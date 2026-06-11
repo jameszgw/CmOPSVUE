@@ -1,0 +1,74 @@
+import Vue from "vue";
+import VueRouter from "vue-router";
+import store from "@/store";
+import { checkPermission } from "@/utils/permission";
+
+Vue.use(VueRouter);
+
+const BasicLayout = () => import("@/layouts/BasicLayout.vue");
+
+const routes = [
+  {
+    path: "/",
+    component: BasicLayout,
+    redirect: "/devops/ops/host-list",
+    children: [
+      // ===== 运维监控 =====
+      { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },
+      { path: "/devops/ops/host-detail/:id", component: () => import("@/views/ops/HostDetail.vue") },
+      { path: "/devops/ops/host/alarm/history/:hostId", component: () => import("@/views/ops/HostAlarmHistory.vue") },
+      { path: "/devops/ops/sftp-manage/:hostId", component: () => import("@/views/ops/SftpManage.vue") },
+      { path: "/devops/ops/cluster-list", component: () => import("@/views/ops/ClusterList.vue") },
+      { path: "/devops/ops/server-key", component: () => import("@/views/ops/ServerKey.vue") },
+      { path: "/devops/ops/server-env", component: () => import("@/views/ops/ServerEnv.vue") },
+      { path: "/devops/ops/server-proxy", component: () => import("@/views/ops/ServerProxy.vue") },
+      { path: "/devops/ops/server-monitor", component: () => import("@/views/ops/ServerMonitor.vue") },
+      { path: "/devops/ops/terminal-page", component: () => import("@/views/ops/TerminalPage.vue") },
+      // ===== CI 应用发布 =====
+      { path: "/devops/ci/app-list", component: () => import("@/views/ci/AppList.vue") },
+      { path: "/devops/ci/app/info/:id", component: () => import("@/views/ci/AppDetail.vue") },
+      { path: "/devops/ci/app/deploy/:id", component: () => import("@/views/ci/Deploy.vue") },
+      // ===== 系统管理 =====
+      { path: "/devops/system/alarm-group", component: () => import("@/views/system/AlarmGroup.vue") },
+      { path: "/devops/system/webhook-config", component: () => import("@/views/system/WebhookConfig.vue") },
+      { path: "/devops/system/script-template", component: () => import("@/views/system/ScriptTemplate.vue") },
+      { path: "/devops/system/security-config", component: () => import("@/views/system/SecurityConfig.vue") },
+      { path: "/devops/system/ip-config", component: () => import("@/views/system/IpConfig.vue") },
+      { path: "/devops/system/system-log", component: () => import("@/views/system/SystemLog.vue") },
+      { path: "/devops/system/system-analysis", component: () => import("@/views/system/SystemAnalysis.vue") },
+      { path: "/devops/system/thread-metrics", component: () => import("@/views/system/ThreadMetrics.vue") },
+      { path: "/devops/system/batch-exec", component: () => import("@/views/system/BatchExec.vue") },
+      { path: "/devops/system/about", component: () => import("@/views/system/About.vue") },
+    ],
+  },
+  { path: "/403", component: () => import("@/views/system/NotAuthorized.vue") },
+  { path: "*", component: () => import("@/views/system/NotFound.vue") },
+];
+
+const router = new VueRouter({
+  mode: "history",
+  routes,
+});
+
+// 权限白名单
+const WHITE_LIST = ["/", "/403"];
+
+router.beforeEach(async (to, from, next) => {
+  if (WHITE_LIST.includes(to.path) || to.matched.length === 0) {
+    next();
+    return;
+  }
+  try {
+    const menu = await store.dispatch("user/queryMenu");
+    if (checkPermission(to.path, menu)) {
+      next();
+    } else {
+      next("/403");
+    }
+  } catch (e) {
+    // 菜单加载失败时放行，由接口层提示错误
+    next();
+  }
+});
+
+export default router;
