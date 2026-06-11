@@ -26,7 +26,7 @@
         <el-table-column prop="displayName" label="显示名称" />
         <el-table-column label="账户类型">
           <template #default="{ row }">
-            <el-tag :type="row.accountType === 1 ? 'danger' : 'primary'">
+            <el-tag :type="row.accountType === 1 ? 'danger' : ''">
               {{ row.accountType === 1 ? "管理员" : "普通账户" }}
             </el-tag>
           </template>
