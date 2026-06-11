@@ -138,7 +138,7 @@ export default {
     border-radius: 4px;
     padding: 16px;
 
-    /deep/ .el-descriptions-item__label {
+    ::v-deep .el-descriptions-item__label {
       width: 124px;
       text-align: end;
       font-size: 14px;

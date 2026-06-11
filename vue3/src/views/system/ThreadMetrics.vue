@@ -1,43 +1,47 @@
 <template>
   <div class="page-container">
     <el-card>
-      <div class="thread-metrics-container" v-loading="loading">
+      <div v-loading="loading" class="thread-metrics-container">
         <div class="other-title">线程池指标</div>
         <div class="thread-metrics-descriptions">
           <el-descriptions :column="1">
             <el-descriptions-item
               v-for="metric in metrics"
               :key="metric.type"
-              :label="formatThreadType(metric.type, 'label')"
+              :label="formatThreadType(metric.type)"
             >
               <div class="thread-pool-metrics-wrapper">
                 <span class="metrics-label">活跃线程数: </span>
                 <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.activeThreadCount }}</span> 个
+                  <span class="metrics-value">{{
+                    metric.activeThreadCount
+                  }}</span>
+                  个
                 </span>
                 <span class="metrics-label">总任务数: </span>
                 <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.totalTaskCount }}</span> 个
+                  <span class="metrics-value">{{ metric.totalTaskCount }}</span>
+                  个
                 </span>
                 <span class="metrics-label">已处理任务数: </span>
                 <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.completedTaskCount }}</span> 个
+                  <span class="metrics-value">{{
+                    metric.completedTaskCount
+                  }}</span>
+                  个
                 </span>
                 <span class="metrics-label">队列任务数: </span>
                 <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.queueSize }}</span> 个
+                  <span class="metrics-value">{{ metric.queueSize }}</span>
+                  个
                 </span>
               </div>
             </el-descriptions-item>
           </el-descriptions>
         </div>
         <div class="thread-metrics-handler-container">
-          <el-button
-            class="reload-button"
-            icon="el-icon-refresh"
-            :loading="loading"
-            @click="init"
-          >
+          <el-button class="reload-button" :loading="loading" @click="init">
+            <el-icon style="margin-right: 4px"><Refresh /></el-icon>
             重新加载
           </el-button>
         </div>
@@ -46,10 +50,11 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from "vue";
 import { getSystemThreadMetrics } from "@/api/system";
 
-// 线程池指标类型 (原 src/utils/index THREAD_POOL_METRICS_TYPE)
+// 线程池指标类型 (对齐原 React 版 THREAD_POOL_METRICS_TYPE)
 const THREAD_POOL_METRICS_TYPE = {
   TERMINAL: { value: 10, label: "远程终端线程池" },
   TERMINAL_WATCHER: { value: 15, label: "终端监视线程池" },
@@ -67,42 +72,30 @@ const THREAD_POOL_METRICS_TYPE = {
   PIPELINE: { value: 130, label: "应用流水线线程池" },
 };
 
-function enumValueOf(e, value) {
-  for (const key in e) {
-    const val = e[key];
-    if (val && val.value === value) {
-      return val;
-    }
-  }
-  return {};
-}
+const loading = ref(false);
+const metrics = ref([]);
 
-export default {
-  name: "ThreadMetrics",
-  data() {
-    return {
-      loading: false,
-      metrics: [],
-    };
-  },
-  created() {
-    this.init();
-  },
-  methods: {
-    async init() {
-      this.loading = true;
-      try {
-        const res = await getSystemThreadMetrics();
-        this.metrics = res.content || [];
-      } finally {
-        this.loading = false;
-      }
-    },
-    formatThreadType(type, field) {
-      return enumValueOf(THREAD_POOL_METRICS_TYPE, type)[field];
-    },
-  },
+const formatThreadType = (type) => {
+  const matched = Object.values(THREAD_POOL_METRICS_TYPE).find(
+    // eslint-disable-next-line eqeqeq
+    (item) => item.value == type
+  );
+  return matched ? matched.label : String(type);
 };
+
+const init = async () => {
+  loading.value = true;
+  try {
+    const res = await getSystemThreadMetrics();
+    metrics.value = res.content || [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  init();
+});
 </script>
 
 <style lang="less" scoped>
@@ -116,9 +109,10 @@ export default {
   .thread-metrics-descriptions {
     margin: 18px 0 0 0;
 
-    ::v-deep .el-descriptions-item__label {
+    :deep(.el-descriptions__label) {
       margin-left: 16px;
       width: 145px;
+      display: inline-block;
       text-align: end;
     }
   }
@@ -128,9 +122,13 @@ export default {
     font-size: 13px;
   }
 
+  .metrics-label {
+    color: rgba(0, 0, 0, 0.65);
+  }
+
   .metrics-value-wrapper {
     margin-right: 8px;
-    width: 48px;
+    min-width: 48px;
     display: inline-block;
 
     .metrics-value {
