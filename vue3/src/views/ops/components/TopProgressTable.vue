@@ -142,7 +142,7 @@ import {
 
 const props = defineProps({
   hostId: {
-    type: String,
+    type: [String, Number],
     default: "",
   },
   disks: {
