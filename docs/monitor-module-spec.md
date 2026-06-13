@@ -338,3 +338,28 @@ listAlertRules(deviceType) / addAlertRule / updateAlertRule / deleteAlertRule(id
 - **Overview** `getGpuOverview`:`{ vendor, model, driverVersion, cudaVersion, gpuTotal, gpuActive, avgUtilization, avgMemUsage, totalMemory, usedMemory, maxTemperature, totalPower, eccErrors, health, runningJobs, pendingJobs }`。卡片:GPU(gpuActive/gpuTotal)、平均利用率(avgUtilization 进度条)、显存使用率(avgMemUsage 进度条)、最高温(maxTemperature)。区块:基础信息(驱动/CUDA/电源/ECC/health tag)、任务(running/pending)。
 - **Gpus** `getGpuCards`:`{ total, hotCount, gpus:[{index,model,utilizationPct,memUsagePct,memUsed,memTotal,temperature,hot,powerW,fanPct,processes,eccErrors,smClockMhz}] }`。每张卡一个 SectionCard 或 el-table(hot=true 温度红;util/mem 进度条)。
 - **Workloads** `getGpuWorkloads`:`{ isEdge, inference:{modelCount,totalQps,avgLatencyP99,queueDepth,models:[{name,replicas,qps,latencyP99Ms,gpuMemMB,status}]}, edge:{nodeTotal,online,offline,nodes:[{name,location,status,latencyMs,gpuUtil,lastHeartbeat}]} }`。推理:卡片(modelCount/totalQps/avgLatencyP99)+ models el-table;边缘(isEdge 或 edge.nodeTotal>0 时):卡片(online/offline)+ nodes el-table(status online 绿/offline 红)。
+
+---
+
+## 11. P2 智能增值:监控大盘 + 全链路拓扑与根因
+
+两个独立页面(非设备标签页,根 `<div class="page-container">`,5s 自动刷新,setInterval 卸载清理)。echarts 用法见现有 server/SystemInfo.vue。设备类型中文映射:SERVER 服务器/REDIS Redis/DATABASE 数据库/K8S 容器/MQ 消息队列/LB 负载均衡/STORAGE 存储/NETDEV 网络设备/GPU GPU。状态色:healthy `#67c23a`,warning `#e6a23c`,critical `#f56c6c`。
+
+### 11.1 监控大盘 `getDashboardSummary` → views/monitor/MonitorDashboard.vue
+```
+{ deviceStats:{ total, online, offline, byType:{SERVER,REDIS,DATABASE,K8S,MQ,LB,STORAGE,NETDEV,GPU} },
+  alertStats:{ active, critical, warning, trend:{times:[],critical:[],warning:[]} },
+  healthScore(0-100), healthLevel,
+  topProblems:[{deviceId,deviceName,type,critical,warning,topIssue}],
+  recentAlerts:[{deviceName,deviceType,metricLabel,value,unit,level,levelText,message,firstTime}],
+  resource:{avgCpu,avgMemory,avgDisk,avgNetwork} }
+```
+布局:① 顶部健康评分 echarts 仪表盘(gauge, healthScore, 颜色按分段)+ 4 张统计卡(设备总数/在线/活跃告警/严重)。② 设备类型分布 echarts 饼图(byType,用中文类型名)+ 告警趋势 echarts 折线(trend.times + critical/warning 两条线)。③ 资源水位概览(avgCpu/avgMemory/avgDisk/avgNetwork 四个 el-progress)。④ 问题设备 Top el-table(deviceName/类型/严重 critical/警告 warning/topIssue)。⑤ 最近告警 el-table(级别 tag/设备/指标 metricLabel/描述 message/首次 firstTime)。复用 StatCard/SectionCard。
+
+### 11.2 拓扑与根因 `getTopologyGraph` + `getTopologyRootCause` → views/monitor/MonitorTopology.vue
+graph:`{ nodes:[{id,name,type,layer(0..3),layerName,status,ip}], edges:[{source,target,relation,status}], layers:[4个名称], healthy, warning, critical }`
+rootcause:`{ incidentCount, incidents:[{id,title,rootDeviceName,rootType,severity,severityText,affectedCount,chain:[{deviceName,type,role,symptom}],recommendation,confidence}] }`
+布局:顶部统计卡(节点总数/健康/警告/严重/根因事件数)。主体左右两栏:
+- 左(较宽):echarts **graph** 拓扑图。建议 `layout:"none"`,按 `layer` 分列布局节点 x 坐标(接入层→计算层→数据层→基础设施层,layer 0-3 映射到 x),同层节点纵向均分 y;`categories` 按 status 着色(healthy/warning/critical),节点 itemStyle 颜色用状态色,边 lineStyle 颜色按 edge.status;边可显示 relation(routes/depends/stores/network)。图例显示三种状态。两个 echarts(graph 与 dashboard 各图)在 onMounted/refresh 时 setOption,onBeforeUnmount dispose。
+- 右(较窄):根因事件列表,每个 incident 一张卡片(SectionCard 或自定义):标题 title + 严重 tag(severityText 红/橙)+ 置信度 confidence% + 受影响 affectedCount;展开传播链 chain(根因→受影响,role 标注,symptom 说明);处置建议 recommendation。incidentCount=0 显示 el-empty“当前无根因事件”。
+vue2 用 Options API + Element UI(el-table slot-scope、字体图标),vue3 用 `<script setup>` + Element Plus。
