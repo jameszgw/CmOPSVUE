@@ -19,12 +19,14 @@ import Overview from "./database/Overview.vue";
 import Connection from "./database/Connection.vue";
 import Performance from "./database/Performance.vue";
 import Tables from "./database/Tables.vue";
+import EngineMetrics from "./database/EngineMetrics.vue";
 
 const tabs = [
   { key: "overview", label: "概览信息", icon: "Histogram" },
   { key: "connection", label: "连接信息", icon: "Share" },
   { key: "performance", label: "性能统计", icon: "TrendCharts" },
   { key: "tables", label: "表统计", icon: "Grid" },
+  { key: "engine", label: "引擎指标", icon: "Cpu" },
 ];
 
 const tabComponents = {
@@ -32,6 +34,7 @@ const tabComponents = {
   connection: Connection,
   performance: Performance,
   tables: Tables,
+  engine: EngineMetrics,
 };
 </script>
 

@@ -17,6 +17,14 @@
         <StatCard icon="Download" label="总接收" :value="d.totalRecv || '-'"
           sub="累计接收流量" color="#909399" />
       </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <StatCard icon="Refresh" label="TCP 重传率" :value="`${num(d.maxRetransRate)}%`"
+          sub="接口最大重传率" color="#e6a23c" />
+      </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <StatCard icon="CircleClose" label="丢包率" :value="`${num(d.maxLossRate)}%`"
+          sub="接口最大丢包率" color="#f56c6c" />
+      </el-col>
     </el-row>
 
     <SectionCard v-for="(itf, i) in d.interfaces || []" :key="i" :title="itf.name || `接口 ${i + 1}`"
@@ -25,6 +33,19 @@
         <el-tag size="small" :type="statusType(itf.status)" effect="plain">{{ itf.status || '-' }}</el-tag>
       </template>
       <InfoTable :rows="interfaceRows(itf)" :columns="2" />
+    </SectionCard>
+
+    <SectionCard title="TCP 连接状态" icon="Connection">
+      <el-row :gutter="12">
+        <el-col v-for="item in connStateCards" :key="item.label" :xs="12" :sm="8" :lg="4">
+          <div class="grid-metric">
+            <div class="grid-metric__label">{{ item.label }}</div>
+            <div class="grid-metric__value" :style="{ color: item.color }">
+              {{ item.value ?? '-' }}
+            </div>
+          </div>
+        </el-col>
+      </el-row>
     </SectionCard>
 
     <SectionCard title="网络总计统计" icon="DataAnalysis">
@@ -80,6 +101,8 @@ const loading = ref(false);
 const data = ref({});
 const d = computed(() => data.value || {});
 
+const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
+
 const statusType = (s) => {
   const v = String(s || "").toLowerCase();
   return v === "up" || v.includes("在线") || v.includes("连接") ? "success" : "info";
@@ -96,7 +119,20 @@ const interfaceRows = (itf) => [
   { label: "接收包数", value: itf.recvPackets },
   { label: "发送错误", value: itf.sentErrors },
   { label: "接收错误", value: itf.recvErrors },
+  { label: "重传率", value: `${num(itf.retransRate)}%`, color: "#e6a23c" },
+  { label: "丢包率", value: `${num(itf.lossRate)}%`, color: "#f56c6c" },
 ];
+
+const connStateCards = computed(() => {
+  const c = d.value.connStates || {};
+  return [
+    { label: "ESTABLISHED", value: c.established, color: "#67c23a" },
+    { label: "TIME_WAIT", value: c.timeWait, color: "#409eff" },
+    { label: "CLOSE_WAIT", value: c.closeWait, color: "#e6a23c" },
+    { label: "LISTEN", value: c.listen, color: "#909399" },
+    { label: "SYN_RECV", value: c.synRecv, color: "#f56c6c" },
+  ];
+});
 
 const sentRows = computed(() => {
   const s = d.value.totalStats?.sent || {};

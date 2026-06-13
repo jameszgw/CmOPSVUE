@@ -12,3 +12,5 @@ export const getDatabaseOverview = (deviceId) => get("overview", deviceId);
 export const getDatabaseConnection = (deviceId) => get("connection", deviceId);
 export const getDatabasePerformance = (deviceId) => get("performance", deviceId);
 export const getDatabaseTables = (deviceId) => get("tables", deviceId);
+
+export const getDatabaseEngine = (deviceId) => get("engine", deviceId);

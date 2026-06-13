@@ -21,6 +21,7 @@ import Clients from "./redis/Clients.vue";
 import Keyspace from "./redis/Keyspace.vue";
 import Statistics from "./redis/Statistics.vue";
 import SlowLog from "./redis/SlowLog.vue";
+import Persistence from "./redis/Persistence.vue";
 
 export default {
   name: "MonitorRedis",
@@ -32,6 +33,7 @@ export default {
     Keyspace,
     Statistics,
     SlowLog,
+    Persistence,
   },
   data() {
     return {
@@ -42,6 +44,7 @@ export default {
         { key: "keyspace", label: "键空间", icon: "el-icon-key" },
         { key: "statistics", label: "统计信息", icon: "el-icon-data-line" },
         { key: "slowlog", label: "慢日志", icon: "el-icon-time" },
+        { key: "persistence", label: "持久化/复制", icon: "el-icon-refresh" },
       ],
       tabComponents: {
         overview: "Overview",
@@ -50,6 +53,7 @@ export default {
         keyspace: "Keyspace",
         statistics: "Statistics",
         slowlog: "SlowLog",
+        persistence: "Persistence",
       },
     };
   },

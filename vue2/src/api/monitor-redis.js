@@ -14,3 +14,5 @@ export const getRedisClients = (deviceId) => get("clients", deviceId);
 export const getRedisKeyspace = (deviceId) => get("keyspace", deviceId);
 export const getRedisStatistics = (deviceId) => get("statistics", deviceId);
 export const getRedisSlowlog = (deviceId) => get("slowlog", deviceId);
+
+export const getRedisPersistence = (deviceId) => get("persistence", deviceId);

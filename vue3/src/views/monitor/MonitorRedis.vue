@@ -21,6 +21,7 @@ import Clients from "./redis/Clients.vue";
 import Keyspace from "./redis/Keyspace.vue";
 import Statistics from "./redis/Statistics.vue";
 import SlowLog from "./redis/SlowLog.vue";
+import Persistence from "./redis/Persistence.vue";
 
 const tabs = [
   { key: "overview", label: "概览信息", icon: "Histogram" },
@@ -29,6 +30,7 @@ const tabs = [
   { key: "keyspace", label: "键空间", icon: "Key" },
   { key: "statistics", label: "统计信息", icon: "TrendCharts" },
   { key: "slowlog", label: "慢日志", icon: "Timer" },
+  { key: "persistence", label: "持久化/复制", icon: "RefreshRight" },
 ];
 
 const tabComponents = {
@@ -38,6 +40,7 @@ const tabComponents = {
   keyspace: Keyspace,
   statistics: Statistics,
   slowlog: SlowLog,
+  persistence: Persistence,
 };
 </script>
 

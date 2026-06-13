@@ -19,6 +19,7 @@ import Overview from "./database/Overview.vue";
 import Connection from "./database/Connection.vue";
 import Performance from "./database/Performance.vue";
 import Tables from "./database/Tables.vue";
+import EngineMetrics from "./database/EngineMetrics.vue";
 
 export default {
   name: "MonitorDatabase",
@@ -28,6 +29,7 @@ export default {
     Connection,
     Performance,
     Tables,
+    EngineMetrics,
   },
   data() {
     return {
@@ -36,12 +38,14 @@ export default {
         { key: "connection", label: "连接信息", icon: "el-icon-share" },
         { key: "performance", label: "性能统计", icon: "el-icon-data-line" },
         { key: "tables", label: "表统计", icon: "el-icon-s-grid" },
+        { key: "engine", label: "引擎指标", icon: "el-icon-cpu" },
       ],
       tabComponents: {
         overview: "Overview",
         connection: "Connection",
         performance: "Performance",
         tables: "Tables",
+        engine: "EngineMetrics",
       },
     };
   },

@@ -52,6 +52,11 @@
     <SectionCard title="实时内存详情" icon="el-icon-time">
       <InfoTable :rows="realtimeRows" :columns="4" />
     </SectionCard>
+
+    <SectionCard title="内核内存与 OOM" icon="el-icon-cpu">
+      <template #extra>OOM 次数 {{ oomKillCount }}</template>
+      <InfoTable :rows="kernelRows" :columns="2" />
+    </SectionCard>
   </div>
 </template>
 
@@ -125,6 +130,29 @@ export default {
         { label: "可用内存", value: rt.available },
         { label: "缓存", value: rt.cached },
         { label: "空闲内存", value: rt.free },
+      ];
+    },
+    oomCount() {
+      const k = this.d.kernel || {};
+      const v = k.oomKillCount != null ? k.oomKillCount : this.d.oomKillCount;
+      return v == null ? 0 : v;
+    },
+    oomKillCount() {
+      return this.oomCount;
+    },
+    kernelRows() {
+      const k = this.d.kernel || {};
+      return [
+        {
+          label: "OOM 次数",
+          value: this.oomCount,
+          color: this.oomCount > 0 ? "#f56c6c" : "#67c23a",
+        },
+        { label: "最近 OOM 时间", value: k.oomLastTime == null ? "无" : k.oomLastTime },
+        { label: "Slab", value: k.slab },
+        { label: "可回收 Slab", value: k.slabReclaimable },
+        { label: "不可回收 Slab", value: k.slabUnreclaim },
+        { label: "页表", value: k.pageTables },
       ];
     },
   },

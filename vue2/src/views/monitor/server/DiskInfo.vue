@@ -17,6 +17,10 @@
         <StatCard icon="el-icon-files" label="总写入" :value="d.totalWritten || '-'"
           sub="累计写入数据" color="#909399" />
       </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <StatCard icon="el-icon-timer" label="磁盘最大await" :value="maxAwait"
+          sub="分区最大IO等待时延" color="#e6a23c" />
+      </el-col>
     </el-row>
 
     <SectionCard v-for="(p, i) in partitions" :key="i" :title="p.mount || p.device || '分区'" icon="el-icon-folder-opened">
@@ -24,6 +28,9 @@
       <div class="part-sub">磁盘空间</div>
       <el-progress :percentage="clamp(p.usage)" :stroke-width="12"
         :color="usageColor(p.usage)" class="block-progress" />
+      <div class="part-sub">inode 使用率</div>
+      <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="12"
+        :color="usageColor(p.inodeUsage)" class="block-progress" />
       <InfoTable :rows="partitionRows(p)" :columns="2" />
     </SectionCard>
 
@@ -82,6 +89,10 @@ export default {
     partitions() {
       return this.d.partitions || [];
     },
+    maxAwait() {
+      const v = this.d.maxAwait;
+      return v == null ? "-" : `${v} ms`;
+    },
     readRows() {
       const r = (this.d.ioStats && this.d.ioStats.read) || {};
       return [
@@ -89,6 +100,7 @@ export default {
         { label: "读取次数", value: this.fmt(r.count) },
         { label: "读取字节", value: r.bytes },
         { label: "读取耗时", value: r.time },
+        { label: "读 await", value: r.await == null ? "-" : `${r.await} ms`, color: "#e6a23c" },
       ];
     },
     writeRows() {
@@ -99,6 +111,7 @@ export default {
         { label: "写入次数", value: this.fmt(w.count) },
         { label: "写入字节", value: w.bytes },
         { label: "写入耗时", value: w.time },
+        { label: "写 await", value: w.await == null ? "-" : `${w.await} ms`, color: "#e6a23c" },
       ];
     },
     realtimeRead() {
@@ -141,6 +154,16 @@ export default {
         { label: "总容量", value: p.total },
         { label: "已使用", value: p.used, color: "#e6a23c" },
         { label: "可用空间", value: p.free, color: "#67c23a" },
+        { label: "inode 使用率", value: `${this.num(p.inodeUsage)}%`, color: "#67c23a" },
+        { label: "inode 总数", value: this.fmt(p.inodeTotal) },
+        {
+          label: "await",
+          value: p.await == null ? "-" : `${p.await} ms`,
+          color: p.slow ? "#f56c6c" : "#303133",
+          tag: p.slow ? "慢盘" : "",
+        },
+        { label: "平均队列", value: p.avgQueue == null ? "-" : p.avgQueue },
+        { label: "利用率", value: `${this.num(p.util)}%`, color: "#e6a23c" },
       ];
     },
     async load() {

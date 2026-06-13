@@ -17,15 +17,27 @@
         <StatCard icon="DataLine" label="总写入" :value="d.totalWritten || '-'"
           sub="累计写入数据" color="#909399" />
       </el-col>
+      <el-col :xs="24" :sm="12" :lg="6">
+        <StatCard icon="Timer" label="磁盘最大 await" :value="`${num(d.maxAwait)} ms`"
+          sub="分区最大 IO 时延" color="#e6a23c" />
+      </el-col>
     </el-row>
 
     <SectionCard v-for="(p, i) in d.partitions || []" :key="i" :title="p.mount || `分区 ${i + 1}`"
       icon="Coin">
-      <template #extra>{{ p.used || '-' }} / {{ p.total || '-' }}</template>
+      <template #extra>
+        <el-tag v-if="p.slow" size="small" type="danger" effect="dark" class="part-slow-tag">慢盘</el-tag>
+        {{ p.used || '-' }} / {{ p.total || '-' }}
+      </template>
       <div class="part-usage">
         <span class="part-usage__label">磁盘空间</span>
         <el-progress :percentage="clamp(p.usage)" :stroke-width="12"
           :color="usageColor(p.usage)" class="part-usage__bar" />
+      </div>
+      <div v-if="p.inodeUsage !== undefined && p.inodeUsage !== null" class="part-usage">
+        <span class="part-usage__label">inode 使用率</span>
+        <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="12"
+          :color="usageColor(p.inodeUsage)" class="part-usage__bar" />
       </div>
       <InfoTable :rows="partitionRows(p)" :columns="2" />
     </SectionCard>
@@ -94,6 +106,15 @@ const partitionRows = (p) => [
   { label: "总容量", value: p.total },
   { label: "已使用", value: p.used },
   { label: "可用空间", value: p.free, color: "#67c23a" },
+  { label: "inode 总数", value: p.inodeTotal },
+  {
+    label: "await",
+    value: `${num(p.await)} ms`,
+    color: p.slow ? "#f56c6c" : undefined,
+    tag: p.slow ? "慢盘" : undefined,
+  },
+  { label: "平均队列", value: num(p.avgQueue) },
+  { label: "利用率", value: `${num(p.util)}%`, color: usageColor(p.util) },
 ];
 
 const readRows = computed(() => {
@@ -102,6 +123,7 @@ const readRows = computed(() => {
     { label: "读取次数", value: r.count },
     { label: "读取字节", value: r.bytes },
     { label: "读取耗时", value: r.time },
+    { label: "读取 await", value: `${num(r.await)} ms`, color: "#e6a23c" },
   ];
 });
 
@@ -111,6 +133,7 @@ const writeRows = computed(() => {
     { label: "写入次数", value: w.count },
     { label: "写入字节", value: w.bytes },
     { label: "写入耗时", value: w.time },
+    { label: "写入 await", value: `${num(w.await)} ms`, color: "#e6a23c" },
   ];
 });
 
@@ -135,6 +158,9 @@ onMounted(load);
 }
 .stat-row .el-col {
   margin-bottom: 12px;
+}
+.part-slow-tag {
+  margin-right: 8px;
 }
 .part-usage {
   margin-bottom: 16px;

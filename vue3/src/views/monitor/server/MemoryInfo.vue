@@ -27,10 +27,15 @@
     </SectionCard>
 
     <SectionCard title="交换分区（Swap）" icon="Switch">
-      <template #extra>使用率 {{ num(d.swap?.usage) }}%</template>
-      <el-progress :percentage="clamp(d.swap?.usage)" :stroke-width="10"
-        :color="usageColor(d.swap?.usage)" class="section-bar" />
+      <template #extra>使用率 {{ num(d.swap?.usage ?? d.swapUsage) }}%</template>
+      <el-progress :percentage="clamp(d.swap?.usage ?? d.swapUsage)" :stroke-width="10"
+        :color="usageColor(d.swap?.usage ?? d.swapUsage)" class="section-bar" />
       <InfoTable :rows="swapRows" :columns="2" />
+    </SectionCard>
+
+    <SectionCard title="内核内存与 OOM" icon="Cpu">
+      <template #extra>OOM 次数 {{ d.kernel?.oomKillCount ?? d.oomKillCount ?? 0 }}</template>
+      <InfoTable :rows="kernelRows" :columns="2" />
     </SectionCard>
 
     <SectionCard title="内存分布" icon="PieChart">
@@ -99,6 +104,23 @@ const swapRows = computed(() => {
     { label: "已使用", value: s.used },
     { label: "可用交换分区", value: s.free, color: "#67c23a" },
     { label: "交换分区使用率", value: `${num(s.usage)}%`, color: "#e6a23c" },
+  ];
+});
+
+const kernelRows = computed(() => {
+  const k = d.value.kernel || {};
+  const oom = k.oomKillCount ?? d.value.oomKillCount;
+  return [
+    {
+      label: "OOM 次数",
+      value: oom ?? 0,
+      color: Number(oom) > 0 ? "#f56c6c" : undefined,
+    },
+    { label: "最近 OOM 时间", value: k.oomLastTime || "无" },
+    { label: "Slab", value: k.slab },
+    { label: "可回收 Slab", value: k.slabReclaimable, color: "#67c23a" },
+    { label: "不可回收 Slab", value: k.slabUnreclaim, color: "#e6a23c" },
+    { label: "页表", value: k.pageTables },
   ];
 });
 

@@ -188,3 +188,54 @@ ECharts 用法见参考实现（`init` + `setOption`，`beforeDestroy/onBeforeUn
 - vue3：`cd vue3 && npm run build` 通过；vue2：`cd vue2 && npm run build` 通过。
 - 与对应截图布局一致（统计卡在顶部、分区清晰、表格/进度条/图表齐全）。
 - 字段缺失需空值兜底（`?.` 或 `&&`），避免渲染报错。
+
+---
+
+## 8. v4.0 深化:P0 深度指标 + 告警阈值中心(新增)
+
+### 8.1 Redis 持久化/复制 `getRedisPersistence(deviceId)` → redis/Persistence.vue
+```
+{ rdbOk, aofOk, aofEnabled, connectedSlaves, maxSlaveLagHuman,
+  rdb:{ lastSaveTime, changesSinceSave, lastBgsaveStatus, bgsaveInProgress, lastBgsaveTimeSec, rdbSize },
+  aof:{ enabled, lastWriteStatus, lastRewriteStatus, rewriteInProgress, aofSize, aofBaseSize },
+  replication:{ role, mode, connectedSlaves, masterReplOffset, maxSlaveLagBytes, maxSlaveLagHuman,
+                masterLinkStatus, slaves:[ {id,addr,state,offset,lagBytes,lagHuman} ] },
+  sentinelEvents:[ {time,type,detail} ] }
+```
+卡片:RDB 状态(rdbOk)/AOF 状态(aofOk/aofEnabled)/从节点数(connectedSlaves)/最大主从偏移(maxSlaveLagHuman)。
+区块:RDB 持久化 InfoTable、AOF 持久化 InfoTable、复制状态(主信息 + slaves el-table)、哨兵切换事件(sentinelEvents 时间线/表;为空显示 el-empty)。
+
+### 8.2 数据库引擎指标 `getDatabaseEngine(deviceId)` → database/EngineMetrics.vue
+```
+{ dbType, engineLabel,
+  stats:[ {label, value, unit, level} ],        // level: normal/warning/critical
+  groups:[ {title, items:[ {label,value,unit,level} ]} ],
+  topSql:[ {rank, sql, calls, avgMs, totalSec, rowsAvg} ] }
+```
+顶部显示 engineLabel(如 MySQL/PostgreSQL/MongoDB)。`stats` 用响应式指标网格渲染,按 level 上色
+(normal 默认 / warning 橙 #e6a23c / critical 红 #f56c6c)。`groups` 每组一个 SectionCard 内含 InfoTable。
+`topSql` 用 el-table(排名/SQL/调用次数 calls/平均耗时 avgMs ms/总耗时 totalSec s/平均行数 rowsAvg)。
+
+### 8.3 服务器深度字段(在既有 server 标签页内增量补充)
+- **DiskInfo**:`disk.maxAwait`;每个 `partitions[i]` 新增 `inodeUsage`(%)、`inodeTotal`、`await`(ms)、`avgQueue`、`util`(%)、`slow`(bool,await>30 高亮红);`ioStats.read/write.await`。在分区卡片补 inode 进度条与 await/队列;新增"磁盘时延概览"统计卡(maxAwait)。
+- **NetworkInfo**:`maxRetransRate`、`maxLossRate`;`interfaces[i].retransRate/lossRate`;新增 `connStates:{established,timeWait,closeWait,listen,synRecv}`。在接口表补重传率/丢包率,新增"TCP 连接状态"SectionCard(各状态计数卡)与"重传/丢包"统计卡。
+- **MemoryInfo**:`swapUsage`、`oomKillCount`、`kernel:{oomKillCount,oomLastTime,slab,slabReclaimable,slabUnreclaim,pageTables}`。新增"内核内存与 OOM"SectionCard(InfoTable:OOM 次数/最近 OOM 时间/Slab/可回收/不可回收/页表)。
+
+### 8.4 告警中心 `AlertCenter.vue`(独立页面,非设备标签页)
+api(`@/api/monitor-alert`):`getAlertStats / getActiveAlerts(level,deviceType) / getAlertHistory(limit) /
+listAlertRules(deviceType) / addAlertRule / updateAlertRule / deleteAlertRule(id) / toggleAlertRule(id,enabled)`。
+
+- **getAlertStats** → `{ activeTotal, critical, warning, historyTotal, resolved, acknowledged, ruleTotal, ruleEnabled, byType:{SERVER,REDIS,DATABASE} }`
+- **getActiveAlerts** → `[ {id,ruleName,deviceName,deviceType,metricLabel,value,unit,comparator,threshold,level,levelText,message,status:'firing',firstTime,lastTime,durationMin} ]`
+- **getAlertHistory** → 同上 + `{recoverTime,durationMin,status:'resolved'|'acknowledged'}`
+- **listAlertRules** → `[ {id,name,deviceType,metricKey,metricLabel,unit,comparator(GT/GTE/LT/LTE),warnValue,criticalValue,durationSec,enabled,sampleMin,sampleMax} ]`
+
+页面布局(`.page-container`,顶部用 el-tabs 切「告警概览 / 阈值规则」):
+1. 顶部统计卡:活跃告警 activeTotal、严重 critical(红)、警告 warning(橙)、已恢复 resolved。再加按设备类型分布(byType)小卡或饼图。
+2. 「告警概览」标签:活跃告警 el-table(级别 tag 红/橙、设备、指标、当前值+单位、比较符+阈值、message、firstTime、持续时长),
+   顶部带 级别(全部/严重/警告)和 设备类型(全部/SERVER/REDIS/DATABASE) 两个 el-select 过滤(改变后重新拉取);下方历史告警 el-table(含恢复时间、状态 tag)。
+3. 「阈值规则」标签:规则 el-table(名称/设备类型/指标/比较符+警告+严重阈值/持续/启用 el-switch(调 toggleAlertRule)),
+   右上「新增规则」按钮 → el-dialog 表单(名称、设备类型 select、指标 metricKey/metricLabel、单位、comparator select、warnValue、criticalValue、durationSec);行内编辑/删除。
+4. 自动刷新:概览数据每 5s 轮询一次(setInterval,卸载清理)。
+
+比较符展示映射:GT→`>`、GTE→`≥`、LT→`<`、LTE→`≤`。级别色:critical `#f56c6c`、warning `#e6a23c`、normal/resolved `#67c23a`。
