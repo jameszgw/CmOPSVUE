@@ -14,3 +14,5 @@ export const getServerMemory = (deviceId) => get("memory", deviceId);
 export const getServerDisk = (deviceId) => get("disk", deviceId);
 export const getServerNetwork = (deviceId) => get("network", deviceId);
 export const getServerProcess = (deviceId) => get("process", deviceId);
+
+export const getServerHardware = (deviceId) => get("hardware", deviceId);

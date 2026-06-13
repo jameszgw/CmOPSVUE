@@ -21,6 +21,7 @@ import MemoryInfo from "./server/MemoryInfo.vue";
 import DiskInfo from "./server/DiskInfo.vue";
 import NetworkInfo from "./server/NetworkInfo.vue";
 import ProcessInfo from "./server/ProcessInfo.vue";
+import HardwareSensors from "./server/HardwareSensors.vue";
 
 export default {
   name: "MonitorServer",
@@ -32,6 +33,7 @@ export default {
     DiskInfo,
     NetworkInfo,
     ProcessInfo,
+    HardwareSensors,
   },
   data() {
     return {
@@ -42,6 +44,7 @@ export default {
         { key: "disk", label: "磁盘信息", icon: "el-icon-files" },
         { key: "network", label: "网络信息", icon: "el-icon-connection" },
         { key: "process", label: "进程信息", icon: "el-icon-s-order" },
+        { key: "hardware", label: "硬件传感器", icon: "el-icon-odometer" },
       ],
       tabComponents: {
         system: "SystemInfo",
@@ -50,6 +53,7 @@ export default {
         disk: "DiskInfo",
         network: "NetworkInfo",
         process: "ProcessInfo",
+        hardware: "HardwareSensors",
       },
     };
   },

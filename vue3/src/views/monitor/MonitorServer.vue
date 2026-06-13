@@ -21,6 +21,7 @@ import MemoryInfo from "./server/MemoryInfo.vue";
 import DiskInfo from "./server/DiskInfo.vue";
 import NetworkInfo from "./server/NetworkInfo.vue";
 import ProcessInfo from "./server/ProcessInfo.vue";
+import HardwareSensors from "./server/HardwareSensors.vue";
 
 const tabs = [
   { key: "system", label: "系统信息", icon: "Platform" },
@@ -29,6 +30,7 @@ const tabs = [
   { key: "disk", label: "磁盘信息", icon: "Files" },
   { key: "network", label: "网络信息", icon: "Connection" },
   { key: "process", label: "进程信息", icon: "List" },
+  { key: "hardware", label: "硬件传感器", icon: "Odometer" },
 ];
 
 const tabComponents = {
@@ -38,6 +40,7 @@ const tabComponents = {
   disk: DiskInfo,
   network: NetworkInfo,
   process: ProcessInfo,
+  hardware: HardwareSensors,
 };
 </script>
 
