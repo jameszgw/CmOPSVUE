@@ -303,3 +303,38 @@ listAlertRules(deviceType) / addAlertRule / updateAlertRule / deleteAlertRule(id
   events:[ {type(Normal/Warning), reason, object, namespace, message, count, lastTime} ] }
 ```
 卡片:事件总数 total、警告 warningCount(橙)、正常 normalCount(绿)。el-table:类型(tag warning/info)、原因 reason、对象 object、命名空间、消息 message、次数 count、最近时间 lastTime。建议默认按 type 可筛选(全部/Warning/Normal)。total=0 显示 el-empty。
+
+---
+
+## 10. P1 扩展设备(消息中间件/负载均衡/存储/网络设备/GPU)
+
+通用约定同前:props `deviceId/device/refreshToken`;`load`+`watch`+`mounted/onMounted`;根 `<div v-loading="loading" class="tab-pane">`;复用 StatCard/SectionCard/InfoTable;统计卡 `<el-row :gutter="12" class="stat-row">`+`<el-col :xs="24" :sm="12" :lg="6">`(3 卡用 `:sm="8"`);状态色 正常/up/online/Established/active `#67c23a`,警告/near-full/degraded `#e6a23c`,异常/down/offline/failed `#f56c6c`。vue3 用 EP 图标名,vue2 用 el-icon-* 类、el-table 用 slot-scope。
+
+### 10.1 消息中间件 `@/api/monitor-mq` → views/monitor/mq/*
+- **Overview** `getMqOverview`:`{ mqType, version, address, brokerOnline, brokerTotal, brokerOffline, controllerActive, topicCount, partitionCount, consumerGroupCount, totalMessages, produceRate, consumeRate, totalLag, messageBacklog, underReplicated, offlinePartitions, diskUsagePct, inRate, outRate }`。卡片:Broker(brokerOnline/brokerTotal)、主题数、生产速率 produceRate(msg/s)、消费积压 totalLag。区块:基础信息 InfoTable、吞吐(produce/consume rate、in/out)、健康(underReplicated/offlinePartitions/diskUsagePct 进度条)。
+- **Topics** `getMqTopics`:`{ topicCount, partitionCount, skewedCount, topics:[{name,partitions,replicas,messages,size,inRate,outRate,partitionSkewPct,skewed}] }`。卡片+el-table(skewed=true 时 partitionSkewPct 红色/“倾斜”tag)。
+- **Consumers** `getMqConsumers`:`{ groupCount, maxLag, totalLag, rebalancingCount, highLagCount, groups:[{groupId,state,members,topics,lag,consumeRate,rebalanceCount,highLag}] }`。卡片+el-table(state tag:Stable 绿/Rebalancing 橙/Empty 灰;highLag=true lag 红)。
+- **Brokers** `getMqBrokers`:`{ total, online, offline, brokers:[{id,host,ip,status,controller,cpuPct,memPct,diskPct,leaderPartitions,isrShrinks,underReplicated,flushLatencyMs}] }`。卡片+el-table(status tag,controller 标记,cpu/mem/disk 进度条或文本)。
+
+### 10.2 负载均衡 `@/api/monitor-lb` → views/monitor/lb/*
+- **Overview** `getLbOverview`:`{ lbType, version, address, status, uptime, qps, totalRequests, activeConnections, error5xxRate, error4xxRate, avgLatencyMs, upstreamHealthy, upstreamTotal, upstreamUnhealthy, inBytesRate, outBytesRate, sslEnabled, wafBlockedRate }`。卡片:QPS、5xx错误率(error5xxRate)、活动连接、上游(healthy/total)。区块:基础信息、流量、上游健康。
+- **Traffic** `getLbTraffic`:`{ qps, trend:{times,qps,latency}, statusDist:{c2xx,c3xx,c4xx,c5xx}, latency:{p50,p90,p99,max}, bytes:{inRate,outRate,totalIn,totalOut} }`。echarts 折线(trend.times/qps);状态码分布(饼或进度条 c2xx/c3xx/c4xx/c5xx %);延迟 InfoTable;流量 InfoTable。
+- **Upstreams** `getLbUpstreams`:`{ total, healthy, upstreams:[{name,serverCount,healthy,unhealthy,activeConn,avgResponseMs,members:[{server,status,weight,activeConn,fails,responseMs}]}] }`。每个 upstream 一个 SectionCard:概况 + members el-table(status tag)。
+- **Connections** `getLbConnections`:`{ connections:{active,reading,writing,waiting,accepted,handled,droppedRate}, ssl:{handshakeMs,handshakesPerSec,sessionReuseRate,certDaysLeft,handshakeFailRate}, security:{wafBlocked,wafBlockedRate,rateLimited,rateLimitHitRate,sessionStickyFailRate} }`。三个 SectionCard 各一 InfoTable(certDaysLeft<30 橙/<7 红)。
+
+### 10.3 存储 `@/api/monitor-storage` → views/monitor/storage/*
+- **Overview** `getStorageOverview`:`{ storageType, vendor, address, health, healthText, totalCapacity, usedCapacity, availableCapacity, usagePct, iops, throughput, avgLatencyMs, poolCount, [Ceph: osdTotal,osdUp,osdDown,pgTotal,pgActiveClean,pgDegraded,scrubErrors,monQuorum] }`。卡片:使用率(usagePct 进度条)、IOPS、吞吐、延迟。区块:基础信息(含 health tag);Ceph 设备额外显示 OSD/PG 区块。
+- **Pools** `getStoragePools`:`{ poolCount, nearFullCount, pools:[{name,capacity,used,usagePct,objects,replicas,status,iops}] }`。卡片+el-table(usagePct 进度条;status near-full 橙)。
+- **Performance** `getStoragePerformance`:`{ iops:{read,write,total}, throughput:{read,write}, latency:{readMs,writeMs,p99Ms}, queueDepth, cacheHitRate, trend:{times,readIops,writeIops} }`。卡片(总 IOPS/缓存命中率/队列深度)+ IOPS/吞吐/延迟 InfoTable + echarts 折线(trend)。
+- **Disks** `getStorageDisks`:`{ type, total, healthy, failed, slowCount, disks:[{id,host,status,capacity,used,usagePct,latencyMs,slow,smartStatus,temperature,reallocatedSectors}] }`。卡片+el-table(status tag、slow=true latency 红、smartStatus warning 橙)。
+
+### 10.4 网络设备 `@/api/monitor-netdev` → views/monitor/netdev/*
+- **Overview** `getNetDevOverview`:`{ netDevType, vendor, model, ip, status, uptime, cpuPct, memPct, temperature, portTotal, portUp, portDown, inThroughput, outThroughput, totalPacketLoss, sessionUsagePct, fanStatus, powerStatus }`。卡片:端口(portUp/portTotal)、CPU、丢包率(totalPacketLoss)、会话使用率(sessionUsagePct 进度条)。区块:基础信息(fan/power status tag)。
+- **Ports** `getNetDevPorts`:`{ total, up, errorPorts, ports:[{name,status,speed,duplex,utilizationPct,inRate,outRate,inErrors,outErrors,crcErrors,dropsPct,hasError}] }`。卡片+el-table(status tag、hasError=true 红、utilizationPct 进度条)。
+- **Sessions** `getNetDevSessions`:`{ isFirewall, sessionTable:{current,max,usagePct,newPerSec,tcpSessions,udpSessions,icmpSessions}, [防火墙: firewall:{policyHits,blockedSessions,blockedRate,threatBlocked,natSessions,vpnTunnels,ipsecTunnelsUp}] }`。会话表 InfoTable + usagePct 进度条;isFirewall 时额外 防火墙 SectionCard。
+- **Protocols** `getNetDevProtocols`:`{ bgp:{total,established,down,neighbors:[{neighbor,as,state,uptime,prefixReceived}]}, ospf:{neighbors,areas,state}, lag:{total,degraded,channels:[{name,members,activeMembers,status,totalSpeed}]}, lldp:{neighbors,discoveredDevices} }`。BGP 邻居 el-table(state tag)、OSPF InfoTable、链路聚合 el-table(status degraded 橙)、LLDP InfoTable。
+
+### 10.5 GPU/边缘 `@/api/monitor-gpu` → views/monitor/gpu/*
+- **Overview** `getGpuOverview`:`{ vendor, model, driverVersion, cudaVersion, gpuTotal, gpuActive, avgUtilization, avgMemUsage, totalMemory, usedMemory, maxTemperature, totalPower, eccErrors, health, runningJobs, pendingJobs }`。卡片:GPU(gpuActive/gpuTotal)、平均利用率(avgUtilization 进度条)、显存使用率(avgMemUsage 进度条)、最高温(maxTemperature)。区块:基础信息(驱动/CUDA/电源/ECC/health tag)、任务(running/pending)。
+- **Gpus** `getGpuCards`:`{ total, hotCount, gpus:[{index,model,utilizationPct,memUsagePct,memUsed,memTotal,temperature,hot,powerW,fanPct,processes,eccErrors,smClockMhz}] }`。每张卡一个 SectionCard 或 el-table(hot=true 温度红;util/mem 进度条)。
+- **Workloads** `getGpuWorkloads`:`{ isEdge, inference:{modelCount,totalQps,avgLatencyP99,queueDepth,models:[{name,replicas,qps,latencyP99Ms,gpuMemMB,status}]}, edge:{nodeTotal,online,offline,nodes:[{name,location,status,latencyMs,gpuUtil,lastHeartbeat}]} }`。推理:卡片(modelCount/totalQps/avgLatencyP99)+ models el-table;边缘(isEdge 或 edge.nodeTotal>0 时):卡片(online/offline)+ nodes el-table(status online 绿/offline 红)。

@@ -15,6 +15,11 @@ const routes = [
       { path: "/devops/monitor/redis", component: () => import("@/views/monitor/MonitorRedis.vue") },
       { path: "/devops/monitor/database", component: () => import("@/views/monitor/MonitorDatabase.vue") },
       { path: "/devops/monitor/k8s", component: () => import("@/views/monitor/MonitorK8s.vue") },
+      { path: "/devops/monitor/mq", component: () => import("@/views/monitor/MonitorMq.vue") },
+      { path: "/devops/monitor/lb", component: () => import("@/views/monitor/MonitorLb.vue") },
+      { path: "/devops/monitor/storage", component: () => import("@/views/monitor/MonitorStorage.vue") },
+      { path: "/devops/monitor/netdev", component: () => import("@/views/monitor/MonitorNetDev.vue") },
+      { path: "/devops/monitor/gpu", component: () => import("@/views/monitor/MonitorGpu.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },

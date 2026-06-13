@@ -109,6 +109,75 @@
           <el-input-number v-model="form.nodeCount" :min="1" :max="500" controls-position="right" />
         </el-form-item>
       </template>
+
+      <!-- 消息中间件专有 -->
+      <template v-if="deviceType === 'MQ'">
+        <el-form-item label="类型" prop="mqType">
+          <el-select v-model="form.mqType">
+            <el-option v-for="t in options.mqTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="版本" prop="mqVersion">
+          <el-input v-model="form.mqVersion" placeholder="如 3.7.0" />
+        </el-form-item>
+        <el-form-item label="Broker 数" prop="brokerCount">
+          <el-input-number v-model="form.brokerCount" :min="1" :max="100" controls-position="right" />
+        </el-form-item>
+      </template>
+
+      <!-- 负载均衡专有 -->
+      <template v-if="deviceType === 'LB'">
+        <el-form-item label="类型" prop="lbType">
+          <el-select v-model="form.lbType">
+            <el-option v-for="t in options.lbTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="版本" prop="lbVersion">
+          <el-input v-model="form.lbVersion" placeholder="如 1.25.4" />
+        </el-form-item>
+      </template>
+
+      <!-- 存储专有 -->
+      <template v-if="deviceType === 'STORAGE'">
+        <el-form-item label="类型" prop="storageType">
+          <el-select v-model="form.storageType">
+            <el-option v-for="t in options.storageTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="厂商/型号" prop="storageVendor">
+          <el-input v-model="form.storageVendor" placeholder="如 Ceph Reef / NetApp" />
+        </el-form-item>
+      </template>
+
+      <!-- 网络设备专有 -->
+      <template v-if="deviceType === 'NETDEV'">
+        <el-form-item label="类型" prop="netDevType">
+          <el-select v-model="form.netDevType">
+            <el-option v-for="t in options.netDevTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="厂商" prop="netDevVendor">
+          <el-input v-model="form.netDevVendor" placeholder="如 Cisco / 华为" />
+        </el-form-item>
+        <el-form-item label="型号" prop="netDevModel">
+          <el-input v-model="form.netDevModel" placeholder="如 Nexus 9300" />
+        </el-form-item>
+      </template>
+
+      <!-- GPU 专有 -->
+      <template v-if="deviceType === 'GPU'">
+        <el-form-item label="厂商" prop="gpuVendor">
+          <el-select v-model="form.gpuVendor">
+            <el-option v-for="t in options.gpuVendors" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="型号" prop="gpuModel">
+          <el-input v-model="form.gpuModel" placeholder="如 A100-SXM4-80GB" />
+        </el-form-item>
+        <el-form-item label="GPU 数" prop="gpuCount">
+          <el-input-number v-model="form.gpuCount" :min="1" :max="256" controls-position="right" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -134,10 +203,16 @@ const visible = computed({
   set: (v) => emit("update:modelValue", v),
 });
 
-const TYPE_LABEL = { SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群" };
+const TYPE_LABEL = {
+  SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
+  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+};
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
 
-const DEFAULT_PORT = { SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443 };
+const DEFAULT_PORT = {
+  SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
+  MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
+};
 
 const formRef = ref();
 const submitting = ref(false);
@@ -163,6 +238,19 @@ const form = reactive({
   k8sRuntime: "CONTAINERD",
   k8sCni: "CALICO",
   nodeCount: 3,
+  mqType: "KAFKA",
+  mqVersion: "3.7.0",
+  brokerCount: 3,
+  lbType: "NGINX",
+  lbVersion: "1.25.0",
+  storageType: "CEPH",
+  storageVendor: "",
+  netDevType: "SWITCH",
+  netDevVendor: "",
+  netDevModel: "",
+  gpuVendor: "NVIDIA",
+  gpuModel: "Tesla T4",
+  gpuCount: 1,
 });
 
 const rules = {
@@ -225,6 +313,31 @@ const submit = () => {
           k8sRuntime: form.k8sRuntime,
           k8sCni: form.k8sCni,
           nodeCount: form.nodeCount,
+        });
+      } else if (props.deviceType === "MQ") {
+        Object.assign(payload, {
+          mqType: form.mqType,
+          mqVersion: form.mqVersion,
+          brokerCount: form.brokerCount,
+        });
+      } else if (props.deviceType === "LB") {
+        Object.assign(payload, { lbType: form.lbType, lbVersion: form.lbVersion });
+      } else if (props.deviceType === "STORAGE") {
+        Object.assign(payload, {
+          storageType: form.storageType,
+          storageVendor: form.storageVendor,
+        });
+      } else if (props.deviceType === "NETDEV") {
+        Object.assign(payload, {
+          netDevType: form.netDevType,
+          netDevVendor: form.netDevVendor,
+          netDevModel: form.netDevModel,
+        });
+      } else if (props.deviceType === "GPU") {
+        Object.assign(payload, {
+          gpuVendor: form.gpuVendor,
+          gpuModel: form.gpuModel,
+          gpuCount: form.gpuCount,
         });
       }
       const res = await addDevice(payload);
