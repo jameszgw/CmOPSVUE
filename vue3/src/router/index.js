@@ -22,6 +22,8 @@ const routes = [
       { path: "/devops/monitor/storage", component: () => import("@/views/monitor/MonitorStorage.vue") },
       { path: "/devops/monitor/netdev", component: () => import("@/views/monitor/MonitorNetDev.vue") },
       { path: "/devops/monitor/gpu", component: () => import("@/views/monitor/MonitorGpu.vue") },
+      { path: "/devops/monitor/aiops", component: () => import("@/views/monitor/MonitorAiops.vue") },
+      { path: "/devops/monitor/resilience", component: () => import("@/views/monitor/MonitorResilience.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },

@@ -363,3 +363,25 @@ rootcause:`{ incidentCount, incidents:[{id,title,rootDeviceName,rootType,severit
 - 左(较宽):echarts **graph** 拓扑图。建议 `layout:"none"`,按 `layer` 分列布局节点 x 坐标(接入层→计算层→数据层→基础设施层,layer 0-3 映射到 x),同层节点纵向均分 y;`categories` 按 status 着色(healthy/warning/critical),节点 itemStyle 颜色用状态色,边 lineStyle 颜色按 edge.status;边可显示 relation(routes/depends/stores/network)。图例显示三种状态。两个 echarts(graph 与 dashboard 各图)在 onMounted/refresh 时 setOption,onBeforeUnmount dispose。
 - 右(较窄):根因事件列表,每个 incident 一张卡片(SectionCard 或自定义):标题 title + 严重 tag(severityText 红/橙)+ 置信度 confidence% + 受影响 affectedCount;展开传播链 chain(根因→受影响,role 标注,symptom 说明);处置建议 recommendation。incidentCount=0 显示 el-empty“当前无根因事件”。
 vue2 用 Options API + Element UI(el-table slot-scope、字体图标),vue3 用 `<script setup>` + Element Plus。
+
+---
+
+## 12. P2 续:智能分析(AIOps) + 韧性与安全
+
+两个独立页面(根 `<div class="page-container">`,用 el-tabs 分区,5s 自动刷新)。设备类型中文映射同 §11。颜色:critical/high/failed `#f56c6c`,warning/medium `#e6a23c`,info/passed/low/正常 `#67c23a`。复用 StatCard/SectionCard/InfoTable。
+
+### 12.1 智能分析 → views/monitor/MonitorAiops.vue
+el-tabs 两页:「异常检测」「成本优化」。
+- `getAiopsAnomalies` → `{ total, critical, warning, byType, anomalies:[{deviceId,deviceName,deviceType,metric,metricLabel,unit,baseline,currentValue,deviation(%),severity,severityText,detectedTime,method,description,trend:[数值数组]}] }`。
+  异常检测页:统计卡(异常总数/严重/警告)+ el-table(设备/类型(中文)/指标 metricLabel/当前值 currentValue+unit/基线 baseline/偏离 deviation% 红橙/级别 tag/检测时间 detectedTime/方法 method)。可选:点击行展开 description + 一个 mini echarts 折线(trend)。
+- `getAiopsCost` → `{ totalMonthlyCost, potentialSavings, savingsPct, idleCount, idleResources:[{deviceName,type,reason,idleMetric,monthlyCost,potentialSaving,recommendation}], utilizationByType:[{type,avgUtil,wasteCost}], forecast:{times,actual,predicted,fullInDays} }`(金额已是 "¥123" 字符串)。
+  成本优化页:统计卡(月度成本 totalMonthlyCost/可节省 potentialSavings/节省占比 savingsPct%/闲置项 idleCount)+ 资源利用率 SectionCard(utilizationByType:type(中文) avgUtil 进度条 + wasteCost)+ 容量预测 echarts 折线(forecast.times + actual + predicted 两条线,fullInDays 说明“预计 N 天后达上限”)+ 闲置资源 el-table(设备/类型/原因 reason/闲置 idleMetric/月成本 monthlyCost/可节省 potentialSaving/建议 recommendation)。
+
+### 12.2 韧性与安全 → views/monitor/MonitorResilience.vue
+el-tabs 两页:「韧性评分」「安全基线」。
+- `getResilienceScore` → `{ overallScore, grade(A/B/C/D), dimensions:[{name,score,weight}], drillTotal, drillPassed, drillFailed, drills:[{id,name,desc,status(passed/failed),statusText,lastRun,detectionTimeSec,recoveryTimeSec,alertAccuracy}], improvements:[字符串] }`。
+  韧性评分页:左 echarts **雷达图**(dimensions 各维度 score,满分 100)+ 总分大数字(overallScore)与等级 grade tag;右 演练统计卡(通过 drillPassed/未通过 drillFailed)。混沌演练 el-table(场景 name/说明 desc/结果 status tag/最近 lastRun/检测耗时 detectionTimeSec s/恢复耗时 recoveryTimeSec s/告警准确率 alertAccuracy%)。改进建议 improvements 列表。
+- `getSecurityDrift` → `{ total, highRisk, mediumRisk, lowRisk, drifts:[{deviceName,deviceType,category,target,baseline,current,risk(high/medium/low),riskText,detectedTime,description,recommendation}] }`。
+  安全基线页:统计卡(漂移总数/高危 highRisk 红/中危 mediumRisk 橙/低危 lowRisk)+ el-table(设备/类型(中文)/类别 category/项 target/基线 baseline/当前 current(红)/风险 risk tag/时间 detectedTime/建议 recommendation)。total=0 时 el-empty。
+
+echarts(雷达图/折线/mini 折线)init-once + setOption-on-refresh + dispose(vue3 onBeforeUnmount;vue2 beforeDestroy)。vue2 用 Options API + el-table slot-scope + 字体图标;vue3 用 `<script setup>` + Element Plus。
