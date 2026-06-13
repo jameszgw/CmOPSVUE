@@ -23,4 +23,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        // 拆分大体积第三方库为独立缓存分块,减小主包并提升缓存命中
+        manualChunks: {
+          echarts: ["echarts"],
+          "element-ui": ["element-ui"],
+          "vue-vendor": ["vue", "vue-router", "vuex"],
+          xterm: ["xterm", "xterm-addon-fit", "xterm-addon-search", "xterm-addon-web-links"],
+        },
+      },
+    },
+  },
 });
