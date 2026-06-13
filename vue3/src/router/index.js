@@ -8,8 +8,12 @@ const routes = [
   {
     path: "/",
     component: BasicLayout,
-    redirect: "/devops/ops/host-list",
+    redirect: "/devops/monitor/server",
     children: [
+      // ===== 系统监控 =====
+      { path: "/devops/monitor/server", component: () => import("@/views/monitor/MonitorServer.vue") },
+      { path: "/devops/monitor/redis", component: () => import("@/views/monitor/MonitorRedis.vue") },
+      { path: "/devops/monitor/database", component: () => import("@/views/monitor/MonitorDatabase.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },
       { path: "/devops/ops/host-detail/:id", component: () => import("@/views/ops/HostDetail.vue") },
