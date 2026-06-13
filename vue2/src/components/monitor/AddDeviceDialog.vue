@@ -84,6 +84,31 @@
           <el-input v-model="form.dbVersion" placeholder="如 PostgreSQL 16.2" />
         </el-form-item>
       </template>
+
+      <!-- K8s 集群专有 -->
+      <template v-if="deviceType === 'K8S'">
+        <el-form-item label="集群版本" prop="k8sVersion">
+          <el-input v-model="form.k8sVersion" placeholder="如 v1.29.3" />
+        </el-form-item>
+        <el-form-item label="发行版" prop="k8sDistro">
+          <el-select v-model="form.k8sDistro">
+            <el-option v-for="t in (options.k8sDistros || [])" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="容器运行时" prop="k8sRuntime">
+          <el-select v-model="form.k8sRuntime">
+            <el-option v-for="t in (options.k8sRuntimes || [])" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="CNI 插件" prop="k8sCni">
+          <el-select v-model="form.k8sCni">
+            <el-option v-for="t in (options.k8sCnis || [])" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="节点数" prop="nodeCount">
+          <el-input-number v-model="form.nodeCount" :min="1" :max="500" controls-position="right" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <div slot="footer">
@@ -96,8 +121,8 @@
 <script>
 import { addDevice, getDeviceOptions } from "@/api/monitor-device";
 
-const TYPE_LABEL = { SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库" };
-const DEFAULT_PORT = { SERVER: 22, REDIS: 6379, DATABASE: 3306 };
+const TYPE_LABEL = { SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群" };
+const DEFAULT_PORT = { SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443 };
 
 export default {
   name: "AddDeviceDialog",
@@ -124,6 +149,11 @@ export default {
         dbType: "MYSQL",
         dbName: "",
         dbVersion: "",
+        k8sVersion: "v1.29.0",
+        k8sDistro: "VANILLA",
+        k8sRuntime: "CONTAINERD",
+        k8sCni: "CALICO",
+        nodeCount: 3,
       },
       rules: {
         name: [{ required: true, message: "请输入设备名称", trigger: "blur" }],
@@ -203,6 +233,14 @@ export default {
               dbType: f.dbType,
               dbName: f.dbName,
               dbVersion: f.dbVersion,
+            });
+          } else if (this.deviceType === "K8S") {
+            Object.assign(payload, {
+              k8sVersion: f.k8sVersion,
+              k8sDistro: f.k8sDistro,
+              k8sRuntime: f.k8sRuntime,
+              k8sCni: f.k8sCni,
+              nodeCount: f.nodeCount,
             });
           }
           const res = await addDevice(payload);

@@ -84,6 +84,31 @@
           <el-input v-model="form.dbVersion" placeholder="如 PostgreSQL 16.2" />
         </el-form-item>
       </template>
+
+      <!-- K8s 集群专有 -->
+      <template v-if="deviceType === 'K8S'">
+        <el-form-item label="集群版本" prop="k8sVersion">
+          <el-input v-model="form.k8sVersion" placeholder="如 v1.29.3" />
+        </el-form-item>
+        <el-form-item label="发行版" prop="k8sDistro">
+          <el-select v-model="form.k8sDistro">
+            <el-option v-for="t in options.k8sDistros" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="容器运行时" prop="k8sRuntime">
+          <el-select v-model="form.k8sRuntime">
+            <el-option v-for="t in options.k8sRuntimes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="CNI 插件" prop="k8sCni">
+          <el-select v-model="form.k8sCni">
+            <el-option v-for="t in options.k8sCnis" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="节点数" prop="nodeCount">
+          <el-input-number v-model="form.nodeCount" :min="1" :max="500" controls-position="right" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -109,10 +134,10 @@ const visible = computed({
   set: (v) => emit("update:modelValue", v),
 });
 
-const TYPE_LABEL = { SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库" };
+const TYPE_LABEL = { SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群" };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
 
-const DEFAULT_PORT = { SERVER: 22, REDIS: 6379, DATABASE: 3306 };
+const DEFAULT_PORT = { SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443 };
 
 const formRef = ref();
 const submitting = ref(false);
@@ -133,6 +158,11 @@ const form = reactive({
   dbType: "MYSQL",
   dbName: "",
   dbVersion: "",
+  k8sVersion: "v1.29.0",
+  k8sDistro: "VANILLA",
+  k8sRuntime: "CONTAINERD",
+  k8sCni: "CALICO",
+  nodeCount: 3,
 });
 
 const rules = {
@@ -187,6 +217,14 @@ const submit = () => {
           dbType: form.dbType,
           dbName: form.dbName,
           dbVersion: form.dbVersion,
+        });
+      } else if (props.deviceType === "K8S") {
+        Object.assign(payload, {
+          k8sVersion: form.k8sVersion,
+          k8sDistro: form.k8sDistro,
+          k8sRuntime: form.k8sRuntime,
+          k8sCni: form.k8sCni,
+          nodeCount: form.nodeCount,
         });
       }
       const res = await addDevice(payload);

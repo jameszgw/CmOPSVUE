@@ -14,6 +14,7 @@ const routes = [
       { path: "/devops/monitor/server", component: () => import("@/views/monitor/MonitorServer.vue") },
       { path: "/devops/monitor/redis", component: () => import("@/views/monitor/MonitorRedis.vue") },
       { path: "/devops/monitor/database", component: () => import("@/views/monitor/MonitorDatabase.vue") },
+      { path: "/devops/monitor/k8s", component: () => import("@/views/monitor/MonitorK8s.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },

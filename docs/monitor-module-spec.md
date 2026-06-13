@@ -239,3 +239,67 @@ listAlertRules(deviceType) / addAlertRule / updateAlertRule / deleteAlertRule(id
 4. 自动刷新:概览数据每 5s 轮询一次(setInterval,卸载清理)。
 
 比较符展示映射:GT→`>`、GTE→`≥`、LT→`<`、LTE→`≤`。级别色:critical `#f56c6c`、warning `#e6a23c`、normal/resolved `#67c23a`。
+
+---
+
+## 9. K8s / 容器集群监控(新增,deviceType="K8S",api `@/api/monitor-k8s`)
+
+页面 `views/monitor/MonitorK8s.vue` 已就绪;标签页文件在 `views/monitor/k8s/*.vue`。状态色:Ready/Healthy/Bound/Running `#67c23a`,Warning/Pending `#e6a23c`,NotReady/Failed/CrashLoop/Unhealthy `#f56c6c`。
+
+### 9.1 集群概览 `getK8sOverview` → k8s/Overview.vue
+```
+{ clusterName, version, distro, runtime, cni, apiServer,
+  nodeTotal, nodeReady, nodeNotReady, podTotal, podRunning, podPending, podFailed, podSucceeded,
+  namespaceCount, deploymentCount, statefulSetCount, daemonSetCount, serviceCount,
+  cpu:{ capacity, allocatable, requestedPct, usedPct, usedCores },
+  memory:{ capacity, allocatable, requestedPct, usedPct, used },
+  controlPlane:{ apiserver, etcd, scheduler, controllerManager },   // "Healthy"/"Unhealthy"
+  topNodes:[ {name, cpuPct, memPct} ] }
+```
+卡片:节点(nodeReady/nodeTotal)、Pod(podRunning,sub 显示 pending/failed)、CPU 使用率(cpu.usedPct 进度条)、内存使用率(memory.usedPct 进度条)。
+区块:集群基础信息 InfoTable(版本/发行版/运行时/CNI/apiServer/命名空间数)、工作负载汇总(Deployment/StatefulSet/DaemonSet/Service 计数卡)、控制平面健康(4 个状态 tag)、CPU/内存 请求vs使用(进度条)、Top 节点(topNodes 进度条/表)。
+
+### 9.2 节点 `getK8sNodes` → k8s/Nodes.vue
+```
+{ total, ready, notReady,
+  nodes:[ {name, role(control-plane/worker), status(Ready/NotReady), ip, cpuPct, memPct,
+           podCount, podCapacity, restarts, memoryPressure, diskPressure, pidPressure,
+           kubeletVersion, os, runtime, age} ] }
+```
+卡片:节点总数/就绪/未就绪。el-table:名称、角色(tag)、状态(tag 红/绿)、CPU%(进度条或文本)、内存%、Pod(podCount/podCapacity)、重启、压力(MemoryPressure/DiskPressure/PIDPressure 为 true 时红色 tag)、kubelet 版本、OS、age。
+
+### 9.3 工作负载 `getK8sPods` → k8s/Pods.vue
+```
+{ total, running, pending, failed, crashLoop, oomKilledTotal,
+  workloads:{ deployments, statefulSets, daemonSets, jobs, cronJobs },
+  pods:[ {name, namespace, node, status, ready("1/1"), restarts, cpu("100m"), mem("256Mi"), age, oomKilled} ],
+  topRestart:[ {name, namespace, restarts, status} ] }
+```
+卡片:运行中 running、Pending pending、失败 failed、CrashLoopBackOff crashLoop(可加 OOMKilled oomKilledTotal)。
+区块:工作负载类型计数(Deployment/StatefulSet/DaemonSet/Job/CronJob)、Pod 列表 el-table(名称/命名空间/节点/状态 tag/就绪/重启/CPU/内存/age;oomKilled 为 true 显示红色"OOMKilled" tag)、重启 Top(topRestart)。Pod 列表建议带状态筛选(可选)。
+
+### 9.4 控制平面 `getK8sControlPlane` → k8s/ControlPlane.vue
+```
+{ apiserver:{ health, latencyP50, latencyP99, qps, errorRate, inflightRequests },
+  etcd:{ health, hasLeader, dbSize, dbSizeUsagePct, fsyncP99, commitP99, leaderChanges },
+  scheduler:{ health, schedulingLatencyP99, pendingPods, scheduleRate },
+  controllerManager:{ health, workqueueDepth, workqueueLatencyP99 } }
+```
+四个组件各一个 SectionCard,标题带 health 状态 tag;内部用 InfoTable 列出各指标(延迟单位 ms,etcd dbSize 直接显示+dbSizeUsagePct 进度条)。
+
+### 9.5 网络与存储 `getK8sNetStorage` → k8s/NetStorage.vue
+```
+{ network:{ cniPlugin, cniHealth, packetLossPct, podNetworkLatencyMs, serviceCount, endpointCount, networkPolicies },
+  imagePull:{ failureRatePct, avgPullSec, totalPulls, failedPulls },
+  storage:{ csiDriver, volumeAttachLatencyMs, pvTotal, pvBound, pvAvailable, pvcTotal, pvcBound, pvcPending,
+            volumes:[ {name, namespace, status(Bound/Pending), capacity, storageClass, latencyMs} ] } }
+```
+卡片:CNI 丢包率(packetLossPct)、镜像拉取失败率(failureRatePct)、PV(pvBound/pvTotal)、PVC(pvcBound/pvcTotal)。
+区块:网络(CNI 插件/健康/丢包/Pod网络延迟/Service/Endpoint/NetworkPolicy) InfoTable、镜像拉取 InfoTable、存储概况 InfoTable + 卷列表 el-table(volumes)。
+
+### 9.6 事件 `getK8sEvents` → k8s/Events.vue
+```
+{ total, warningCount, normalCount,
+  events:[ {type(Normal/Warning), reason, object, namespace, message, count, lastTime} ] }
+```
+卡片:事件总数 total、警告 warningCount(橙)、正常 normalCount(绿)。el-table:类型(tag warning/info)、原因 reason、对象 object、命名空间、消息 message、次数 count、最近时间 lastTime。建议默认按 type 可筛选(全部/Warning/Normal)。total=0 显示 el-empty。
