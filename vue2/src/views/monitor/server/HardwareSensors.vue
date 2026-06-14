@@ -1,14 +1,10 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-alert
-      v-if="d.supported === false"
-      :title="d.note || '该设备无物理硬件传感器'"
-      type="info"
-      :closable="false"
-      show-icon
-    />
-
-    <template v-else>
+    <UnsupportedMask
+      :unsupported="d.supported === false"
+      :reason="d.note"
+      title="无物理硬件传感器"
+    >
       <el-row :gutter="12" class="stat-row">
         <el-col :xs="24" :sm="12" :lg="6">
           <StatCard icon="el-icon-circle-check" label="整体健康"
@@ -132,7 +128,7 @@
           </el-table-column>
         </el-table>
       </SectionCard>
-    </template>
+    </UnsupportedMask>
   </div>
 </template>
 
@@ -140,11 +136,12 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getServerHardware } from "@/api/monitor-server";
 
 export default {
   name: "ServerHardwareSensors",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, UnsupportedMask },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },

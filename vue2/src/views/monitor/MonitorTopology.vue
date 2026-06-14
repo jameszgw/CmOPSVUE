@@ -76,6 +76,7 @@ import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+import { nodeSymbol } from "@/utils/topo-symbols";
 
 const TYPE_LABEL = {
   SERVER: "服务器",
@@ -174,14 +175,16 @@ export default {
           const x = layer * 320;
           const y = count <= 1 ? 280 : (idx / (count - 1)) * 560;
           const status = n.status || "healthy";
+          const isVirtual = n.type === "VIRTUAL" || n.type === "INTERNET";
+          const color = isVirtual ? "#909399" : STATUS_COLOR[status] || "#67c23a";
           result.push({
             id: n.id,
             name: n.name,
             x: x,
             y: y,
-            symbolSize: 46,
+            symbol: nodeSymbol(n.type, color),
+            symbolSize: 40,
             category: STATUS_INDEX[status] === undefined ? 0 : STATUS_INDEX[status],
-            itemStyle: { color: STATUS_COLOR[status] || "#67c23a" },
             label: { show: true },
             _raw: n,
           });
