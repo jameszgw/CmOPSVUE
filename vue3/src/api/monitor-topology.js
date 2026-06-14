@@ -37,6 +37,13 @@ export const getTopoViewGraph = (viewId) =>
     data: { viewId },
   });
 
+// 保存整图：删除并重建该视图的节点与连线（保留传入 id）
+export const saveTopoGraph = (viewId, nodes, edges) =>
+  request("/api/devops/monitor/topology/topo-view/save-graph", {
+    method: "POST",
+    data: { viewId, nodes, edges },
+  });
+
 // ===== 拓扑节点（topo-node） =====
 export const createTopoNode = (data) =>
   request("/api/devops/monitor/topology/topo-node/create", {

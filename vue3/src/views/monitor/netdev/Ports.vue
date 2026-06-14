@@ -120,6 +120,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -128,18 +129,18 @@ onMounted(load);
 }
 .port-name {
   font-family: monospace;
-  color: #303133;
+  color: var(--cm-text-primary);
 }
 .plain-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card);
 }
 .err-val {
-  color: #f56c6c;
+  color: var(--cm-color-danger);
   font-weight: 600;
 }
 :deep(.row-error) {
-  --el-table-tr-bg-color: #fef0f0;
-  color: #f56c6c;
+  --el-table-tr-bg-color: var(--cm-danger-soft);
+  color: var(--cm-color-danger);
 }
 </style>

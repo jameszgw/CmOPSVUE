@@ -152,6 +152,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -160,7 +161,7 @@ onBeforeUnmount(() => {
 }
 .policy-desc {
   margin-top: 16px;
-  background: #fafafa;
+  background: var(--cm-bg-muted);
   border-radius: 6px;
   padding: 14px 16px;
   &__title {
@@ -168,10 +169,10 @@ onBeforeUnmount(() => {
     align-items: center;
     font-size: 13px;
     font-weight: 600;
-    color: #606266;
+    color: var(--cm-text-regular);
     margin-bottom: 10px;
     .el-icon {
-      color: #e6a23c;
+      color: var(--cm-color-warning);
       margin-right: 6px;
     }
   }
@@ -181,10 +182,10 @@ onBeforeUnmount(() => {
     list-style: none;
     li {
       font-size: 12px;
-      color: #909399;
+      color: var(--cm-text-secondary);
       line-height: 1.9;
       b {
-        color: #606266;
+        color: var(--cm-text-regular);
       }
     }
   }

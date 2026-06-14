@@ -126,6 +126,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -134,17 +135,17 @@ onMounted(load);
 }
 .node-name {
   font-family: monospace;
-  color: #303133;
+  color: var(--cm-text-primary);
 }
 .plain-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card);
 }
 .press-tag {
   margin-right: 4px;
 }
 .no-press {
-  color: #909399;
+  color: var(--cm-text-secondary);
   font-size: 12px;
 }
 </style>

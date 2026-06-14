@@ -128,6 +128,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -141,7 +142,7 @@ onMounted(load);
   display: flex;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--cm-bg-page);
   font-size: 13px;
   &__dot {
     width: 8px;
@@ -150,17 +151,17 @@ onMounted(load);
     margin-right: 8px;
   }
   &__label {
-    color: #606266;
+    color: var(--cm-text-regular);
   }
   &__count {
     margin-left: auto;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__percent {
     width: 64px;
     text-align: right;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 .dist-total {
@@ -170,17 +171,17 @@ onMounted(load);
   &__label {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__count {
     margin-left: auto;
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 .rank-item {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
   padding: 10px 12px;
   margin-bottom: 10px;
@@ -196,7 +197,7 @@ onMounted(load);
     text-align: center;
     border-radius: 4px;
     background: #ecf5ff;
-    color: #409eff;
+    color: var(--cm-color-primary);
     font-size: 12px;
     font-weight: 600;
     margin-right: 8px;
@@ -204,12 +205,12 @@ onMounted(load);
   &__name {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__pid {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__metric {
     display: flex;
@@ -218,7 +219,7 @@ onMounted(load);
     margin-top: 2px;
   }
   &__metric-label {
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__metric-value {
     margin-left: auto;

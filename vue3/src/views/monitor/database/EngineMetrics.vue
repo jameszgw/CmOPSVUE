@@ -110,6 +110,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .engine-head {
   display: flex;
   align-items: center;
@@ -118,16 +119,16 @@ onMounted(load);
 
   &__label {
     font-size: 14px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
 }
 .metric-grid .el-col {
   margin-bottom: 12px;
 }
 .metric-card {
-  background: #fafafa;
-  border: 1px solid #ebeef5;
-  border-top: 3px solid #409eff;
+  background: var(--cm-bg-muted);
+  border: 1px solid var(--cm-border-light);
+  border-top: 3px solid var(--cm-color-primary);
   border-radius: 8px;
   padding: 12px 14px;
   height: 100%;
@@ -138,19 +139,19 @@ onMounted(load);
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     margin-bottom: 8px;
   }
   &__value {
     font-size: 22px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     line-height: 1.2;
   }
   &__unit {
     font-size: 13px;
     font-weight: 400;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-left: 4px;
   }
 }
@@ -158,8 +159,8 @@ onMounted(load);
   display: block;
   font-family: monospace;
   font-size: 12px;
-  color: #303133;
-  background: #f5f7fa;
+  color: var(--cm-text-primary);
+  background: var(--cm-bg-soft);
   border-radius: 4px;
   padding: 6px 8px;
   white-space: pre-wrap;

@@ -126,6 +126,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -133,11 +134,11 @@ onMounted(load);
   margin-bottom: 12px;
 }
 .db-card {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
-  background: #fafafa;
+  background: var(--cm-bg-muted);
   &__head {
     display: flex;
     align-items: center;
@@ -148,7 +149,7 @@ onMounted(load);
     height: 36px;
     border-radius: 8px;
     background: #ecf5ff;
-    color: #409eff;
+    color: var(--cm-color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -157,11 +158,11 @@ onMounted(load);
   &__name {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__index {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__tag {
     margin-left: auto;
@@ -171,34 +172,34 @@ onMounted(load);
   margin-bottom: 8px;
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-bottom: 6px;
   }
   &__value {
     font-size: 20px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     margin-bottom: 6px;
   }
   &__sub {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 .field-doc {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
   &__title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     margin-bottom: 4px;
   }
   &__text {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     line-height: 1.6;
   }
 }

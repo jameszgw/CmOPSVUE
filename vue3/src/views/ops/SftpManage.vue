@@ -48,6 +48,12 @@
                     @click="downloadSelectedFiles(selectedRows.map((row) => row.path))"
                   />
                   <el-button
+                    :icon="FolderOpened"
+                    title="打包下载"
+                    :disabled="selectedRows.length === 0"
+                    @click="packageSelected"
+                  />
+                  <el-button
                     :icon="CopyDocument"
                     title="复制路径"
                     @click="copySelectedFilesPath(currentPath)"
@@ -79,7 +85,12 @@
                           title="重试所有"
                           @click="retryAllFailed"
                         />
-                        <el-button size="small" :icon="Files" title="打包传输" />
+                        <el-button
+                          size="small"
+                          :icon="Files"
+                          title="打包传输"
+                          @click="packageAllDownloads"
+                        />
                         <el-button size="small" :icon="Delete" title="清空" @click="clearAll" />
                       </el-button-group>
                       <div class="transfer-list">
@@ -319,6 +330,7 @@ import {
   VideoPlay,
   CircleCheck,
   Files,
+  FolderOpened,
 } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import {
@@ -341,6 +353,8 @@ import {
   resumeAllTransfers,
   clearAllTransfers,
   removeSingleTransfer,
+  packageDownloadFile,
+  packageAllCompletedFiles,
   down,
 } from "@/api/sftp";
 
@@ -524,6 +538,60 @@ const downloadSelectedFiles = async (paths) => {
   ElMessage.success("添加传输列表成功");
 };
 
+// 通过 logId 触发浏览器附件下载（创建临时 a 标签点击）
+const downloadByLogId = (id) => {
+  if (id === null || id === undefined) {
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = `/api/devops/download/sftp?logId=${id}`;
+  a.setAttribute("download", "");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+// 打包下载当前选中的文件
+const packageSelected = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning("请先选择文件");
+    return;
+  }
+  try {
+    const res = await packageDownloadFile({
+      paths: selectedRows.value.map((row) => row.path),
+      sessionToken: session.value?.sessionToken,
+    });
+    const content = res?.content;
+    if (!content?.id) {
+      ElMessage.warning("打包失败或无可下载文件");
+      return;
+    }
+    downloadByLogId(content.id);
+    getTransfers();
+  } catch (e) {
+    /* toasted */
+  }
+};
+
+// 打包全部已完成的传输
+const packageAllDownloads = async () => {
+  try {
+    const res = await packageAllCompletedFiles({
+      sessionToken: session.value?.sessionToken,
+      packageType: "all",
+    });
+    const content = res?.content;
+    if (!content?.id) {
+      ElMessage.warning("暂无可打包的已完成文件");
+      return;
+    }
+    downloadByLogId(content.id);
+  } catch (e) {
+    /* toasted */
+  }
+};
+
 // 复制路径
 const copySelectedFilesPath = (path) => {
   if (!path) {
@@ -694,6 +762,7 @@ const handleUpload = async () => {
       .then(() => {
         fileList.value = [];
         ElMessage.success("上传成功");
+        getTransfers();
       })
       .catch(() => {
         ElMessage.error("上传失败");

@@ -287,6 +287,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -309,13 +310,13 @@ onBeforeUnmount(() => {
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     margin-bottom: 8px;
   }
 
   &__value {
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 </style>
