@@ -5,9 +5,12 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store";
 import "./styles/global.less";
+import { initSkin } from "./utils/skin";
 
 Vue.use(ElementUI, { size: "small" });
 Vue.config.productionTip = false;
+
+initSkin();
 
 new Vue({
   router,

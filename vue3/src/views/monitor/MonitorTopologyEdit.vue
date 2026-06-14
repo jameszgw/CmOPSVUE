@@ -837,32 +837,34 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
 }
 .stat-row {
-  margin-bottom: 4px;
+  margin-bottom: @space-xs;
 }
 .stat-row .el-col {
-  margin-bottom: 12px;
+  margin-bottom: @space-md;
 }
 .toolbar {
   &__group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: @space-sm;
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
 }
 .edit-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: @space-sm;
+  margin-bottom: @space-md;
 }
 .topo-chart {
   height: 560px;
@@ -870,28 +872,28 @@ onBeforeUnmount(() => {
 }
 
 .drawer-body {
-  padding: 4px 4px 24px;
+  padding: @space-xs @space-xs @space-xl;
 }
 .drawer-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: @space-md;
   font-size: 13px;
-  color: #606266;
+  color: var(--cm-text-regular);
   padding: 6px 0;
 
   &__label {
     width: 48px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 .drawer-section {
   font-size: 13px;
   font-weight: 600;
-  color: #303133;
-  margin: 16px 0 8px;
+  color: var(--cm-text-primary);
+  margin: @space-lg 0 @space-sm;
   padding-bottom: 6px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--cm-bg-page);
 }
 .metric-list {
   display: flex;
@@ -903,29 +905,29 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   font-size: 13px;
   padding: 6px 10px;
-  background: #fafbfc;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
+  background: var(--cm-bg-muted);
+  border: 1px solid var(--cm-border-light);
+  border-radius: @radius-base;
 
   &__key {
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__val {
-    color: #303133;
+    color: var(--cm-text-primary);
     font-weight: 600;
   }
 }
 .alert-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: @space-sm;
 }
 .alert-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: @space-sm;
   font-size: 13px;
-  color: #606266;
+  color: var(--cm-text-regular);
 
   &__msg {
     flex: 1;

@@ -38,6 +38,17 @@
           </el-menu>
         </div>
         <div class="header-right">
+          <el-tooltip :content="skin === 'dark' ? '切换浅色' : '切换深色'" placement="bottom">
+            <el-switch
+              class="skin-switch"
+              :value="skin === 'dark'"
+              active-color="#1f2329"
+              inactive-color="#dcdfe6"
+              active-icon-class="el-icon-moon"
+              inactive-icon-class="el-icon-sunny"
+              @change="toggleSkin"
+            />
+          </el-tooltip>
           <el-dropdown @command="handleUserCommand">
             <span class="user-info">
               <el-avatar
@@ -66,6 +77,7 @@
 
 <script>
 import { mapState } from "vuex";
+import { getSkin, setSkin } from "@/utils/skin";
 
 // 后端菜单 icon 为 antd 图标名，这里映射到 Element UI 图标
 const ICON_MAP = {
@@ -86,6 +98,7 @@ export default {
     return {
       loading: true,
       menuLoaded: false,
+      skin: getSkin(),
     };
   },
   computed: {
@@ -109,6 +122,9 @@ export default {
     }
   },
   methods: {
+    toggleSkin(isDark) {
+      this.skin = setSkin(isDark ? "dark" : "light");
+    },
     iconOf(icon) {
       if (!icon || icon.startsWith("http")) {
         return "el-icon-menu";
@@ -133,6 +149,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .basic-layout {
   height: 100vh;
 }
@@ -145,8 +163,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #ebeef5;
-  background: #fff;
+  border-bottom: 1px solid var(--cm-border-light, @border-light);
+  background: var(--cm-bg-card, @bg-card);
 
   .header-left {
     display: flex;
@@ -157,7 +175,7 @@ export default {
     .logo {
       font-size: 18px;
       font-weight: 600;
-      margin-right: 24px;
+      margin-right: @space-xl;
       color: #1677ff;
     }
 
@@ -169,30 +187,47 @@ export default {
   }
 
   .header-right {
+    display: flex;
+    align-items: center;
+
+    .skin-switch {
+      margin-right: @space-lg;
+    }
+
     .user-info {
       display: flex;
       align-items: center;
       cursor: pointer;
 
       .user-name {
-        margin-left: 8px;
+        margin-left: @space-sm;
       }
     }
   }
 }
 
 .layout-main {
+  // 浅色保持原值 #f5f5f5；深色跟随页面背景
   background: #f5f5f5;
   overflow: auto;
+}
+
+[data-theme="dark"] .layout-main {
+  background: var(--cm-bg-page);
 }
 
 .layout-footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  // 浅色保持原值 #999；深色跟随次要文本
   color: #999;
   font-size: 12px;
-  background: #fff;
-  border-top: 1px solid #ebeef5;
+  background: var(--cm-bg-card, @bg-card);
+  border-top: 1px solid var(--cm-border-light, @border-light);
+}
+
+[data-theme="dark"] .layout-footer {
+  color: var(--cm-text-secondary);
 }
 </style>

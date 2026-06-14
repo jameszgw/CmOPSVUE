@@ -1,0 +1,57 @@
+// =============================================================
+// Canonical design tokens (LESS).
+// 单一数据源 — 颜色值与现有硬编码 hex 完全一致（浅色主题不变）。
+// =============================================================
+
+// 品牌 / 状态
+@color-primary: #409eff;
+@color-success: #67c23a;
+@color-warning: #e6a23c;
+@color-danger: #f56c6c;
+@color-info: #909399;
+@color-purple: #9254de;
+
+// 监控语义状态（拓扑/告警节点）
+@status-healthy: @color-success;
+@status-warning: @color-warning;
+@status-critical: @color-danger;
+
+// 文本
+@text-primary: #303133;
+@text-regular: #606266;
+@text-secondary: #909399;
+@text-placeholder: #c0c4cc;
+
+// 边框 / 背景
+@border-base: #dcdfe6;
+@border-light: #ebeef5;
+@border-lighter: #f0f0f0;
+@bg-page: #f0f2f5;
+@bg-card: #ffffff;
+@bg-muted: #fafbfc;
+@bg-soft: #f5f7fa;
+
+// 反馈底色
+@danger-soft: #fef0f0;
+@success-soft: #f0f9eb;
+@warning-soft: #fdf6ec;
+
+// 终端
+@terminal-bg: #212529;
+@terminal-fg: #ffffff;
+
+// 尺寸
+@radius-sm: 4px;
+@radius-base: 6px;
+@radius-lg: 8px;
+
+@space-xs: 4px;
+@space-sm: 8px;
+@space-md: 12px;
+@space-lg: 16px;
+@space-xl: 24px;
+
+@shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+// 图表调色板（与 src/styles/chart-theme.js 的 CHART_PALETTE 保持一致）
+@chart-palette: #409eff, #67c23a, #e6a23c, #f56c6c, #9254de, #1890ff, #13c2c2, #fa8c16;

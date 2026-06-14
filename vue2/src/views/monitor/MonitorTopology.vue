@@ -264,14 +264,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
 }
 .stat-row {
-  margin-bottom: 4px;
+  margin-bottom: @space-xs;
 }
 .stat-row .el-col {
-  margin-bottom: 12px;
+  margin-bottom: @space-md;
 }
 .graph-chart {
   height: 560px;
@@ -282,11 +284,11 @@ export default {
   overflow-y: auto;
 }
 .incident-card {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
-  background: #fafbfc;
+  border: 1px solid var(--cm-border-light, @border-light);
+  border-radius: @radius-lg;
+  padding: @space-md 14px;
+  margin-bottom: @space-md;
+  background: var(--cm-bg-muted, @bg-muted);
 
   &:last-child {
     margin-bottom: 0;
@@ -296,85 +298,85 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: @space-sm;
   }
 
   &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
-    margin-right: 8px;
+    color: var(--cm-text-primary, @text-primary);
+    margin-right: @space-sm;
   }
 
   &__meta {
     display: flex;
-    gap: 16px;
+    gap: @space-lg;
     margin-bottom: 10px;
 
     .meta-item {
       font-size: 12px;
-      color: #909399;
+      color: var(--cm-text-secondary, @text-secondary);
 
       b {
-        color: #409eff;
+        color: var(--cm-color-primary, @color-primary);
       }
     }
   }
 
   &__chain {
-    border-top: 1px dashed #ebeef5;
-    padding-top: 8px;
+    border-top: 1px dashed var(--cm-border-light, @border-light);
+    padding-top: @space-sm;
 
     .chain-label {
       font-size: 12px;
-      color: #909399;
+      color: var(--cm-text-secondary, @text-secondary);
       margin-bottom: 6px;
     }
   }
 
   &__rec {
     margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px dashed #ebeef5;
+    padding-top: @space-sm;
+    border-top: 1px dashed var(--cm-border-light, @border-light);
     font-size: 12px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     line-height: 1.5;
 
     i {
-      color: #e6a23c;
-      margin-right: 4px;
+      color: var(--cm-color-warning, @color-warning);
+      margin-right: @space-xs;
     }
   }
 }
 .chain-node {
   position: relative;
-  padding: 6px 8px 6px 12px;
+  padding: 6px @space-sm 6px @space-md;
   margin-bottom: 6px;
-  border-left: 2px solid #ebeef5;
+  border-left: 2px solid var(--cm-border-light, @border-light);
 
   &--root {
-    border-left-color: #f56c6c;
+    border-left-color: var(--cm-color-danger, @color-danger);
   }
 
   .chain-name {
     margin: 0 6px;
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     font-weight: 500;
   }
 
   .chain-type {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 
   .chain-symptom {
-    margin-top: 4px;
+    margin-top: @space-xs;
     font-size: 12px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
 }
 .incident-list /deep/ .el-tag--mini {
-  margin-right: 4px;
+  margin-right: @space-xs;
 }
 </style>

@@ -163,18 +163,20 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .monitor-layout {
   display: flex;
   height: 100%;
-  gap: 12px;
+  gap: @space-md;
   align-items: stretch;
 
   &__side {
     width: 220px;
     flex-shrink: 0;
-    background: #fff;
-    border: 1px solid #ebeef5;
-    border-radius: 8px;
+    background: var(--cm-bg-card, @bg-card);
+    border: 1px solid var(--cm-border-light, @border-light);
+    border-radius: @radius-lg;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -182,36 +184,37 @@ export default {
 
   &__search {
     display: flex;
-    gap: 8px;
-    padding: 12px;
+    gap: @space-sm;
+    padding: @space-md;
+    // 浅色保持原值 #f0f2f5；深色跟随边框
     border-bottom: 1px solid #f0f2f5;
   }
 
   &__nav {
     list-style: none;
     margin: 0;
-    padding: 8px;
+    padding: @space-sm;
     overflow-y: auto;
   }
 
   &__nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 6px;
+    gap: @space-sm;
+    padding: 10px @space-md;
+    border-radius: @radius-base;
     cursor: pointer;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     font-size: 14px;
     margin-bottom: 2px;
 
     &:hover {
-      background: #f5f7fa;
+      background: var(--cm-bg-soft, @bg-soft);
     }
 
     &.active {
       background: #ecf5ff;
-      color: #409eff;
+      color: var(--cm-color-primary, @color-primary);
       font-weight: 500;
     }
   }
@@ -227,23 +230,23 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
-    background: #fff;
-    border: 1px solid #ebeef5;
-    border-radius: 8px;
-    margin-bottom: 12px;
+    padding: @space-md @space-lg;
+    background: var(--cm-bg-card, @bg-card);
+    border: 1px solid var(--cm-border-light, @border-light);
+    border-radius: @radius-lg;
+    margin-bottom: @space-md;
   }
 
   &__title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: @space-sm;
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
 
     i {
-      color: #409eff;
+      color: var(--cm-color-primary, @color-primary);
     }
   }
 
@@ -259,7 +262,7 @@ export default {
 
   &__device-sub {
     float: right;
-    color: #c0c4cc;
+    color: var(--cm-text-placeholder, @text-placeholder);
     font-size: 12px;
   }
 
@@ -267,6 +270,15 @@ export default {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+  }
+}
+
+[data-theme="dark"] .monitor-layout {
+  &__search {
+    border-bottom-color: var(--cm-border-light);
+  }
+  &__nav-item.active {
+    background: rgba(64, 158, 255, 0.16);
   }
 }
 </style>

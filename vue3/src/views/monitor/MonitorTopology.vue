@@ -252,14 +252,16 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
 }
 .stat-row {
-  margin-bottom: 4px;
+  margin-bottom: @space-xs;
 }
 .stat-row .el-col {
-  margin-bottom: 12px;
+  margin-bottom: @space-md;
 }
 .topo-chart {
   height: 560px;
@@ -271,11 +273,11 @@ onBeforeUnmount(() => {
   overflow-y: auto;
 }
 .incident {
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-  background: #fafbfc;
+  border: 1px solid var(--cm-border-light);
+  border-radius: @radius-lg;
+  padding: @space-md;
+  margin-bottom: @space-md;
+  background: var(--cm-bg-muted);
 
   &:last-child {
     margin-bottom: 0;
@@ -285,20 +287,20 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: @space-sm;
   }
 
   &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 
   &__meta {
     display: flex;
-    gap: 16px;
+    gap: @space-lg;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-bottom: 10px;
   }
 
@@ -315,13 +317,13 @@ onBeforeUnmount(() => {
     align-items: flex-start;
     gap: 6px;
     font-size: 12px;
-    color: #606266;
-    background: #f0f9eb;
-    border-radius: 6px;
-    padding: 8px 10px;
+    color: var(--cm-text-regular);
+    background: var(--cm-success-soft);
+    border-radius: @radius-base;
+    padding: @space-sm 10px;
 
     .el-icon {
-      color: #67c23a;
+      color: var(--cm-status-healthy);
       margin-top: 2px;
     }
   }
@@ -329,46 +331,46 @@ onBeforeUnmount(() => {
 
 .chain-arrow {
   align-self: center;
-  color: #c0c4cc;
+  color: var(--cm-text-placeholder);
 }
 
 .chain-node {
   flex: 1;
   min-width: 110px;
   border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  padding: 6px 8px;
-  background: #fff;
+  border-radius: @radius-base;
+  padding: 6px @space-sm;
+  background: var(--cm-bg-card);
 
   &--root {
-    border-color: #f56c6c;
-    background: #fef0f0;
+    border-color: var(--cm-status-critical);
+    background: var(--cm-danger-soft);
   }
 
   &__role {
     font-size: 11px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 
   &__name {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 
   &__type {
     font-size: 11px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 
   &__symptom {
     font-size: 11px;
-    color: #e6a23c;
+    color: var(--cm-status-warning);
     margin-top: 2px;
   }
 
   &--root &__role {
-    color: #f56c6c;
+    color: var(--cm-status-critical);
     font-weight: 600;
   }
 }

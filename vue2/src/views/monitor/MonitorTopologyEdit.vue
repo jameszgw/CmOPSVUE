@@ -727,28 +727,30 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
 }
 .stat-row {
-  margin-bottom: 4px;
+  margin-bottom: @space-xs;
 }
 .stat-row .el-col {
-  margin-bottom: 12px;
+  margin-bottom: @space-md;
 }
 .toolbar {
-  margin-bottom: 12px;
+  margin-bottom: @space-md;
 
   &__group {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: @space-sm;
   }
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
 }
 .graph-chart {
@@ -756,7 +758,7 @@ export default {
   width: 100%;
 }
 .node-detail {
-  padding: 16px 20px;
+  padding: @space-lg 20px;
 
   &__row {
     display: flex;
@@ -767,16 +769,16 @@ export default {
   &__label {
     width: 60px;
     font-size: 13px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 
   &__section {
-    margin: 16px 0 8px;
+    margin: @space-lg 0 @space-sm;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
-    border-top: 1px dashed #ebeef5;
-    padding-top: 12px;
+    color: var(--cm-text-primary, @text-primary);
+    border-top: 1px dashed var(--cm-border-light, @border-light);
+    padding-top: @space-md;
   }
 }
 .metric-list {
@@ -784,15 +786,16 @@ export default {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
+    // 浅色保持原值 #f5f7fa；深色跟随边框
     border-bottom: 1px solid #f5f7fa;
     font-size: 13px;
 
     &__key {
-      color: #606266;
+      color: var(--cm-text-regular, @text-regular);
     }
 
     &__val {
-      color: #303133;
+      color: var(--cm-text-primary, @text-primary);
       font-weight: 500;
     }
   }
@@ -805,10 +808,14 @@ export default {
     font-size: 13px;
 
     &__msg {
-      margin-left: 8px;
-      color: #606266;
+      margin-left: @space-sm;
+      color: var(--cm-text-regular, @text-regular);
       line-height: 1.4;
     }
   }
+}
+
+[data-theme="dark"] .metric-list .metric-item {
+  border-bottom-color: var(--cm-border-light);
 }
 </style>

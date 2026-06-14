@@ -7,6 +7,9 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import App from "./App.vue";
 import router from "./router";
 import "./styles/global.less";
+import { initSkin } from "./utils/skin";
+
+initSkin();
 
 const app = createApp(App);
 

@@ -1,0 +1,90 @@
+// =============================================================
+// Skin: 浅色 + 深色，通过 CSS 自定义属性实现运行时换肤。
+// 浅色值 = 当前 hex（不变）；深色为附加/可选。
+// =============================================================
+@import (reference) "./variables.less";
+
+// Element Plus 深色变量（暗色模式下生效）
+@import "element-plus/theme-chalk/dark/css-vars.css";
+
+:root {
+  // 品牌 / 状态（深浅一致，保持色相）
+  --cm-color-primary: @color-primary;
+  --cm-color-success: @color-success;
+  --cm-color-warning: @color-warning;
+  --cm-color-danger: @color-danger;
+  --cm-color-info: @color-info;
+  --cm-color-purple: @color-purple;
+
+  // 监控语义状态
+  --cm-status-healthy: @status-healthy;
+  --cm-status-warning: @status-warning;
+  --cm-status-critical: @status-critical;
+
+  // 文本
+  --cm-text-primary: @text-primary;
+  --cm-text-regular: @text-regular;
+  --cm-text-secondary: @text-secondary;
+  --cm-text-placeholder: @text-placeholder;
+
+  // 边框 / 背景
+  --cm-border-base: @border-base;
+  --cm-border-light: @border-light;
+  --cm-border-lighter: @border-lighter;
+  --cm-bg-page: @bg-page;
+  --cm-bg-card: @bg-card;
+  --cm-bg-muted: @bg-muted;
+  --cm-bg-soft: @bg-soft;
+
+  // 反馈底色
+  --cm-danger-soft: @danger-soft;
+  --cm-success-soft: @success-soft;
+  --cm-warning-soft: @warning-soft;
+
+  // 终端
+  --cm-terminal-bg: @terminal-bg;
+  --cm-terminal-fg: @terminal-fg;
+
+  // 阴影
+  --cm-shadow-card: @shadow-card;
+}
+
+html.dark {
+  // 品牌 / 状态保持色相不变
+  --cm-color-primary: @color-primary;
+  --cm-color-success: @color-success;
+  --cm-color-warning: @color-warning;
+  --cm-color-danger: @color-danger;
+  --cm-color-info: @color-info;
+  --cm-color-purple: @color-purple;
+
+  --cm-status-healthy: @status-healthy;
+  --cm-status-warning: @status-warning;
+  --cm-status-critical: @status-critical;
+
+  // 文本（深色）
+  --cm-text-primary: #e5e7eb;
+  --cm-text-regular: #c0c4cc;
+  --cm-text-secondary: #909399;
+  --cm-text-placeholder: #6b7078;
+
+  // 边框 / 背景（深色）
+  --cm-border-base: #3a3d45;
+  --cm-border-light: #2c2f36;
+  --cm-border-lighter: #2c2f36;
+  --cm-bg-page: #16181d;
+  --cm-bg-card: #1f2329;
+  --cm-bg-muted: #23272e;
+  --cm-bg-soft: #23272e;
+
+  // 反馈底色（深色，低饱和暗底）
+  --cm-danger-soft: #3a1f22;
+  --cm-success-soft: #1f2e1c;
+  --cm-warning-soft: #3a2f1c;
+
+  // 终端保持
+  --cm-terminal-bg: @terminal-bg;
+  --cm-terminal-fg: @terminal-fg;
+
+  --cm-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
+}

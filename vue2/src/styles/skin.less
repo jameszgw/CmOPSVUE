@@ -1,0 +1,71 @@
+// =============================================================
+// 皮肤（skin）—— 通过 CSS 自定义属性实现 浅色 / 深色。
+//
+// 浅色 = 当前线上取值（视觉完全不变）。
+// 深色 = 仅作用于「我们自己的表面」（布局、卡片、页面背景、自研组件），
+//        品牌色 / 状态色 保持不变。
+//
+// 注意：Element UI (Vue2) 没有官方深色主题，因此深色皮肤只通过
+//       var(--cm-*) 影响我们自己的组件；Element UI 内部组件仍保持浅色，
+//       这是可接受的取舍 —— 不去 patch Element UI 内部样式。
+// =============================================================
+
+@import (reference) "./variables.less";
+
+:root {
+  // 背景 / 表面
+  --cm-bg-page: @bg-page; // #f0f2f5
+  --cm-bg-card: @bg-card; // #ffffff
+  --cm-bg-muted: @bg-muted; // #fafbfc
+  --cm-bg-soft: @bg-soft; // #f5f7fa
+
+  // 文本
+  --cm-text-primary: @text-primary; // #303133
+  --cm-text-regular: @text-regular; // #606266
+  --cm-text-secondary: @text-secondary; // #909399
+  --cm-text-placeholder: @text-placeholder; // #c0c4cc
+
+  // 边框
+  --cm-border-base: @border-base; // #dcdfe6
+  --cm-border-light: @border-light; // #ebeef5
+  --cm-border-lighter: @border-lighter; // #f0f0f0
+
+  // 品牌 / 状态（皮肤间保持一致）
+  --cm-color-primary: @color-primary;
+  --cm-color-success: @color-success;
+  --cm-color-warning: @color-warning;
+  --cm-color-danger: @color-danger;
+  --cm-color-info: @color-info;
+
+  // 阴影
+  --cm-shadow-card: @shadow-card;
+}
+
+[data-theme="dark"] {
+  // 背景 / 表面
+  --cm-bg-page: #16181d;
+  --cm-bg-card: #1f2329;
+  --cm-bg-muted: #23272e;
+  --cm-bg-soft: #262b33;
+
+  // 文本
+  --cm-text-primary: #e5e7eb;
+  --cm-text-regular: #c0c4cc;
+  --cm-text-secondary: #9aa0a8;
+  --cm-text-placeholder: #6b7280;
+
+  // 边框
+  --cm-border-base: #3a3f47;
+  --cm-border-light: #2c2f36;
+  --cm-border-lighter: #2c2f36;
+
+  // 品牌 / 状态保持不变（hues unchanged）
+  --cm-color-primary: @color-primary;
+  --cm-color-success: @color-success;
+  --cm-color-warning: @color-warning;
+  --cm-color-danger: @color-danger;
+  --cm-color-info: @color-info;
+
+  // 阴影（深色下更柔和）
+  --cm-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
+}

@@ -45,24 +45,26 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .stat-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 16px 20px;
+  background: var(--cm-bg-card, @bg-card);
+  border: 1px solid var(--cm-border-light, @border-light);
+  border-radius: @radius-lg;
+  padding: @space-lg 20px;
   height: 100%;
   box-sizing: border-box;
 
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: @space-md;
   }
 
   &__icon {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: @radius-lg;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -72,7 +74,7 @@ export default {
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
 
   &__tag {
@@ -83,31 +85,31 @@ export default {
   &__value {
     font-size: 26px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     line-height: 1.2;
   }
 
   &__progress {
     display: flex;
     align-items: center;
-    margin-top: 12px;
+    margin-top: @space-md;
 
     /deep/ .el-progress {
       flex: 1;
     }
 
     .stat-card__percent {
-      margin-left: 8px;
+      margin-left: @space-sm;
       font-size: 12px;
-      color: #909399;
+      color: var(--cm-text-secondary, @text-secondary);
       white-space: nowrap;
     }
   }
 
   &__sub {
-    margin-top: 8px;
+    margin-top: @space-sm;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

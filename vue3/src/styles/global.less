@@ -1,7 +1,17 @@
+@import "./variables.less";
+@import "./mixins.less";
+@import "./skin.less";
+
 html,
 body {
   padding: 0;
   margin: 0;
+}
+
+body {
+  color: var(--cm-text-primary);
+  background: var(--cm-bg-page);
+  .cm-scrollbar();
 }
 
 * {
@@ -12,6 +22,20 @@ body {
   height: 100vh;
 }
 
+// ---- 页面公共类（合并各页面原本内联重复的样式）----
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
+  background: var(--cm-bg-page);
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  margin: 0 0 @space-lg;
+}
+
+// 主题化卡片表面工具类
+.cm-card {
+  .cm-card();
 }
