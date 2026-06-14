@@ -56,6 +56,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -63,6 +65,7 @@ import { getLbTraffic } from "@/api/monitor-lb";
 
 export default {
   name: "LbTraffic",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
@@ -140,9 +143,19 @@ export default {
     clamp(v) {
       return Math.max(0, Math.min(100, Number(v) || 0));
     },
+    reinitChartsForSkin() {
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = null;
+      }
+      this.renderChart();
+    },
     renderChart() {
       if (!this.$refs.chartRef) return;
-      if (!this.chart) this.chart = echarts.init(this.$refs.chartRef);
+      if (!this.chart) {
+        applyChartTheme(echarts);
+        this.chart = echarts.init(this.$refs.chartRef, currentChartTheme());
+      }
       const t = this.trend;
       const hasLatency = Array.isArray(t.latency) && t.latency.length > 0;
       const legend = ["QPS"];

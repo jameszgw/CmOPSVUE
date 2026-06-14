@@ -51,6 +51,24 @@
           <el-button size="small" icon="el-icon-refresh" :disabled="!currentViewId" @click="loadGraph">
             刷新
           </el-button>
+          <el-button
+            size="small"
+            icon="el-icon-download"
+            :disabled="!currentViewId"
+            @click="onExportJson"
+          >
+            导出JSON
+          </el-button>
+          <el-button size="small" icon="el-icon-upload2" @click="onImportJsonClick">
+            导入JSON
+          </el-button>
+          <input
+            ref="importInput"
+            type="file"
+            accept=".json,application/json"
+            style="display: none"
+            @change="onImportJsonChange"
+          />
         </div>
       </div>
 
@@ -223,6 +241,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { listDevices } from "@/api/monitor-device";
@@ -259,6 +279,7 @@ const STATUS_INDEX = { healthy: 0, warning: 1, critical: 2 };
 
 export default {
   name: "MonitorTopologyEdit",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard },
   data() {
     return {
@@ -457,6 +478,151 @@ export default {
         .catch(() => {});
     },
 
+    // ===== 导出 / 导入 JSON =====
+    onExportJson() {
+      if (!this.currentViewId) return;
+      const cur = this.views.find((v) => v.id === this.currentViewId) || {};
+      const viewName = cur.name || "topology";
+      const graph = this.graph || {};
+      const nodes = graph.nodes || [];
+      // 节点 id → 数组下标，连线引用下标，便于导入时重新关联。
+      const idToIndex = {};
+      nodes.forEach((n, idx) => {
+        if (n && n.id !== undefined && n.id !== null) idToIndex[n.id] = idx;
+      });
+      const payload = {
+        name: viewName,
+        remark: cur.remark || "",
+        layoutMode: cur.layoutMode || "manual",
+        nodes: nodes.map((n) => ({
+          deviceId: n.deviceId === undefined ? null : n.deviceId,
+          name: n.name || "",
+          type: n.type || "",
+          icon: n.icon || "",
+          x: n.x === undefined || n.x === null ? 0 : n.x,
+          y: n.y === undefined || n.y === null ? 0 : n.y,
+        })),
+        edges: (graph.edges || [])
+          .map((e) => {
+            const srcId = e.sourceNodeId !== undefined ? e.sourceNodeId : e.source;
+            const tgtId = e.targetNodeId !== undefined ? e.targetNodeId : e.target;
+            const sourceIndex = idToIndex[srcId];
+            const targetIndex = idToIndex[tgtId];
+            if (sourceIndex === undefined || targetIndex === undefined) return null;
+            return {
+              sourceIndex: sourceIndex,
+              targetIndex: targetIndex,
+              relation: e.relation || "",
+              label: e.label || "",
+            };
+          })
+          .filter((e) => e !== null),
+      };
+      try {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "topology-" + viewName + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.$message.success("已导出 JSON");
+      } catch (e) {
+        this.$message.error("导出失败");
+      }
+    },
+    onImportJsonClick() {
+      if (this.$refs.importInput) {
+        this.$refs.importInput.value = "";
+        this.$refs.importInput.click();
+      }
+    },
+    onImportJsonChange(evt) {
+      const input = evt && evt.target;
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        let json;
+        try {
+          json = JSON.parse(e.target.result);
+        } catch (err) {
+          this.$message.error("JSON 解析失败，文件格式不正确");
+          return;
+        }
+        if (!json || typeof json !== "object" || !Array.isArray(json.nodes)) {
+          this.$message.error("JSON 内容不合法：缺少 nodes 数组");
+          return;
+        }
+        await this.importTopology(json);
+      };
+      reader.onerror = () => {
+        this.$message.error("文件读取失败");
+      };
+      reader.readAsText(file);
+    },
+    async importTopology(json) {
+      try {
+        const baseName = json.name || "拓扑";
+        const viewRes = await createTopoView({
+          name: baseName + "(导入)",
+          remark: json.remark || "",
+          layoutMode: json.layoutMode || "manual",
+        });
+        const view = (viewRes && viewRes.content) || {};
+        const newViewId = view.id;
+        if (newViewId === undefined || newViewId === null) {
+          this.$message.error("创建导入视图失败");
+          return;
+        }
+        // 下标 → 新节点 id 映射
+        const indexToNodeId = {};
+        const nodes = json.nodes || [];
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i] || {};
+          const nodeRes = await createTopoNode({
+            viewId: newViewId,
+            deviceId: n.deviceId === undefined ? null : n.deviceId,
+            name: n.name || "",
+            type: n.type || "VIRTUAL",
+            icon: n.icon || "",
+            x: n.x === undefined || n.x === null ? (i % 6) * 160 : n.x,
+            y: n.y === undefined || n.y === null ? Math.floor(i / 6) * 140 : n.y,
+          });
+          const created = (nodeRes && nodeRes.content) || {};
+          if (created.id !== undefined && created.id !== null) {
+            indexToNodeId[i] = created.id;
+          }
+        }
+        // 连线：通过下标映射解析源/目标节点 id
+        const edges = Array.isArray(json.edges) ? json.edges : [];
+        for (let j = 0; j < edges.length; j++) {
+          const ed = edges[j] || {};
+          const srcId = indexToNodeId[ed.sourceIndex];
+          const tgtId = indexToNodeId[ed.targetIndex];
+          if (srcId === undefined || tgtId === undefined) continue;
+          await createTopoEdge({
+            viewId: newViewId,
+            sourceNodeId: srcId,
+            targetNodeId: tgtId,
+            relation: ed.relation || "",
+            label: ed.label || "",
+          });
+        }
+        await this.loadViews(true);
+        this.currentViewId = newViewId;
+        this.resetSelection();
+        await this.loadGraph();
+        this.$message.success("导入成功");
+      } catch (e) {
+        this.$message.error("导入失败");
+      }
+    },
+
     // ===== 图加载/渲染 =====
     async loadGraph() {
       if (!this.currentViewId) return;
@@ -503,7 +669,8 @@ export default {
     renderChart() {
       if (!this.$refs.graphRef) return;
       if (!this.chart) {
-        this.chart = echarts.init(this.$refs.graphRef);
+        applyChartTheme(echarts);
+        this.chart = echarts.init(this.$refs.graphRef, currentChartTheme());
         this.chart.on("click", this.onChartClick);
       }
       const categories = [
@@ -547,6 +714,13 @@ export default {
         },
         true
       );
+    },
+    reinitChartsForSkin() {
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = null;
+      }
+      this.renderChart();
     },
     onChartClick(params) {
       if (params.dataType === "node") {

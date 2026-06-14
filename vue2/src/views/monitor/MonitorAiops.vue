@@ -137,6 +137,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -156,6 +158,7 @@ const TYPE_LABEL = {
 
 export default {
   name: "MonitorAiops",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard, InfoTable },
   data() {
     return {
@@ -237,10 +240,20 @@ export default {
       if (n < 50) return "#e6a23c";
       return "#67c23a";
     },
+    reinitChartsForSkin() {
+      if (this.forecastChart) {
+        this.forecastChart.dispose();
+        this.forecastChart = null;
+      }
+      this.renderForecast();
+    },
     renderForecast() {
       if (this.activeTab !== "cost") return;
       if (!this.$refs.forecastRef) return;
-      if (!this.forecastChart) this.forecastChart = echarts.init(this.$refs.forecastRef);
+      if (!this.forecastChart) {
+        applyChartTheme(echarts);
+        this.forecastChart = echarts.init(this.$refs.forecastRef, currentChartTheme());
+      }
       const f = this.cost.forecast || {};
       this.forecastChart.setOption({
         tooltip: { trigger: "axis" },

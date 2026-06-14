@@ -109,6 +109,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getDashboardSummary } from "@/api/monitor-dashboard";
@@ -127,6 +129,7 @@ const TYPE_LABEL = {
 
 export default {
   name: "MonitorDashboard",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard },
   data() {
     return {
@@ -217,6 +220,15 @@ export default {
         this.loading = false;
       }
     },
+    reinitChartsForSkin() {
+      Object.keys(this.charts).forEach((k) => {
+        if (this.charts[k]) {
+          this.charts[k].dispose();
+          this.charts[k] = null;
+        }
+      });
+      this.renderCharts();
+    },
     renderCharts() {
       this.renderGauge();
       this.renderPie();
@@ -225,7 +237,8 @@ export default {
     chart(key, ref) {
       if (!this.$refs[ref]) return null;
       if (!this.charts[key]) {
-        this.charts[key] = echarts.init(this.$refs[ref]);
+        applyChartTheme(echarts);
+        this.charts[key] = echarts.init(this.$refs[ref], currentChartTheme());
       }
       return this.charts[key];
     },

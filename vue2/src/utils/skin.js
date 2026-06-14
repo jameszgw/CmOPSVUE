@@ -22,6 +22,11 @@ export function setSkin(s) {
   } catch (e) {
     // ignore storage errors
   }
+  try {
+    window.dispatchEvent(new CustomEvent("cm-skin-change", { detail: { skin } }));
+  } catch (e) {
+    // ignore dispatch errors
+  }
   return skin;
 }
 
