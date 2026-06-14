@@ -27,6 +27,10 @@ const GLYPH = {
     "<rect x='4' y='7' width='15' height='10' rx='1.5'/><rect x='19' y='10' width='2' height='4' rx='0.5'/><rect x='6.5' y='9.5' width='2' height='5' fill='#fff'/><rect x='10' y='9.5' width='2' height='5' fill='#fff'/><rect x='13.5' y='9.5' width='2' height='5' fill='#fff'/>",
   IOT:
     "<path d='M5 9a10 10 0 0 1 14 0M8 12a6 6 0 0 1 8 0M10.5 15a2.5 2.5 0 0 1 3 0' fill='none' stroke-width='1.6'/><circle cx='12' cy='17.5' r='1.4'/>",
+  SBC:
+    "<rect x='4' y='7' width='16' height='11' rx='1.5'/><rect x='12' y='9.5' width='6' height='6' rx='0.8' fill='#fff'/><circle cx='6.6' cy='10' r='0.9' fill='#fff'/><circle cx='9.2' cy='10' r='0.9' fill='#fff'/><circle cx='6.6' cy='12.6' r='0.9' fill='#fff'/><circle cx='9.2' cy='12.6' r='0.9' fill='#fff'/><path d='M5 19.2h14' fill='none' stroke-width='1.6'/>",
+  ANDROID:
+    "<path d='M8.2 6.6l-1.7-2.6' fill='none' stroke-width='1.5'/><path d='M15.8 6.6l1.7-2.6' fill='none' stroke-width='1.5'/><path d='M6 12.5a6 6 0 0 1 12 0v5.2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z'/><circle cx='10' cy='10.6' r='0.95' fill='#fff'/><circle cx='14' cy='10.6' r='0.95' fill='#fff'/>",
   VIRTUAL:
     "<circle cx='12' cy='12' r='8' fill='none' stroke-width='1.4'/><path d='M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16' fill='none' stroke-width='1.2'/>",
   INTERNET:
@@ -65,6 +69,8 @@ export const TYPE_LABEL = {
   POWER: "电能",
   ESS: "储能",
   IOT: "物联",
+  SBC: "单板机",
+  ANDROID: "安卓",
   VIRTUAL: "虚拟节点",
   INTERNET: "互联网",
 };

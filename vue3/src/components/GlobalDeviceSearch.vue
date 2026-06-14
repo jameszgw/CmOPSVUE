@@ -51,6 +51,8 @@ const TYPE_LABEL = {
   POWER: "电能",
   ESS: "储能",
   IOT: "物联",
+  SBC: "单板机",
+  ANDROID: "安卓",
 };
 
 const TYPE_ROUTE = {
@@ -66,6 +68,8 @@ const TYPE_ROUTE = {
   POWER: "power",
   ESS: "ess",
   IOT: "iot",
+  SBC: "sbc",
+  ANDROID: "android",
 };
 
 const router = useRouter();

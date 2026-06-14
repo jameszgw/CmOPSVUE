@@ -227,6 +227,40 @@
           </el-select>
         </el-form-item>
       </template>
+
+      <!-- 单板机专有 -->
+      <template v-if="deviceType === 'SBC'">
+        <el-form-item label="板卡型号" prop="boardModel">
+          <el-select v-model="form.boardModel" placeholder="请选择">
+            <el-option v-for="t in options.boardModels" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="SoC型号" prop="socModel">
+          <el-input v-model="form.socModel" placeholder="如 BCM2712 / RK3588" />
+        </el-form-item>
+        <el-form-item label="CPU架构" prop="cpuArch">
+          <el-select v-model="form.cpuArch" placeholder="请选择">
+            <el-option v-for="t in options.cpuArchs" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+      </template>
+
+      <!-- 安卓多开专有 -->
+      <template v-if="deviceType === 'ANDROID'">
+        <el-form-item label="安卓类型" prop="androidType">
+          <el-select v-model="form.androidType" placeholder="请选择">
+            <el-option v-for="t in options.androidTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="安卓版本" prop="androidVersion">
+          <el-select v-model="form.androidVersion" placeholder="请选择">
+            <el-option v-for="t in options.androidVersions" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="实例容量" prop="instanceCap">
+          <el-input-number v-model="form.instanceCap" :min="1" :max="1000" controls-position="right" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -255,14 +289,14 @@ const visible = computed({
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
   MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
-  POWER: "电能", ESS: "储能", IOT: "物联",
+  POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开",
 };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
 
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
   MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
-  POWER: 502, ESS: 502, IOT: 1883,
+  POWER: 502, ESS: 502, IOT: 1883, SBC: 22, ANDROID: 5555,
 };
 
 const formRef = ref();
@@ -311,6 +345,12 @@ const form = reactive({
   iotType: "GATEWAY",
   iotProtocol: "MQTT",
   iotBand: "2.4G",
+  boardModel: "",
+  socModel: "",
+  cpuArch: "",
+  androidType: "",
+  androidVersion: "",
+  instanceCap: 16,
 });
 
 const rules = {
@@ -419,6 +459,18 @@ const submit = () => {
           iotType: form.iotType,
           iotProtocol: form.iotProtocol,
           iotBand: form.iotBand,
+        });
+      } else if (props.deviceType === "SBC") {
+        Object.assign(payload, {
+          boardModel: form.boardModel,
+          socModel: form.socModel,
+          cpuArch: form.cpuArch,
+        });
+      } else if (props.deviceType === "ANDROID") {
+        Object.assign(payload, {
+          androidType: form.androidType,
+          androidVersion: form.androidVersion,
+          instanceCap: form.instanceCap,
         });
       }
       const res = await addDevice(payload);
