@@ -164,6 +164,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -172,18 +173,18 @@ export default {
 }
 .metric-desc {
   padding: 12px 14px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
   margin-bottom: 12px;
   &__label {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-bottom: 4px;
   }
   &__text {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

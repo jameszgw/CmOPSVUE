@@ -145,13 +145,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .progress-row {
   display: flex;
   align-items: center;
   margin-top: 14px;
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     width: 80px;
     flex-shrink: 0;
   }
@@ -161,7 +162,7 @@ onMounted(load);
   &__num {
     margin-left: 10px;
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary);
     white-space: nowrap;
   }
 }

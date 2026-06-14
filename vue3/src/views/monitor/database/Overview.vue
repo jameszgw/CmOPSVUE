@@ -141,6 +141,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -153,7 +154,7 @@ onMounted(load);
   margin: 12px 0;
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     width: 90px;
     flex-shrink: 0;
   }
@@ -163,7 +164,7 @@ onMounted(load);
   &__num {
     margin-left: 10px;
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary);
     white-space: nowrap;
   }
 }

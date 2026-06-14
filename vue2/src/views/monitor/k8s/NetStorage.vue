@@ -165,6 +165,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -174,7 +175,7 @@ export default {
 .tab-pane {
   /deep/ .status-tag {
     border: none;
-    color: #fff;
+    color: var(--cm-bg-card, @bg-card);
   }
 }
 </style>

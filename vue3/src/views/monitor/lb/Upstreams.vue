@@ -116,6 +116,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -133,13 +134,13 @@ onMounted(load);
   }
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-bottom: 4px;
   }
   &__value {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 </style>

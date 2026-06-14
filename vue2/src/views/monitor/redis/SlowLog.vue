@@ -142,6 +142,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -149,11 +150,11 @@ export default {
   margin-bottom: 12px;
 }
 .log-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 14px 16px;
   margin-bottom: 14px;
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
   &:last-child {
     margin-bottom: 0;
   }
@@ -165,7 +166,7 @@ export default {
   &__seq {
     font-size: 13px;
     font-weight: 600;
-    color: #fff;
+    color: var(--cm-bg-card, @bg-card);
     background: #409eff;
     border-radius: 4px;
     padding: 2px 8px;
@@ -173,15 +174,15 @@ export default {
   }
   &__id {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     margin-right: 16px;
     b {
-      color: #303133;
+      color: var(--cm-text-primary, @text-primary);
     }
   }
   &__time {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     i {
       margin-right: 4px;
     }
@@ -190,34 +191,34 @@ export default {
     margin-left: auto;
   }
   &__cmd {
-    background: #fff;
-    border: 1px solid #ebeef5;
+    background: var(--cm-bg-card, @bg-card);
+    border: 1px solid var(--cm-border-light, @border-light);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 12px;
   }
   &__cmd-label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 4px;
   }
   &__cmd-text {
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     font-family: Consolas, Monaco, monospace;
     word-break: break-all;
   }
 }
 .log-meta {
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--cm-bg-card, @bg-card);
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 6px;
   padding: 12px;
   height: 100%;
   box-sizing: border-box;
   &__title {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 10px;
     i {
       margin-right: 4px;
@@ -230,32 +231,32 @@ export default {
     line-height: 1.9;
   }
   &__label {
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__value {
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     font-weight: 500;
   }
   &__ratio-label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 8px;
   }
 }
 .log-desc {
   padding: 12px 14px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
   margin-bottom: 12px;
   &__label {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-bottom: 4px;
   }
   &__text {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

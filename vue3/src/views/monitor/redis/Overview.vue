@@ -177,6 +177,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -184,7 +185,7 @@ onMounted(load);
   margin-bottom: 12px;
 }
 .ks-item {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
   padding: 14px;
   margin-bottom: 12px;
@@ -196,21 +197,21 @@ onMounted(load);
   &__name {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__index {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__row {
     display: flex;
     justify-content: space-between;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     padding: 4px 0;
     b {
-      color: #303133;
+      color: var(--cm-text-primary);
     }
   }
 }
@@ -221,17 +222,17 @@ onMounted(load);
     align-items: center;
     padding: 10px 0;
     & + & {
-      border-top: 1px solid #f0f2f5;
+      border-top: 1px solid var(--cm-bg-page);
     }
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
   &__value {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 </style>

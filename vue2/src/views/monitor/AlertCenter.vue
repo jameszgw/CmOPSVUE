@@ -519,6 +519,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -529,7 +530,7 @@ export default {
   margin-bottom: 12px;
 }
 .extra-text {
-  color: #909399;
+  color: var(--cm-text-secondary, @text-secondary);
 }
 .toolbar {
   display: flex;
@@ -545,7 +546,7 @@ export default {
 }
 .filter-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--cm-text-regular, @text-regular);
   margin: 0 8px 0 0;
 }
 .filter-select {
@@ -559,7 +560,7 @@ export default {
   color: #f56c6c;
 }
 .cond-sep {
-  color: #c0c4cc;
+  color: var(--cm-text-placeholder, @text-placeholder);
 }
 .btn-danger {
   color: #f56c6c;

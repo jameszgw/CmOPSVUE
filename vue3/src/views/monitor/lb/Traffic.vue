@@ -157,6 +157,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -180,7 +181,7 @@ onBeforeUnmount(() => {
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     width: 44px;
     flex-shrink: 0;
   }
@@ -190,7 +191,7 @@ onBeforeUnmount(() => {
   &__num {
     margin-left: 10px;
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary);
     white-space: nowrap;
     width: 44px;
     text-align: right;

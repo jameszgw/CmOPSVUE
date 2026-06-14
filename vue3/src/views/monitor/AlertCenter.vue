@@ -469,6 +469,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -482,11 +483,11 @@ onBeforeUnmount(() => {
   align-items: center;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--cm-text-primary);
   margin-right: auto;
 
   .title-icon {
-    color: #409eff;
+    color: var(--cm-color-primary);
     margin-right: 8px;
   }
 }
@@ -506,13 +507,13 @@ onBeforeUnmount(() => {
 }
 .val-strong {
   font-weight: 600;
-  color: #303133;
+  color: var(--cm-text-primary);
 }
 .cond-warn {
-  color: #e6a23c;
+  color: var(--cm-color-warning);
   margin-right: 12px;
 }
 .cond-crit {
-  color: #f56c6c;
+  color: var(--cm-color-danger);
 }
 </style>

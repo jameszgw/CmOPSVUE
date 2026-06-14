@@ -145,6 +145,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -153,11 +154,11 @@ export default {
 }
 .mono {
   font-family: monospace;
-  color: #303133;
+  color: var(--cm-text-primary, @text-primary);
 }
 .plain-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card, @bg-card);
 }
 .err-val {
   color: #f56c6c;

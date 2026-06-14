@@ -230,12 +230,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
 .aiops-tabs {
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--cm-bg-card);
+  border: 1px solid var(--cm-border-light);
   border-radius: 8px;
   padding: 0 16px 8px;
 }
@@ -250,7 +251,7 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 .util-item {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -263,12 +264,12 @@ onBeforeUnmount(() => {
   &__type {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__waste {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 </style>

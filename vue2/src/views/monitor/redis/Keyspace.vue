@@ -147,6 +147,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -154,11 +155,11 @@ export default {
   margin-bottom: 12px;
 }
 .db-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 14px 16px;
   margin-bottom: 14px;
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
   &:last-child {
     margin-bottom: 0;
   }
@@ -182,11 +183,11 @@ export default {
   &__name {
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
   &__sub {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__tag {
     margin-left: auto;
@@ -195,7 +196,7 @@ export default {
 .db-metric {
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 6px;
     i {
       margin-right: 4px;
@@ -204,7 +205,7 @@ export default {
   &__value {
     font-size: 22px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     line-height: 1.2;
   }
   &__bar {
@@ -213,23 +214,23 @@ export default {
   &__hint {
     margin-top: 6px;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 .field-desc {
   padding: 12px 14px;
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
   margin-bottom: 12px;
   &__label {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-bottom: 4px;
   }
   &__text {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

@@ -289,6 +289,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -309,7 +310,7 @@ export default {
 }
 .util-item {
   padding: 12px 14px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   margin-bottom: 12px;
 
@@ -322,13 +323,13 @@ export default {
   &__type {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 
   &__waste {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

@@ -123,6 +123,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -130,7 +131,7 @@ onMounted(load);
   margin-bottom: 12px;
 }
 .log-card {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 8px;
   padding: 14px 16px;
   margin-bottom: 12px;
@@ -143,20 +144,20 @@ onMounted(load);
   &__no {
     font-size: 13px;
     font-weight: 600;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__id {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     b {
-      color: #303133;
+      color: var(--cm-text-primary);
     }
   }
   &__time {
     display: flex;
     align-items: center;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     .el-icon {
       margin-right: 4px;
     }
@@ -165,18 +166,18 @@ onMounted(load);
     margin-left: auto;
   }
   &__cmd {
-    background: #fafafa;
+    background: var(--cm-bg-muted);
     border-radius: 6px;
     padding: 10px 12px;
     margin-bottom: 12px;
     &-label {
       font-size: 12px;
-      color: #909399;
+      color: var(--cm-text-secondary);
       margin-bottom: 4px;
     }
     &-text {
       font-size: 13px;
-      color: #303133;
+      color: var(--cm-text-primary);
       word-break: break-all;
       font-family: Consolas, Monaco, monospace;
     }
@@ -187,7 +188,7 @@ onMounted(load);
       display: flex;
       align-items: center;
       font-size: 12px;
-      color: #606266;
+      color: var(--cm-text-regular);
       margin-bottom: 8px;
       .el-icon {
         margin-right: 4px;
@@ -195,10 +196,10 @@ onMounted(load);
     }
     &-row {
       font-size: 13px;
-      color: #606266;
+      color: var(--cm-text-regular);
       line-height: 1.9;
       b {
-        color: #303133;
+        color: var(--cm-text-primary);
       }
     }
   }
@@ -211,25 +212,25 @@ onMounted(load);
   }
   &__ratio-label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-right: 8px;
     white-space: nowrap;
   }
 }
 .doc-item {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
   &__title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     margin-bottom: 4px;
   }
   &__text {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     line-height: 1.6;
   }
 }

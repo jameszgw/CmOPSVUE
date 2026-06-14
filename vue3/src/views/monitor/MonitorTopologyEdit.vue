@@ -78,6 +78,14 @@
           >保存布局</el-button
         >
         <el-button
+          type="primary"
+          plain
+          :icon="DocumentChecked"
+          :disabled="!currentViewId"
+          @click="saveTopoGraphAll"
+          >保存整图</el-button
+        >
+        <el-button
           type="danger"
           plain
           :icon="Delete"
@@ -281,6 +289,7 @@ import {
   Box,
   Connection,
   Finished,
+  DocumentChecked,
 } from "@element-plus/icons-vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
@@ -296,6 +305,7 @@ import {
   createTopoEdge,
   deleteTopoEdge,
   getTopoNodeMetrics,
+  saveTopoGraph,
 } from "@/api/monitor-topology";
 import { listDevices } from "@/api/monitor-device";
 
@@ -745,6 +755,49 @@ const saveLayout = async () => {
   try {
     await Promise.all(tasks);
     ElMessage.success(`已保存 ${tasks.length} 个节点位置`);
+    await reloadGraph();
+  } catch (e) {
+    /* toasted */
+  }
+};
+
+// ===== 保存整图：一次性持久化全部节点与连线（含拖拽坐标） =====
+const saveTopoGraphAll = async () => {
+  if (!currentViewId.value) return;
+  // 读取画布当前拖拽后的坐标
+  const data = chart?.getOption()?.series?.[0]?.data || [];
+  const posMap = {};
+  data.forEach((d) => {
+    posMap[String(d.id)] = {
+      x: Math.round(d.x ?? 0),
+      y: Math.round(d.y ?? 0),
+    };
+  });
+
+  const payloadNodes = nodes.value.map((n) => {
+    const pos = posMap[String(n.id)] || {};
+    return {
+      id: n.id,
+      deviceId: n.deviceId ?? null,
+      name: n.name,
+      type: n.type,
+      icon: n.icon ?? n.type,
+      x: pos.x ?? Math.round(n.x ?? 0),
+      y: pos.y ?? Math.round(n.y ?? 0),
+    };
+  });
+
+  const payloadEdges = (g.value.edges || []).map((e) => ({
+    id: e.id,
+    sourceNodeId: e.sourceNodeId ?? e.source,
+    targetNodeId: e.targetNodeId ?? e.target,
+    relation: e.relation,
+    label: e.label,
+  }));
+
+  try {
+    await saveTopoGraph(currentViewId.value, payloadNodes, payloadEdges);
+    ElMessage.success("整图已保存");
     await reloadGraph();
   } catch (e) {
     /* toasted */

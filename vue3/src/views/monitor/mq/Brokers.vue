@@ -124,6 +124,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -132,13 +133,13 @@ onMounted(load);
 }
 .broker-host {
   font-family: monospace;
-  color: #303133;
+  color: var(--cm-text-primary);
 }
 .plain-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card);
 }
 .muted {
-  color: #909399;
+  color: var(--cm-text-secondary);
 }
 </style>

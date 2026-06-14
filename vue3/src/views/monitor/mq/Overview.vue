@@ -133,6 +133,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -149,13 +150,13 @@ onMounted(load);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light);
   border-radius: 8px;
   padding: 16px 12px;
 
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-bottom: 6px;
   }
   &__value {
@@ -170,7 +171,7 @@ onMounted(load);
   &__label {
     width: 96px;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     flex-shrink: 0;
   }
   :deep(.el-progress) {

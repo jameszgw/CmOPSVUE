@@ -132,6 +132,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -139,16 +140,16 @@ onMounted(load);
   margin-bottom: 12px;
 }
 .schema-text {
-  color: #909399;
+  color: var(--cm-text-secondary);
   font-size: 12px;
 }
 .table-name {
   font-family: monospace;
-  color: #303133;
+  color: var(--cm-text-primary);
 }
 .size-text {
   font-weight: 600;
-  color: #9254de;
+  color: var(--cm-color-purple);
 }
 .table-grid {
   display: grid;
@@ -156,26 +157,26 @@ onMounted(load);
   gap: 12px;
 }
 .table-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light);
   border-radius: 8px;
   overflow: hidden;
 
   &__head {
     padding: 10px 12px;
-    border-bottom: 1px solid #f0f2f5;
-    background: #fafafa;
+    border-bottom: 1px solid var(--cm-bg-page);
+    background: var(--cm-bg-muted);
     display: flex;
     flex-direction: column;
   }
   &__schema {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__name {
     font-family: monospace;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     word-break: break-all;
     margin-top: 2px;
   }
@@ -191,11 +192,11 @@ onMounted(load);
   font-size: 13px;
 
   &__label {
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
   &__value {
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 </style>

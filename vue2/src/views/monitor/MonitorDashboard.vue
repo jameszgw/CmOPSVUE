@@ -331,6 +331,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -360,7 +361,7 @@ export default {
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
 
   &__value {
@@ -369,7 +370,7 @@ export default {
   }
 
   /deep/ .el-progress-bar__outer {
-    background-color: #f0f2f5;
+    background-color: var(--cm-bg-page, @bg-page);
   }
 }
 </style>

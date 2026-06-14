@@ -162,6 +162,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -175,7 +176,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--cm-bg-page, @bg-page);
 
   &__dot {
     width: 10px;
@@ -185,19 +186,19 @@ export default {
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
   &__count {
     margin-left: auto;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
   &__pct {
     width: 64px;
     text-align: right;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 .dist-total {
@@ -208,17 +209,17 @@ export default {
   &__label {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
   &__value {
     margin-left: auto;
     font-size: 16px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 }
 .rank-item {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -233,7 +234,7 @@ export default {
     height: 20px;
     border-radius: 50%;
     background: #409eff;
-    color: #fff;
+    color: var(--cm-bg-card, @bg-card);
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -253,12 +254,12 @@ export default {
   &__name {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
   &__pid {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__metric {
     display: flex;
@@ -267,7 +268,7 @@ export default {
     margin-top: 4px;
   }
   &__metric-label {
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__metric-value {
     margin-left: auto;

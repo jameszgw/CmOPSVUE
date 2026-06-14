@@ -154,6 +154,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -166,7 +167,7 @@ onMounted(load);
   margin: 12px 0;
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     width: 90px;
     flex-shrink: 0;
   }
@@ -176,7 +177,7 @@ onMounted(load);
   &__num {
     margin-left: 10px;
     font-size: 13px;
-    color: #303133;
+    color: var(--cm-text-primary);
     white-space: nowrap;
   }
   &__state {
@@ -190,7 +191,7 @@ onMounted(load);
   margin-top: 18px;
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     margin-bottom: 10px;
   }
   &__item {
@@ -206,13 +207,13 @@ onMounted(load);
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
   &__value {
     margin-left: auto;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 }
 .capacity {
@@ -224,17 +225,17 @@ onMounted(load);
   }
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
   &__num {
     margin-left: auto;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__sub {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     margin-bottom: 8px;
   }
 }
@@ -244,18 +245,18 @@ onMounted(load);
   gap: 12px;
 }
 .note-item {
-  background: #fafafa;
+  background: var(--cm-bg-muted);
   border-radius: 6px;
   padding: 12px 14px;
   &__title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
     margin-bottom: 6px;
   }
   &__desc {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     line-height: 1.5;
   }
 }

@@ -168,10 +168,11 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .tab-pane {
   /deep/ .status-tag {
     border: none;
-    color: #fff;
+    color: var(--cm-bg-card, @bg-card);
   }
 }
 .bar-block {
@@ -183,13 +184,13 @@ export default {
   }
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
   &__val {
     margin-left: auto;
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 }
 </style>

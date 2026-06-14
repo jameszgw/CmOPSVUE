@@ -187,6 +187,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -202,18 +203,18 @@ onMounted(load);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light);
   border-radius: 8px;
   padding: 12px 14px;
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
   }
 }
 .cp-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card);
 }
 .count-grid {
   display: grid;
@@ -224,7 +225,7 @@ onMounted(load);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light);
   border-radius: 8px;
   padding: 16px 12px;
 
@@ -234,12 +235,12 @@ onMounted(load);
   &__value {
     font-size: 24px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
   &__label {
     margin-top: 4px;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 .bar-line {
@@ -250,7 +251,7 @@ onMounted(load);
   &__label {
     width: 48px;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     flex-shrink: 0;
   }
   :deep(.el-progress) {
@@ -259,6 +260,6 @@ onMounted(load);
 }
 .bar-sub {
   font-size: 12px;
-  color: #909399;
+  color: var(--cm-text-secondary);
 }
 </style>

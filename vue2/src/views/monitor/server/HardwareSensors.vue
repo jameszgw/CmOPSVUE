@@ -209,6 +209,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -216,7 +217,7 @@ export default {
   margin-bottom: 12px;
 }
 .sensor {
-  border: 1px solid #f0f2f5;
+  border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
   padding: 12px;
   text-align: center;
@@ -224,17 +225,17 @@ export default {
 
   &__name {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__val {
     font-size: 22px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin: 6px 0;
   }
   &__unit {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-left: 2px;
   }
   &.warning {

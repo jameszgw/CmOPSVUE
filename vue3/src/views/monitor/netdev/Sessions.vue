@@ -104,6 +104,7 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -118,7 +119,7 @@ onMounted(load);
   &__label {
     width: 90px;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     flex-shrink: 0;
   }
   :deep(.el-progress) {

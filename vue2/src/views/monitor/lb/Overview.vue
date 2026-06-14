@@ -162,6 +162,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -177,7 +178,7 @@ export default {
   }
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
   &__state {
     margin-left: auto;

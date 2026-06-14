@@ -56,6 +56,12 @@
                     @click="downloadSelectedFiles(selectedRows.map((row) => row.path))"
                   />
                   <el-button
+                    icon="el-icon-box"
+                    title="打包下载"
+                    :disabled="selectedRows.length === 0"
+                    @click="packageSelected"
+                  />
+                  <el-button
                     icon="el-icon-document-copy"
                     title="复制路径"
                     @click="copySelectedFilesPath(currentPath)"
@@ -70,7 +76,7 @@
                       <el-button size="mini" icon="el-icon-video-pause" title="暂停所有" @click="pauseAllTransfers" />
                       <el-button size="mini" icon="el-icon-refresh-right" title="恢复所有" @click="resumeAllTransfers" />
                       <el-button size="mini" icon="el-icon-finished" title="重试所有" @click="retryFailedTransfer" />
-                      <el-button size="mini" icon="el-icon-box" title="打包传输" />
+                      <el-button size="mini" icon="el-icon-box" title="打包传输" @click="packageAllDownloads" />
                       <el-button size="mini" icon="el-icon-delete" title="清空" @click="clearAllTransfers" />
                     </el-button-group>
                   </div>
@@ -307,6 +313,8 @@ import {
   getTransferList,
   removeSingleTransfer,
   clearAllTransfers,
+  packageDownloadFile,
+  packageAllCompletedFiles,
   down,
 } from "@/api/sftp";
 
@@ -604,6 +612,56 @@ export default {
       await resumeAllTransfers({ sessionToken: this.sessionToken });
       this.getTransferList();
     },
+    // 通过 logId 触发浏览器下载 zip
+    downloadByLogId(id) {
+      if (id === undefined || id === null) return;
+      const a = document.createElement("a");
+      a.href = `/api/devops/download/sftp?logId=${id}`;
+      a.setAttribute("download", "");
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    },
+    // 打包全部已完成传输并下载
+    async packageAllDownloads() {
+      try {
+        const res = await packageAllCompletedFiles({
+          sessionToken: this.sessionToken,
+          packageType: "all",
+        });
+        const content = (res && res.content) || {};
+        if (content.id === undefined || content.id === null) {
+          this.$message.warning("暂无可打包的文件");
+          return;
+        }
+        this.downloadByLogId(content.id);
+        this.$message.success("打包成功，开始下载");
+      } catch (e) {
+        this.$message.error("打包失败");
+      }
+    },
+    // 打包选中文件并下载
+    async packageSelected() {
+      if (!this.selectedRows.length) {
+        this.$message.warning("请先选择文件");
+        return;
+      }
+      try {
+        const res = await packageDownloadFile({
+          paths: this.selectedRows.map((row) => row.path),
+          sessionToken: this.sessionToken,
+        });
+        const content = (res && res.content) || {};
+        if (content.id === undefined || content.id === null) {
+          this.$message.warning("打包结果为空");
+          return;
+        }
+        this.downloadByLogId(content.id);
+        this.$message.success("打包成功，开始下载");
+      } catch (e) {
+        this.$message.error("打包失败");
+      }
+    },
     async handleAction(item, action) {
       switch (action) {
         case "pause":
@@ -675,6 +733,7 @@ export default {
         }).then((r) => r.json());
         this.fileList = [];
         this.$message.success("上传成功");
+        this.getTransferList();
       } catch (e) {
         this.$message.error("上传失败");
       } finally {

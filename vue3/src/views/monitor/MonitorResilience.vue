@@ -261,6 +261,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -295,7 +296,7 @@ onBeforeUnmount(() => {
 
   li {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular);
     line-height: 1.9;
   }
 }
