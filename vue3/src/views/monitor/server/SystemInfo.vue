@@ -86,7 +86,7 @@ let chart = null;
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 
-const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows" };
+const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" };
 const MODE_LABEL = { AGENT: "含 Agent", AGENTLESS: "无 Agent" };
 
 const basicRows = computed(() => {

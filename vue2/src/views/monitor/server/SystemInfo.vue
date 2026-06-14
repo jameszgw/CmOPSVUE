@@ -71,7 +71,7 @@ import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getServerSystem } from "@/api/monitor-server";
 
-const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows" };
+const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" };
 const MODE_LABEL = { AGENT: "含 Agent", AGENTLESS: "无 Agent" };
 
 export default {

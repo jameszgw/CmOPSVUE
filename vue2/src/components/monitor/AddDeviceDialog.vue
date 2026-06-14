@@ -36,7 +36,7 @@
         </el-form-item>
         <el-form-item label="操作系统" prop="osType">
           <el-select v-model="form.osType" placeholder="请选择">
-            <el-option v-for="t in (options.osTypes || [])" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in (options.osTypes || [])" :key="t" :label="osLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="系统名称" prop="osName">
@@ -281,8 +281,14 @@ export default {
           VIRTUALBOX: "VirtualBox",
           OPENSTACK: "OpenStack",
           CLOUD_ECS: "云主机 ECS",
+          APPLE_VZ: "Apple 虚拟化",
+          PARALLELS: "Parallels",
+          VMWARE_FUSION: "VMware Fusion",
         }[t] || t
       );
+    },
+    osLabel(t) {
+      return { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" }[t] || t;
     },
     async onOpen() {
       this.form.port = DEFAULT_PORT[this.deviceType] || 22;
