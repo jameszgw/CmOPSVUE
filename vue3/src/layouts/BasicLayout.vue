@@ -38,6 +38,7 @@
           </el-menu>
         </div>
         <div class="header-right">
+          <GlobalDeviceSearch class="header-search" />
           <el-button
             class="skin-toggle"
             circle
@@ -80,6 +81,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
 import { getSkin, setSkin } from "@/utils/skin";
+import GlobalDeviceSearch from "@/components/GlobalDeviceSearch.vue";
 
 // 后端菜单 icon 为 antd 图标名，这里映射到 Element Plus 图标组件名
 const ICON_MAP = {
@@ -184,6 +186,10 @@ onMounted(async () => {
   .header-right {
     display: flex;
     align-items: center;
+
+    .header-search {
+      margin-right: @space-md;
+    }
 
     .skin-toggle {
       margin-right: @space-md;

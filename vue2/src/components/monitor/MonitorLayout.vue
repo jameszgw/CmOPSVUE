@@ -34,10 +34,12 @@
             class="monitor-layout__device"
             @change="onDeviceChange"
           >
-            <el-option v-for="dev in devices" :key="dev.id" :label="dev.name" :value="dev.id">
-              <span>{{ dev.name }}</span>
-              <span class="monitor-layout__device-sub">{{ dev.ip }}</span>
-            </el-option>
+            <el-option-group v-for="g in deviceGroups" :key="g.label" :label="g.label">
+              <el-option v-for="d in g.list" :key="d.id" :label="d.name" :value="d.id">
+                <span>{{ d.name }}</span>
+                <span class="monitor-layout__device-sub">{{ d.ip }}</span>
+              </el-option>
+            </el-option-group>
           </el-select>
           <el-tooltip :content="autoRefresh ? '关闭自动刷新' : '开启自动刷新'">
             <el-button
@@ -109,10 +111,35 @@ export default {
     currentDevice() {
       return this.devices.find((d) => d.id === this.currentDeviceId);
     },
+    // 按环境(env)分组设备，生产环境优先，其余按字母排序
+    deviceGroups() {
+      const map = new Map();
+      (this.devices || []).forEach((d) => {
+        const env = (d && d.env) || "默认环境";
+        if (!map.has(env)) {
+          map.set(env, []);
+        }
+        map.get(env).push(d);
+      });
+      const labels = Array.from(map.keys()).sort((a, b) => {
+        if (a === "生产环境") return -1;
+        if (b === "生产环境") return 1;
+        return a.localeCompare(b);
+      });
+      return labels.map((label) => ({ label, list: map.get(label) }));
+    },
   },
   watch: {
     autoRefresh() {
       this.setupTimer();
+    },
+    // 响应路由 query.deviceId 变化（同类型页面内切换）
+    "$route.query.deviceId"(id) {
+      if (id && this.devices.some((d) => d.id === id) && id !== this.currentDeviceId) {
+        this.currentDeviceId = id;
+        this.persistDevice(id);
+        this.refreshNow();
+      }
     },
   },
   async mounted() {
@@ -123,16 +150,47 @@ export default {
     this.clearTimer();
   },
   methods: {
+    storageKey() {
+      return `cm-last-device-${this.deviceType}`;
+    },
+    readLastDevice() {
+      try {
+        return localStorage.getItem(this.storageKey()) || "";
+      } catch (e) {
+        return "";
+      }
+    },
+    persistDevice(id) {
+      try {
+        if (id) {
+          localStorage.setItem(this.storageKey(), id);
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    },
     async loadDevices(preferId) {
       this.loadingDevices = true;
       try {
         const res = await listDevices(this.deviceType);
         this.devices = res.content || [];
-        if (preferId && this.devices.some((d) => d.id === preferId)) {
-          this.currentDeviceId = preferId;
-        } else if (!this.devices.some((d) => d.id === this.currentDeviceId)) {
-          this.currentDeviceId = this.devices[0] ? this.devices[0].id : "";
+        const exists = (id) => id && this.devices.some((d) => d.id === id);
+        // 优先级：路由 query.deviceId > preferId 参数 > localStorage > 当前值 > 第一个
+        const queryId = this.$route.query && this.$route.query.deviceId;
+        let target = "";
+        if (exists(queryId)) {
+          target = queryId;
+        } else if (exists(preferId)) {
+          target = preferId;
+        } else if (exists(this.readLastDevice())) {
+          target = this.readLastDevice();
+        } else if (exists(this.currentDeviceId)) {
+          target = this.currentDeviceId;
+        } else {
+          target = this.devices[0] ? this.devices[0].id : "";
         }
+        this.currentDeviceId = target;
+        this.persistDevice(target);
       } finally {
         this.loadingDevices = false;
       }
@@ -141,6 +199,7 @@ export default {
       this.refreshToken += 1;
     },
     onDeviceChange() {
+      this.persistDevice(this.currentDeviceId);
       this.refreshNow();
     },
     onDeviceAdded(device) {

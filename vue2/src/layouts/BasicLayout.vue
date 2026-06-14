@@ -38,6 +38,7 @@
           </el-menu>
         </div>
         <div class="header-right">
+          <GlobalDeviceSearch />
           <el-tooltip :content="skin === 'dark' ? '切换浅色' : '切换深色'" placement="bottom">
             <el-switch
               class="skin-switch"
@@ -78,6 +79,7 @@
 <script>
 import { mapState } from "vuex";
 import { getSkin, setSkin } from "@/utils/skin";
+import GlobalDeviceSearch from "@/components/GlobalDeviceSearch.vue";
 
 // 后端菜单 icon 为 antd 图标名，这里映射到 Element UI 图标
 const ICON_MAP = {
@@ -94,6 +96,7 @@ const ICON_MAP = {
 
 export default {
   name: "BasicLayout",
+  components: { GlobalDeviceSearch },
   data() {
     return {
       loading: true,
