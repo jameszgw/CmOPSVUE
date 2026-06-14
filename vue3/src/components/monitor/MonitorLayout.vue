@@ -34,15 +34,21 @@
             class="monitor-layout__device"
             @change="onDeviceChange"
           >
-            <el-option
-              v-for="d in devices"
-              :key="d.id"
-              :label="d.name"
-              :value="d.id"
+            <el-option-group
+              v-for="g in deviceGroups"
+              :key="g.label"
+              :label="g.label"
             >
-              <span>{{ d.name }}</span>
-              <span class="monitor-layout__device-sub">{{ d.ip }}</span>
-            </el-option>
+              <el-option
+                v-for="d in g.list"
+                :key="d.id"
+                :label="d.name"
+                :value="d.id"
+              >
+                <span>{{ d.name }}</span>
+                <span class="monitor-layout__device-sub">{{ d.ip }}</span>
+              </el-option>
+            </el-option-group>
           </el-select>
           <el-tooltip :content="autoRefresh ? '关闭自动刷新' : '开启自动刷新'">
             <el-button
@@ -83,6 +89,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
 import { Search, Plus, Refresh, RefreshRight, Monitor } from "@element-plus/icons-vue";
 import { listDevices } from "@/api/monitor-device";
 import AddDeviceDialog from "./AddDeviceDialog.vue";
@@ -94,6 +101,27 @@ const props = defineProps({
   // 自动刷新间隔(毫秒)
   interval: { type: Number, default: 5000 },
 });
+
+const route = useRoute();
+
+// 记住上次选择的设备（按设备类型区分）
+const storageKey = computed(() => `cm-last-device-${props.deviceType}`);
+const readLastDevice = () => {
+  try {
+    return localStorage.getItem(storageKey.value) || "";
+  } catch (e) {
+    return "";
+  }
+};
+const persistDevice = (id) => {
+  try {
+    if (id) {
+      localStorage.setItem(storageKey.value, id);
+    }
+  } catch (e) {
+    /* ignore */
+  }
+};
 
 const keyword = ref("");
 const devices = ref([]);
@@ -115,16 +143,46 @@ const currentDevice = computed(() =>
   devices.value.find((d) => d.id === currentDeviceId.value)
 );
 
+// 按环境(env)分组设备，生产环境优先，其余按字母排序
+const deviceGroups = computed(() => {
+  const map = new Map();
+  for (const d of devices.value) {
+    const env = d.env || "默认环境";
+    if (!map.has(env)) {
+      map.set(env, []);
+    }
+    map.get(env).push(d);
+  }
+  const labels = Array.from(map.keys()).sort((a, b) => {
+    if (a === "生产环境") return -1;
+    if (b === "生产环境") return 1;
+    return a.localeCompare(b);
+  });
+  return labels.map((label) => ({ label, list: map.get(label) }));
+});
+
 const loadDevices = async (preferId) => {
   loadingDevices.value = true;
   try {
     const res = await listDevices(props.deviceType);
     devices.value = res.content || [];
-    if (preferId && devices.value.some((d) => d.id === preferId)) {
-      currentDeviceId.value = preferId;
-    } else if (!devices.value.some((d) => d.id === currentDeviceId.value)) {
-      currentDeviceId.value = devices.value[0]?.id || "";
+    const exists = (id) => id && devices.value.some((d) => d.id === id);
+    // 优先级：路由 query.deviceId > preferId 参数 > localStorage > 当前值 > 第一个
+    const queryId = route.query?.deviceId;
+    let target = "";
+    if (exists(queryId)) {
+      target = queryId;
+    } else if (exists(preferId)) {
+      target = preferId;
+    } else if (exists(readLastDevice())) {
+      target = readLastDevice();
+    } else if (exists(currentDeviceId.value)) {
+      target = currentDeviceId.value;
+    } else {
+      target = devices.value[0]?.id || "";
     }
+    currentDeviceId.value = target;
+    persistDevice(target);
   } finally {
     loadingDevices.value = false;
   }
@@ -135,8 +193,21 @@ const refreshNow = () => {
 };
 
 const onDeviceChange = () => {
+  persistDevice(currentDeviceId.value);
   refreshNow();
 };
+
+// 同页面下路由 query.deviceId 变化（全局搜索跳转到同类型设备）时更新选中
+watch(
+  () => route.query.deviceId,
+  (id) => {
+    if (id && id !== currentDeviceId.value && devices.value.some((d) => d.id === id)) {
+      currentDeviceId.value = id;
+      persistDevice(id);
+      refreshNow();
+    }
+  }
+);
 
 const onDeviceAdded = (device) => {
   loadDevices(device?.id);
