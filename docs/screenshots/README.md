@@ -20,7 +20,10 @@
 | --- | --- |
 | 监控大盘（仪表盘/环形/折线均暗色适配） | `dark-dashboard.png` |
 | 拓扑维护 | `dark-topology-edit.png` |
-| Server 监控 | `dark-server.png` |
-| 主机列表 | `dark-host-list.png` |
+| Server 监控（左侧设备列表面板已深色一致） | `dark-server.png` |
+| Redis 监控 | `dark-redis.png` |
+| 容器(K8s)监控 | `dark-k8s.png` |
+| 主机列表（左侧机组树 + 表格已深色一致） | `dark-host-list.png` |
 
-> 已知小项：个别监控页的嵌套左侧列表面板在深色下仍为浅底，属逐页深色适配的少量残留，后续可继续打磨。
+> 深色一致性：共享布局 `MonitorLayout`（各设备监控页左侧列表/头部）、`InfoTable`、`LeftHostList`
+> 等嵌套面板已全部迁移至 `var(--cm-*)`，深色下不再出现浅底残留。

@@ -196,7 +196,7 @@ onMounted(load);
     line-height: 20px;
     text-align: center;
     border-radius: 4px;
-    background: #ecf5ff;
+    background: var(--cm-active-soft);
     color: var(--cm-color-primary);
     font-size: 12px;
     font-weight: 600;

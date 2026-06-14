@@ -142,7 +142,7 @@ onMounted(() => {
 .message-list-wrapper {
   .message-list-header {
     padding: 8px 0 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--cm-border-lighter);
     display: flex;
     justify-content: space-between;
   }
@@ -161,7 +161,7 @@ onMounted(() => {
     padding: 12px 8px;
     transition: all 0.3s;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--cm-border-lighter);
 
     &.unread {
       background-color: #f0f7ff;

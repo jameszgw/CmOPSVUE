@@ -354,7 +354,7 @@ onBeforeUnmount(() => {
 .chain-node {
   flex: 1;
   min-width: 110px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--cm-border-base);
   border-radius: @radius-base;
   padding: 6px @space-sm;
   background: var(--cm-bg-card);

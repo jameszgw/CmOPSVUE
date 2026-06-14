@@ -180,7 +180,7 @@ export default {
   margin-bottom: 16px;
 }
 .json-preview {
-  background: #f5f7fa;
+  background: var(--cm-bg-soft);
   padding: 12px;
   font-size: 12px;
   max-height: 240px;

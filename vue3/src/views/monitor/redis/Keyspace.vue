@@ -148,7 +148,7 @@ onMounted(load);
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: #ecf5ff;
+    background: var(--cm-active-soft);
     color: var(--cm-color-primary);
     display: flex;
     align-items: center;

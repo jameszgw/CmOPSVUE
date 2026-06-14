@@ -262,7 +262,7 @@ export default {
 <style lang="less" scoped>
 .system-analysis-container {
   padding: 24px;
-  background: #fff;
+  background: var(--cm-bg-card);
   border-radius: 4px;
 
   .system-clean-container {

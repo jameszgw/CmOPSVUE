@@ -174,8 +174,8 @@ onBeforeUnmount(clearTimer);
   &__side {
     width: 220px;
     flex-shrink: 0;
-    background: #fff;
-    border: 1px solid #ebeef5;
+    background: var(--cm-bg-card);
+    border: 1px solid var(--cm-border-light);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -186,7 +186,7 @@ onBeforeUnmount(clearTimer);
     display: flex;
     gap: 8px;
     padding: 12px;
-    border-bottom: 1px solid #f0f2f5;
+    border-bottom: 1px solid var(--cm-border-light);
   }
 
   &__nav {
@@ -203,16 +203,16 @@ onBeforeUnmount(clearTimer);
     padding: 10px 12px;
     border-radius: 6px;
     cursor: pointer;
-    color: #606266;
+    color: var(--cm-text-regular);
     font-size: 14px;
     margin-bottom: 2px;
 
     &:hover {
-      background: #f5f7fa;
+      background: var(--cm-bg-soft);
     }
 
     &.active {
-      background: #ecf5ff;
+      background: var(--cm-active-soft);
       color: #409eff;
       font-weight: 500;
     }
@@ -230,8 +230,8 @@ onBeforeUnmount(clearTimer);
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: #fff;
-    border: 1px solid #ebeef5;
+    background: var(--cm-bg-card);
+    border: 1px solid var(--cm-border-light);
     border-radius: 8px;
     margin-bottom: 12px;
   }
@@ -242,7 +242,7 @@ onBeforeUnmount(clearTimer);
     gap: 8px;
     font-size: 15px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
 
     .el-icon {
       color: #409eff;
@@ -261,7 +261,7 @@ onBeforeUnmount(clearTimer);
 
   &__device-sub {
     float: right;
-    color: #c0c4cc;
+    color: var(--cm-text-placeholder);
     font-size: 12px;
   }
 
