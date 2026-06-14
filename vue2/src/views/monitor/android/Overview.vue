@@ -23,6 +23,9 @@
       <el-col :xs="24" :lg="12">
         <SectionCard title="基础信息" icon="el-icon-info">
           <template #extra>
+            <el-tag size="mini" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
+              {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+            </el-tag>
             <el-tag size="mini" :type="statusTag" effect="dark">{{ val(d.status) }}</el-tag>
           </template>
           <InfoTable :rows="basicRows" :columns="2" />

@@ -9,6 +9,34 @@
       class="note-banner"
     />
 
+    <SectionCard title="下发批量任务" icon="Promotion" class="dispatch-card">
+      <el-form inline class="dispatch-form" @submit.prevent>
+        <el-form-item label="任务类型">
+          <el-select v-model="form.taskType" size="small" style="width: 150px">
+            <el-option label="批量安装APK" value="install" />
+            <el-option label="批量重启" value="reboot" />
+            <el-option label="Shell命令" value="shell" />
+            <el-option label="清理缓存" value="clearcache" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="作用范围">
+          <el-input v-model="form.scope" size="small" style="width: 220px"
+            placeholder="作用范围，如 在线实例 / 全部 / 标签:电商" />
+        </el-form-item>
+        <el-form-item v-if="form.taskType === 'install'" label="APK 路径">
+          <el-input v-model="form.payload" size="small" style="width: 240px"
+            placeholder="APK 本地路径，如 /data/app.apk" />
+        </el-form-item>
+        <el-form-item v-else-if="form.taskType === 'shell'" label="命令">
+          <el-input v-model="form.payload" size="small" style="width: 240px"
+            placeholder="shell 命令，如 input keyevent 3" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" :loading="submitting" @click="onDispatch">下发</el-button>
+        </el-form-item>
+      </el-form>
+    </SectionCard>
+
     <SectionCard title="群控任务" icon="Operation">
       <template #extra>运行中 {{ d.runningTasks ?? 0 }}</template>
       <el-empty v-if="!items.length" description="暂无数据" />
@@ -42,9 +70,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
+import { ElMessage } from "element-plus";
 import SectionCard from "@/components/monitor/SectionCard.vue";
-import { getAndroidGroupControl } from "@/api/monitor-android";
+import { getAndroidGroupControl, dispatchGroupControl } from "@/api/monitor-android";
 
 const props = defineProps({
   deviceId: { type: String, default: "" },
@@ -53,6 +82,8 @@ const props = defineProps({
 });
 
 const loading = ref(false);
+const submitting = ref(false);
+const form = reactive({ taskType: "install", scope: "", payload: "" });
 const data = ref({});
 const d = computed(() => data.value || {});
 const items = computed(() => d.value.items || []);
@@ -83,6 +114,33 @@ const load = async () => {
   }
 };
 
+const onDispatch = async () => {
+  if (!props.deviceId) {
+    ElMessage.warning("缺少设备ID，无法下发");
+    return;
+  }
+  submitting.value = true;
+  try {
+    const res = await dispatchGroupControl({
+      deviceId: props.deviceId,
+      taskType: form.taskType,
+      scope: form.scope,
+      payload: form.payload,
+    });
+    const c = res.content || {};
+    if (c.source === "agent") {
+      ElMessage.success(
+        `已真实下发：影响 ${c.affected ?? 0} 台，成功 ${c.okCount ?? 0}，失败 ${c.failCount ?? 0}`
+      );
+    } else {
+      ElMessage.success(`已受理(模拟)：${c.note || c.taskId || "-"}`);
+    }
+    await load();
+  } finally {
+    submitting.value = false;
+  }
+};
+
 watch(() => [props.deviceId, props.refreshToken], load);
 onMounted(load);
 </script>
@@ -91,5 +149,13 @@ onMounted(load);
 @import (reference) "@/styles/variables.less";
 .note-banner {
   margin-bottom: 12px;
+}
+.dispatch-card {
+  margin-bottom: 12px;
+}
+.dispatch-form {
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
 }
 </style>
