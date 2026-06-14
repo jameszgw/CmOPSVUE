@@ -60,9 +60,21 @@
                   />
 
                   <!-- 传输列表 -->
-                  <el-popover placement="bottom-end" :width="520" trigger="click">
+                  <el-popover
+                    placement="bottom-end"
+                    :width="520"
+                    trigger="click"
+                    @show="onTransferPopoverShow"
+                    @hide="onTransferPopoverHide"
+                  >
                     <template #reference>
-                      <el-button :icon="Switch" title="传输列表" @click="getTransfers" />
+                      <el-badge
+                        :value="activeTransferCount"
+                        :hidden="activeTransferCount === 0"
+                        type="primary"
+                      >
+                        <el-button :icon="Switch" title="传输列表" @click="getTransfers" />
+                      </el-badge>
                     </template>
                     <div class="transfer-panel">
                       <el-button-group class="transfer-toolbar">
@@ -101,6 +113,12 @@
                         >
                           <div class="transfer-file" :title="item.remoteFile">
                             {{ item.remoteFile }}
+                          </div>
+                          <div
+                            v-if="item.total"
+                            class="transfer-size"
+                          >
+                            {{ item.transferredText || "0" }} / {{ item.totalText || "-" }}
                           </div>
                           <div class="transfer-row">
                             <el-tag :type="statusColorMapper[item.status] || 'info'" size="small">
@@ -313,7 +331,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import {
@@ -453,7 +471,9 @@ const openSession = async () => {
   inputPath.value = home;
   pathStack.value.push(home);
   await loadFileListData(home, showHiddenFiles.value);
-  getTransfers();
+  await getTransfers();
+  // 若已有进行中任务，开启轮询让徽标与进度保持实时
+  if (shouldPoll()) startPolling();
 };
 
 // 文件列表
@@ -676,6 +696,61 @@ const updatePermission = async () => {
 const getTransfers = async () => {
   const res = await getTransferList({ sessionToken: session.value?.sessionToken });
   transferList.value = res.content || [];
+  // 出现进行中任务时自动开启轮询（幂等）
+  if (shouldPoll()) startPolling();
+};
+
+// ===== 传输进度自动轮询 =====
+// 进行中的状态：未开始(10) / 进行中(20) / 已暂停(30)
+const ACTIVE_STATUSES = [10, 20, 30];
+const activeTransferCount = computed(
+  () =>
+    (transferList.value || []).filter((t) => ACTIVE_STATUSES.includes(t.status))
+      .length
+);
+const transferPopoverOpen = ref(false);
+let pollTimer = null;
+
+const shouldPoll = () =>
+  transferPopoverOpen.value || activeTransferCount.value > 0;
+
+const tickPoll = async () => {
+  // 静默刷新；失败不弹错以免轮询噪声
+  try {
+    await getTransfers();
+  } catch (e) {
+    /* ignore */
+  }
+  // 若已无需轮询则停止
+  if (!shouldPoll()) {
+    stopPolling();
+  }
+};
+
+const startPolling = () => {
+  if (pollTimer) return;
+  pollTimer = setInterval(tickPoll, 1500);
+};
+
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+};
+
+const onTransferPopoverShow = () => {
+  transferPopoverOpen.value = true;
+  getTransfers();
+  startPolling();
+};
+
+const onTransferPopoverHide = () => {
+  transferPopoverOpen.value = false;
+  // 弹层关闭后，若仍有进行中任务则继续轮询徽标计数，否则停止
+  if (!shouldPoll()) {
+    stopPolling();
+  }
 };
 
 const pauseAll = async () => {
@@ -777,6 +852,10 @@ onMounted(() => {
     openSession();
   }
 });
+
+onBeforeUnmount(() => {
+  stopPolling();
+});
 </script>
 
 <style lang="less" scoped>
@@ -840,6 +919,12 @@ onMounted(() => {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      .transfer-size {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+        margin: 2px 0;
       }
 
       .transfer-row {

@@ -126,6 +126,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -148,6 +150,7 @@ const GRADE_TAG = { A: "success", B: "success", C: "warning", D: "danger" };
 
 export default {
   name: "MonitorResilience",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard, InfoTable },
   data() {
     return {
@@ -237,9 +240,19 @@ export default {
       if (risk === "medium") return "中危";
       return "低危";
     },
+    reinitChartsForSkin() {
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = null;
+      }
+      this.renderRadar();
+    },
     renderRadar() {
       if (!this.$refs.radarRef) return;
-      if (!this.chart) this.chart = echarts.init(this.$refs.radarRef);
+      if (!this.chart) {
+        applyChartTheme(echarts);
+        this.chart = echarts.init(this.$refs.radarRef, currentChartTheme());
+      }
       const dims = this.dimensions;
       this.chart.setOption({
         tooltip: {},

@@ -41,6 +41,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -48,6 +50,7 @@ import { getRedisMemory } from "@/api/monitor-redis";
 
 export default {
   name: "RedisMemoryInfo",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
@@ -113,9 +116,19 @@ export default {
     num(v) {
       return v === undefined || v === null ? "-" : Number(v).toFixed(1);
     },
+    reinitChartsForSkin() {
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = null;
+      }
+      this.renderChart();
+    },
     renderChart() {
       if (!this.$refs.chartRef) return;
-      if (!this.chart) this.chart = echarts.init(this.$refs.chartRef);
+      if (!this.chart) {
+        applyChartTheme(echarts);
+        this.chart = echarts.init(this.$refs.chartRef, currentChartTheme());
+      }
       const t = this.d.trend || {};
       this.chart.setOption({
         tooltip: { trigger: "axis", formatter: "{b}<br/>内存使用率: {c}%" },

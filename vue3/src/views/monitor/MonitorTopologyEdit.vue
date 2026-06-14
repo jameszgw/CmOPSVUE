@@ -93,6 +93,22 @@
           @click="deleteSelected"
           >删除选中</el-button
         >
+        <el-button
+          :icon="Download"
+          :disabled="!currentViewId"
+          @click="exportJson"
+          >导出JSON</el-button
+        >
+        <el-button :icon="Upload" :loading="importing" @click="triggerImport"
+          >导入JSON</el-button
+        >
+        <input
+          ref="importInputRef"
+          type="file"
+          accept=".json,application/json"
+          style="display: none"
+          @change="handleImportFile"
+        />
       </div>
       <el-empty v-if="!currentViewId" description="请先选择或新建视图" />
       <div v-show="currentViewId" ref="chartRef" class="topo-chart"></div>
@@ -290,6 +306,8 @@ import {
   Connection,
   Finished,
   DocumentChecked,
+  Download,
+  Upload,
 } from "@element-plus/icons-vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
@@ -308,6 +326,10 @@ import {
   saveTopoGraph,
 } from "@/api/monitor-topology";
 import { listDevices } from "@/api/monitor-device";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import { useChartSkin } from "@/composables/useChartSkin";
+
+applyChartTheme(echarts);
 
 const STATUS_COLOR = {
   healthy: "#67c23a",
@@ -413,7 +435,7 @@ const handleViewChange = () => {
 const renderChart = () => {
   if (!chartRef.value) return;
   if (!chart) {
-    chart = echarts.init(chartRef.value);
+    chart = echarts.init(chartRef.value, currentChartTheme());
     chart.on("click", onChartClick);
   }
 
@@ -514,6 +536,17 @@ const onChartClick = (p) => {
     renderChart();
   }
 };
+
+// 皮肤切换：销毁并以新主题重建画布（点击事件会在 renderChart 内重新绑定）
+const rerenderChart = () => {
+  if (chart) {
+    chart.off("click", onChartClick);
+    chart.dispose();
+    chart = null;
+  }
+  renderChart();
+};
+useChartSkin(rerenderChart);
 
 // ===== 视图对话框 =====
 const viewDialog = reactive({
@@ -801,6 +834,191 @@ const saveTopoGraphAll = async () => {
     await reloadGraph();
   } catch (e) {
     /* toasted */
+  }
+};
+
+// ===== 导出 / 导入 JSON =====
+const importInputRef = ref(null);
+const importing = ref(false);
+
+// 导出当前视图为 JSON（不含服务端 id，连线以节点数组下标 sourceIndex/targetIndex 关联）
+const exportJson = () => {
+  if (!currentViewId.value) return;
+  const nodeList = nodes.value || [];
+  const edgeList = g.value.edges || [];
+
+  // 读取画布当前拖拽后坐标（若有）
+  const data = chart?.getOption()?.series?.[0]?.data || [];
+  const posMap = {};
+  data.forEach((d) => {
+    posMap[String(d.id)] = { x: Math.round(d.x ?? 0), y: Math.round(d.y ?? 0) };
+  });
+
+  // 建立 节点服务端id -> 数组下标 的映射，供连线关联
+  const idToIndex = {};
+  nodeList.forEach((n, i) => {
+    idToIndex[String(n.id)] = i;
+  });
+
+  const exportNodes = nodeList.map((n, i) => {
+    const pos = posMap[String(n.id)] || {};
+    return {
+      index: i,
+      deviceId: n.deviceId ?? null,
+      name: n.name ?? "",
+      type: n.type ?? "VIRTUAL",
+      icon: n.icon ?? n.type ?? "VIRTUAL",
+      x: pos.x ?? Math.round(n.x ?? 0),
+      y: pos.y ?? Math.round(n.y ?? 0),
+    };
+  });
+
+  const exportEdges = edgeList
+    .map((e) => {
+      const si = idToIndex[String(e.sourceNodeId ?? e.source)];
+      const ti = idToIndex[String(e.targetNodeId ?? e.target)];
+      if (si === undefined || ti === undefined) return null;
+      return {
+        sourceIndex: si,
+        targetIndex: ti,
+        relation: e.relation ?? "custom",
+        label: e.label ?? "",
+      };
+    })
+    .filter(Boolean);
+
+  const viewName = currentView.value.name || "topology";
+  const payload = {
+    name: viewName,
+    remark: currentView.value.remark || "",
+    layoutMode: currentView.value.layoutMode || "manual",
+    nodes: exportNodes,
+    edges: exportEdges,
+  };
+
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `topology-${viewName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    ElMessage.success("已导出 JSON");
+  } catch (e) {
+    ElMessage.error("导出失败");
+  }
+};
+
+const triggerImport = () => {
+  if (importInputRef.value) {
+    importInputRef.value.value = "";
+    importInputRef.value.click();
+  }
+};
+
+const handleImportFile = (evt) => {
+  const file = evt?.target?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    let json;
+    try {
+      json = JSON.parse(String(e.target?.result || ""));
+    } catch (err) {
+      ElMessage.error("JSON 解析失败，文件格式不正确");
+      return;
+    }
+    await importGraph(json);
+  };
+  reader.onerror = () => ElMessage.error("文件读取失败");
+  reader.readAsText(file);
+};
+
+const importGraph = async (json) => {
+  // 校验 JSON 形态
+  if (
+    !json ||
+    typeof json !== "object" ||
+    !Array.isArray(json.nodes) ||
+    !Array.isArray(json.edges)
+  ) {
+    ElMessage.error("JSON 结构非法：缺少 nodes / edges");
+    return;
+  }
+  importing.value = true;
+  try {
+    // 1) 新建视图
+    const viewRes = await createTopoView({
+      name: `${json.name || "导入视图"}(导入)`,
+      remark: json.remark || "",
+      layoutMode: json.layoutMode || "manual",
+    });
+    const newViewId = viewRes?.content?.id;
+    if (!newViewId) {
+      ElMessage.error("导入失败：创建视图未返回 id");
+      return;
+    }
+
+    // 2) 逐个创建节点，记录 导入下标 -> 新节点id
+    const indexToNewId = {};
+    for (let i = 0; i < json.nodes.length; i++) {
+      const n = json.nodes[i] || {};
+      const key = n.index ?? i; // 优先用导出时的 index，回退到数组位置
+      try {
+        const nodeRes = await createTopoNode({
+          viewId: newViewId,
+          deviceId: n.deviceId ?? null,
+          name: n.name ?? `节点${i + 1}`,
+          type: n.type ?? "VIRTUAL",
+          icon: n.icon ?? n.type ?? "VIRTUAL",
+          x: Math.round(n.x ?? 0),
+          y: Math.round(n.y ?? 0),
+        });
+        const newId = nodeRes?.content?.id;
+        if (newId !== undefined && newId !== null) {
+          indexToNewId[String(key)] = newId;
+        }
+      } catch (err) {
+        /* 单节点失败不阻断整体导入 */
+      }
+    }
+
+    // 3) 创建连线，按 sourceIndex/targetIndex 解析为新节点 id
+    let edgeOk = 0;
+    for (const ed of json.edges) {
+      if (!ed) continue;
+      const sId = indexToNewId[String(ed.sourceIndex)];
+      const tId = indexToNewId[String(ed.targetIndex)];
+      if (sId === undefined || tId === undefined) continue;
+      try {
+        await createTopoEdge({
+          viewId: newViewId,
+          sourceNodeId: sId,
+          targetNodeId: tId,
+          relation: ed.relation ?? "custom",
+          label: ed.label ?? "",
+        });
+        edgeOk++;
+      } catch (err) {
+        /* 单连线失败不阻断 */
+      }
+    }
+
+    // 4) 刷新视图列表，选中新视图并重载
+    currentViewId.value = newViewId;
+    await loadViews();
+    ElMessage.success(
+      `导入成功：${Object.keys(indexToNewId).length} 个节点，${edgeOk} 条连线`
+    );
+  } catch (e) {
+    ElMessage.error("导入失败");
+  } finally {
+    importing.value = false;
   }
 };
 

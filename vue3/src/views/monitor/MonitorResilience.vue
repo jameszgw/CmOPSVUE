@@ -153,6 +153,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import { useChartSkin } from "@/composables/useChartSkin";
+applyChartTheme(echarts);
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getResilienceScore, getSecurityDrift } from "@/api/monitor-resilience";
@@ -195,7 +198,7 @@ const riskText = (r) => (r === "high" ? "高危" : r === "medium" ? "中危" : "
 
 const renderRadar = () => {
   if (!radarRef.value) return;
-  if (!radarChart) radarChart = echarts.init(radarRef.value);
+  if (!radarChart) radarChart = echarts.init(radarRef.value, currentChartTheme());
   const dims = score.value.dimensions || [];
   radarChart.setOption({
     tooltip: { trigger: "item" },
@@ -244,6 +247,16 @@ const load = async (silent = false) => {
     loading.value = false;
   }
 };
+
+const rerenderAllCharts = () => {
+  if (radarChart) {
+    radarChart.dispose();
+    radarChart = null;
+  }
+  renderRadar();
+};
+
+useChartSkin(rerenderAllCharts);
 
 onMounted(() => {
   load();

@@ -71,6 +71,8 @@
 
 <script>
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
@@ -92,6 +94,7 @@ const STATUS_INDEX = { healthy: 0, warning: 1, critical: 2 };
 
 export default {
   name: "MonitorTopology",
+  mixins: [chartSkin],
   components: { StatCard, SectionCard },
   data() {
     return {
@@ -195,9 +198,19 @@ export default {
         label: { show: true, formatter: e.relation || "", fontSize: 10, color: "#909399" },
       }));
     },
+    reinitChartsForSkin() {
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = null;
+      }
+      this.renderChart();
+    },
     renderChart() {
       if (!this.$refs.graphRef) return;
-      if (!this.chart) this.chart = echarts.init(this.$refs.graphRef);
+      if (!this.chart) {
+        applyChartTheme(echarts);
+        this.chart = echarts.init(this.$refs.graphRef, currentChartTheme());
+      }
       const categories = [
         { name: STATUS_LABEL.healthy, itemStyle: { color: STATUS_COLOR.healthy } },
         { name: STATUS_LABEL.warning, itemStyle: { color: STATUS_COLOR.warning } },

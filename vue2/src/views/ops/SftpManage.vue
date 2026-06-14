@@ -69,7 +69,12 @@
                 </el-button-group>
 
                 <!-- 传输列表 -->
-                <el-popover placement="bottom-end" width="480" trigger="click">
+                <el-popover
+                  v-model="transferPopoverVisible"
+                  placement="bottom-end"
+                  width="480"
+                  trigger="click"
+                >
                   <div class="transfer-toolbar">
                     <el-button-group>
                       <el-button size="mini" icon="el-icon-refresh" title="刷新" @click="getTransferList" />
@@ -90,8 +95,14 @@
                         <el-progress
                           :percentage="item.progress || 0"
                           :show-text="false"
-                          style="width: 240px"
+                          style="width: 180px"
                         />
+                        <span
+                          v-if="item.totalText && Number(item.total) > 0"
+                          class="transfer-size"
+                        >
+                          {{ item.transferredText }} / {{ item.totalText }}
+                        </span>
                         <el-button
                           v-if="item.status === 20"
                           size="mini"
@@ -129,12 +140,18 @@
                       </div>
                     </div>
                   </div>
-                  <el-button
+                  <el-badge
                     slot="reference"
-                    icon="el-icon-sort"
-                    title="传输列表"
-                    @click="getTransferList"
-                  />
+                    :value="activeTransferCount"
+                    :hidden="activeTransferCount === 0"
+                    type="primary"
+                  >
+                    <el-button
+                      icon="el-icon-sort"
+                      title="传输列表"
+                      @click="getTransferList"
+                    />
+                  </el-badge>
                 </el-popover>
 
                 <el-button icon="el-icon-plus" title="创建" @click="mkdirModalVisible = !mkdirModalVisible" />
@@ -399,11 +416,19 @@ export default {
       uploading: false,
       statusMapper: StatusMapper,
       statusColorMapper: StatusColorMapper,
+      transferPopoverVisible: false,
+      transferTimer: null,
     };
   },
   computed: {
     hostId() {
       return this.$route.params.hostId;
+    },
+    // 进行中的传输任务数（状态 10 未开始 / 20 进行中 / 30 已暂停）
+    activeTransferCount() {
+      return (this.transferList || []).filter(
+        (t) => t && (t.status === 10 || t.status === 20 || t.status === 30)
+      ).length;
     },
     sessionToken() {
       return this.open && this.open.sessionToken;
@@ -416,6 +441,18 @@ export default {
     if (this.hostId) {
       this.openSession(this.hostId);
     }
+  },
+  watch: {
+    transferPopoverVisible(open) {
+      // 打开弹层立即刷新并评估是否需要轮询；关闭时按是否仍有活动任务决定停止。
+      if (open) {
+        this.getTransferList();
+      }
+      this.updateTransferPolling();
+    },
+  },
+  beforeDestroy() {
+    this.stopTransferPolling();
   },
   methods: {
     formatTime(time) {
@@ -593,8 +630,38 @@ export default {
     },
     // ===== 传输列表 =====
     async getTransferList() {
-      const res = await getTransferList({ sessionToken: this.sessionToken });
-      this.transferList = res.content || [];
+      if (!this.sessionToken) return;
+      try {
+        const res = await getTransferList({ sessionToken: this.sessionToken });
+        this.transferList = (res && res.content) || [];
+      } catch (e) {
+        // 静默：轮询期间不打扰用户
+      }
+      // 根据弹层状态与活动任务决定是否继续轮询
+      this.updateTransferPolling();
+    },
+    // 弹层打开 或 存在活动任务（状态 10/20/30）时轮询，否则停止
+    updateTransferPolling() {
+      const shouldPoll =
+        !!this.sessionToken &&
+        (this.transferPopoverVisible || this.activeTransferCount > 0);
+      if (shouldPoll) {
+        this.startTransferPolling();
+      } else {
+        this.stopTransferPolling();
+      }
+    },
+    startTransferPolling() {
+      if (this.transferTimer) return;
+      this.transferTimer = setInterval(() => {
+        this.getTransferList();
+      }, 1500);
+    },
+    stopTransferPolling() {
+      if (this.transferTimer) {
+        clearInterval(this.transferTimer);
+        this.transferTimer = null;
+      }
     },
     async retryFailedTransfer() {
       await retryAllFailedTransfers({ sessionToken: this.sessionToken });
@@ -795,6 +862,12 @@ export default {
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    .transfer-size {
+      font-size: 12px;
+      color: #909399;
+      white-space: nowrap;
     }
   }
 }
