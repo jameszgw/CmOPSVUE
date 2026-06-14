@@ -92,6 +92,15 @@
           </el-button>
           <el-button
             size="small"
+            type="success"
+            icon="el-icon-document-checked"
+            :disabled="!currentViewId"
+            @click="onSaveGraph"
+          >
+            保存整图
+          </el-button>
+          <el-button
+            size="small"
             type="danger"
             icon="el-icon-delete"
             :disabled="!hasSelection"
@@ -229,6 +238,7 @@ import {
   createTopoEdge,
   deleteTopoEdge,
   getTopoNodeMetrics,
+  saveTopoGraph,
 } from "@/api/monitor-topology";
 
 const TYPE_LABEL = {
@@ -685,6 +695,50 @@ export default {
       try {
         await Promise.all(tasks);
         this.$message.success("布局已保存");
+        await this.loadGraph();
+      } catch (e) {
+        // toasted
+      }
+    },
+
+    // ===== 保存整图 =====
+    async onSaveGraph() {
+      if (!this.currentViewId) return;
+      // 从画布读取当前坐标（包含拖拽后的位置）
+      const posMap = {};
+      if (this.chart) {
+        const opt = this.chart.getOption();
+        const series = (opt.series && opt.series[0]) || {};
+        const data = series.data || [];
+        data.forEach((d) => {
+          if (d.id === undefined || d.id === null) return;
+          posMap[d.id] = { x: d.x, y: d.y };
+        });
+      }
+      const nodes = (this.graph.nodes || []).map((n) => {
+        const pos = posMap[n.id] || {};
+        const x = pos.x !== undefined && pos.x !== null ? Math.round(pos.x) : n.x;
+        const y = pos.y !== undefined && pos.y !== null ? Math.round(pos.y) : n.y;
+        return {
+          id: n.id,
+          deviceId: n.deviceId,
+          name: n.name,
+          type: n.type,
+          icon: n.icon,
+          x: x,
+          y: y,
+        };
+      });
+      const edges = (this.graph.edges || []).map((e) => ({
+        id: e.id,
+        sourceNodeId: e.sourceNodeId !== undefined ? e.sourceNodeId : e.source,
+        targetNodeId: e.targetNodeId !== undefined ? e.targetNodeId : e.target,
+        relation: e.relation,
+        label: e.label,
+      }));
+      try {
+        await saveTopoGraph(this.currentViewId, nodes, edges);
+        this.$message.success("整图已保存");
         await this.loadGraph();
       } catch (e) {
         // toasted

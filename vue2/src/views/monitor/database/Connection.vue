@@ -178,6 +178,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -193,7 +194,7 @@ export default {
   }
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
   &__state {
     margin-left: auto;
@@ -206,13 +207,13 @@ export default {
   text-align: right;
   font-size: 13px;
   font-weight: 600;
-  color: #303133;
+  color: var(--cm-text-primary, @text-primary);
 }
 .dist-block {
   margin-bottom: 18px;
   &__title {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     margin-bottom: 10px;
   }
 }
@@ -228,32 +229,32 @@ export default {
   }
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
   &__val {
     margin-left: auto;
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 }
 .usage-bar {
   margin-top: 14px;
 }
 .note-item {
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
   border-radius: 6px;
   padding: 12px 14px;
   margin-bottom: 12px;
   &__title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-bottom: 6px;
   }
   &__desc {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     line-height: 1.5;
   }
 }

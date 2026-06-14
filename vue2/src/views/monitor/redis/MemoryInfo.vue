@@ -153,6 +153,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -162,12 +163,12 @@ export default {
 .policy-desc {
   margin-top: 16px;
   padding: 14px 16px;
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
   border-radius: 6px;
   &__title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-bottom: 10px;
     i {
       color: #e6a23c;
@@ -176,10 +177,10 @@ export default {
   }
   &__item {
     font-size: 12px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     line-height: 1.9;
     b {
-      color: #303133;
+      color: var(--cm-text-primary, @text-primary);
     }
   }
 }

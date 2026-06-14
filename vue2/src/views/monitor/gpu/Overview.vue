@@ -130,6 +130,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -137,7 +138,7 @@ export default {
   margin-bottom: 12px;
 }
 .count-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 14px 12px;
   text-align: center;
@@ -150,7 +151,7 @@ export default {
   &__label {
     margin-top: 6px;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 </style>

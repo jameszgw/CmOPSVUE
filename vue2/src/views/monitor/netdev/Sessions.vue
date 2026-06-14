@@ -128,6 +128,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -142,7 +143,7 @@ export default {
   &__label {
     width: 90px;
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     flex-shrink: 0;
   }
   /deep/ .el-progress {

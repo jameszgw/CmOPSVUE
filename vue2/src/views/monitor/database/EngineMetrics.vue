@@ -137,11 +137,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .engine-head {
   display: flex;
   align-items: center;
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--cm-bg-card, @bg-card);
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 14px 18px;
   margin-bottom: 16px;
@@ -155,14 +156,14 @@ export default {
   &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     margin-right: 12px;
   }
 
   &__type {
     margin-left: 10px;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
 }
 .metric-grid {
@@ -172,8 +173,8 @@ export default {
   margin-bottom: 12px;
 }
 .metric-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
+  background: var(--cm-bg-card, @bg-card);
+  border: 1px solid var(--cm-border-light, @border-light);
   border-left-width: 3px;
   border-radius: 8px;
   padding: 14px 16px;
@@ -182,7 +183,7 @@ export default {
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
     margin-bottom: 8px;
   }
 
@@ -195,7 +196,7 @@ export default {
   &__unit {
     font-size: 13px;
     font-weight: 400;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-left: 4px;
   }
 }
@@ -206,8 +207,8 @@ export default {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #f0f2f5;
-  color: #606266;
+  background: var(--cm-bg-page, @bg-page);
+  color: var(--cm-text-regular, @text-regular);
   font-size: 12px;
   font-weight: 600;
   &--gold {
@@ -216,7 +217,7 @@ export default {
   }
   &--silver {
     background: #f4f4f5;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &--bronze {
     background: #fef0f0;
@@ -226,7 +227,7 @@ export default {
 .sql-text {
   font-family: "Consolas", "Monaco", monospace;
   font-size: 12px;
-  color: #303133;
+  color: var(--cm-text-primary, @text-primary);
   word-break: break-all;
 }
 </style>

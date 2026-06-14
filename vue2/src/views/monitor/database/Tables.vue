@@ -118,6 +118,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -131,8 +132,8 @@ export default {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #f0f2f5;
-  color: #606266;
+  background: var(--cm-bg-page, @bg-page);
+  color: var(--cm-text-regular, @text-regular);
   font-size: 12px;
   font-weight: 600;
   &--gold {
@@ -141,7 +142,7 @@ export default {
   }
   &--silver {
     background: #f4f4f5;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &--bronze {
     background: #fef0f0;
@@ -149,7 +150,7 @@ export default {
   }
 }
 .table-card {
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 12px 14px;
   margin-bottom: 12px;
@@ -162,7 +163,7 @@ export default {
     margin-left: 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
     word-break: break-all;
   }
   &__grid {
@@ -177,11 +178,11 @@ export default {
   justify-content: space-between;
   font-size: 12px;
   &__label {
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
   }
   &__value {
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 }
 </style>

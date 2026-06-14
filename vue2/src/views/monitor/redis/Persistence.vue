@@ -186,6 +186,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -196,6 +197,6 @@ export default {
   margin-top: 16px;
 }
 /deep/ .el-table th {
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
 }
 </style>

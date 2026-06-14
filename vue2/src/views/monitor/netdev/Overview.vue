@@ -158,6 +158,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -174,18 +175,18 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 12px 14px;
 
   &__label {
     font-size: 13px;
-    color: #606266;
+    color: var(--cm-text-regular, @text-regular);
   }
 }
 .plain-tag {
   border: none;
-  color: #fff;
+  color: var(--cm-bg-card, @bg-card);
 }
 .metric-grid {
   display: grid;
@@ -196,19 +197,19 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
   padding: 12px;
 
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 6px;
   }
   &__value {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
 
     small {
       font-size: 12px;

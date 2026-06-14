@@ -110,6 +110,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -119,6 +120,6 @@ export default {
 .mem-text {
   margin-top: 2px;
   font-size: 12px;
-  color: #909399;
+  color: var(--cm-text-secondary, @text-secondary);
 }
 </style>

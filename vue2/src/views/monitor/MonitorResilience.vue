@@ -277,6 +277,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .page-container {
   padding: 16px;
 }
@@ -320,8 +321,8 @@ export default {
     align-items: flex-start;
     padding: 8px 0;
     font-size: 13px;
-    color: #606266;
-    border-bottom: 1px solid #f0f2f5;
+    color: var(--cm-text-regular, @text-regular);
+    border-bottom: 1px solid var(--cm-bg-page, @bg-page);
 
     &:last-child {
       border-bottom: none;

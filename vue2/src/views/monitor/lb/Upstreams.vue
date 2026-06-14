@@ -152,6 +152,7 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
 .stat-row {
   margin-bottom: 4px;
 }
@@ -162,19 +163,19 @@ export default {
   margin-bottom: 14px;
 }
 .ov-item {
-  background: #fafafa;
+  background: var(--cm-bg-muted, @bg-muted);
   border-radius: 6px;
   padding: 10px 12px;
   margin-bottom: 8px;
   &__label {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 6px;
   }
   &__val {
     font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary, @text-primary);
   }
 }
 /deep/ .el-table {
