@@ -1,5 +1,10 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <UnsupportedMask
+      :unsupported="d.supported === false"
+      :reason="d.reason"
+      title="无频谱扫描能力"
+    >
     <SectionCard title="信号趋势" icon="TrendCharts">
       <template #extra>频段 {{ d.band ?? "-" }} · 底噪 {{ d.noiseFloor ?? "-" }} dBm</template>
       <div ref="chartRef" class="trend-chart"></div>
@@ -25,6 +30,7 @@
         </el-table-column>
       </el-table>
     </SectionCard>
+    </UnsupportedMask>
   </div>
 </template>
 
@@ -34,6 +40,7 @@ import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getIotSignal } from "@/api/monitor-iot";
 
 applyChartTheme(echarts);

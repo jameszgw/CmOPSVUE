@@ -1,5 +1,6 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <UnsupportedMask :unsupported="d.supported === false" :reason="d.reason" title="无频谱扫描能力">
     <el-row :gutter="12" class="stat-row">
       <el-col :xs="24" :sm="12" :lg="6">
         <StatCard icon="el-icon-connection" label="频段" :value="val(d.band)"
@@ -37,6 +38,7 @@
         </el-table-column>
       </el-table>
     </SectionCard>
+    </UnsupportedMask>
   </div>
 </template>
 
@@ -46,13 +48,14 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getIotSignal } from "@/api/monitor-iot";
 
 export default {
   name: "IotSignal",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, UnsupportedMask },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
