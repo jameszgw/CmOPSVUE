@@ -28,12 +28,18 @@ defineProps({
   border: 1px solid var(--cm-border-light);
   border-radius: @radius-lg;
   margin-bottom: @space-lg;
+  /* 同行卡片等高：在 el-row(flex) 中拉伸；单列堆叠时父高 auto，height:100% 无副作用 */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 
   &__head {
     display: flex;
     align-items: center;
     padding: @space-md @space-lg;
     border-bottom: 1px solid var(--cm-bg-page);
+    flex-shrink: 0;
   }
 
   &__icon {
@@ -55,6 +61,9 @@ defineProps({
 
   &__body {
     padding: @space-lg;
+    /* 内容区填满卡片剩余高度，便于内部表格/图表占满、必要时内部滚动 */
+    flex: 1;
+    min-height: 0;
   }
 }
 </style>
