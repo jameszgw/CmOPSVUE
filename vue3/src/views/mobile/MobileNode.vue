@@ -92,8 +92,29 @@ const levelText = (l) =>
 // 去掉 image:// 前缀，绑定到 <img :src>
 const iconSrc = (type, color) => nodeSymbol(type, color).replace("image://", "");
 
+// 常见父键中文名
+const PARENT_LABEL = {
+  diskIo: "磁盘IO",
+  netIo: "网络IO",
+  cpu: "CPU",
+  memory: "内存",
+  disk: "磁盘",
+  totalCapacity: "总容量",
+};
+// 常见内层子键中文名
+const INNER_LABEL = {
+  readSpeed: "读速率",
+  writeSpeed: "写速率",
+  readBytes: "读总量",
+  writeBytes: "写总量",
+  upSpeed: "上行速率",
+  downSpeed: "下行速率",
+  totalSent: "上行总量",
+  totalRecv: "下行总量",
+};
+
 // 最小化人性化键名：下划线/驼峰转空格、首字母大写
-const humanize = (key) => {
+const prettify = (key) => {
   if (key == null) return "";
   return String(key)
     .replace(/[_-]+/g, " ")
@@ -102,22 +123,51 @@ const humanize = (key) => {
     .trim()
     .replace(/^./, (c) => c.toUpperCase());
 };
+const humanize = (key) => PARENT_LABEL[key] || prettify(key);
+const innerLabel = (key) => INNER_LABEL[key] || prettify(key);
 
-// 把 metrics 对象转成可渲染的键值列表（值为对象时取 value/unit）
+// 判断对象是否为标量包装（{value/val/current, unit}）
+const hasScalarField = (o) =>
+  o && typeof o === "object" &&
+  (o.value !== undefined || o.val !== undefined || o.current !== undefined);
+
+// 把对象/标量格式化为显示字符串
+const fmtScalar = (raw) => {
+  let value = raw;
+  if (raw && typeof raw === "object") {
+    const v = raw.value ?? raw.val ?? raw.current ?? "-";
+    const unit = raw.unit ?? "";
+    value = unit ? `${v}${unit}` : v;
+  }
+  if (value === undefined || value === null) value = "-";
+  return value;
+};
+
+// 把 metrics 对象转成可渲染的键值列表；
+// 普通对象（无 value/val/current 字段）展开为多条子行：「父label · 子label」
 const metricEntries = computed(() => {
   const m = node.value.metrics;
   if (!m || typeof m !== "object") return [];
-  return Object.keys(m).map((key) => {
+  const rows = [];
+  for (const key of Object.keys(m)) {
     const raw = m[key];
-    let value = raw;
-    if (raw && typeof raw === "object") {
-      const v = raw.value ?? raw.val ?? raw.current ?? "-";
-      const unit = raw.unit ?? "";
-      value = unit ? `${v}${unit}` : v;
+    if (raw && typeof raw === "object" && !Array.isArray(raw) && !hasScalarField(raw)) {
+      // 展开为子行
+      const subKeys = Object.keys(raw);
+      if (subKeys.length) {
+        for (const sk of subKeys) {
+          rows.push({
+            key: `${key}.${sk}`,
+            label: `${humanize(key)} · ${innerLabel(sk)}`,
+            value: fmtScalar(raw[sk]),
+          });
+        }
+        continue;
+      }
     }
-    if (value === undefined || value === null) value = "-";
-    return { key, label: humanize(key), value };
-  });
+    rows.push({ key, label: humanize(key), value: fmtScalar(raw) });
+  }
+  return rows;
 });
 
 const alertList = computed(() =>

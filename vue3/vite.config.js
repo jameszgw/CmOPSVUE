@@ -1,9 +1,41 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      includeAssets: ["icons/pwa-192.png", "icons/pwa-512.png"],
+      manifest: {
+        name: "统一监控平台",
+        short_name: "监控",
+        description: "网络拓扑与监控指标 · 移动端",
+        theme_color: "#1677ff",
+        background_color: "#ffffff",
+        display: "standalone",
+        orientation: "portrait",
+        scope: "/",
+        start_url: "/m/dashboard",
+        icons: [
+          { src: "icons/pwa-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icons/pwa-512.png", sizes: "512x512", type: "image/png" },
+          { src: "icons/pwa-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api/, /^\/sso/, /^\/ws/],
+        runtimeCaching: [
+          { urlPattern: ({ url }) => url.pathname.startsWith("/api/"), handler: "NetworkOnly" },
+        ],
+      },
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

@@ -20,6 +20,38 @@
       </div>
     </div>
 
+    <!-- 搜索 -->
+    <div class="search">
+      <el-input
+        v-model="keyword"
+        placeholder="搜索设备名称 / IP"
+        clearable
+        :prefix-icon="Search"
+      />
+    </div>
+
+    <!-- 设备类型筛选 -->
+    <div class="type-chips">
+      <button
+        type="button"
+        class="type-chip"
+        :class="{ 'type-chip--active': activeType === '' }"
+        @click="activeType = ''"
+      >
+        全部
+      </button>
+      <button
+        v-for="t in typeOptions"
+        :key="t"
+        type="button"
+        class="type-chip"
+        :class="{ 'type-chip--active': activeType === t }"
+        @click="activeType = t"
+      >
+        {{ typeLabel(t) }}
+      </button>
+    </div>
+
     <!-- 分层节点 -->
     <section v-for="layer in groupedLayers" :key="layer.layer" class="layer">
       <div class="layer__head">
@@ -48,13 +80,18 @@
       </button>
     </section>
 
-    <el-empty v-if="!loading && !groupedLayers.length" description="暂无拓扑节点" :image-size="80" />
+    <el-empty
+      v-if="!loading && !groupedLayers.length"
+      :description="isFiltering ? '未找到匹配的设备' : '暂无拓扑节点'"
+      :image-size="80"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+import { Search } from "@element-plus/icons-vue";
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
 import { nodeSymbol, TYPE_LABEL } from "@/utils/topo-symbols";
 
@@ -62,6 +99,8 @@ const router = useRouter();
 const loading = ref(false);
 const graphData = ref({});
 const incidentCount = ref(null);
+const keyword = ref("");
+const activeType = ref("");
 let timer = null;
 
 const graph = computed(() => graphData.value || {});
@@ -82,9 +121,46 @@ const statusText = (s) =>
 // 图标：去掉 image:// 前缀后绑定到 <img :src>
 const iconSrc = (type, color) => nodeSymbol(type, color).replace("image://", "");
 
-// 按 layers 顺序分组节点
+const allNodes = computed(() =>
+  Array.isArray(graph.value.nodes) ? graph.value.nodes : []
+);
+
+// 当前图中出现过的设备类型（去重，保持出现顺序）
+const typeOptions = computed(() => {
+  const seen = new Set();
+  const out = [];
+  for (const n of allNodes.value) {
+    const t = n && n.type;
+    if (t != null && t !== "" && !seen.has(t)) {
+      seen.add(t);
+      out.push(t);
+    }
+  }
+  return out;
+});
+
+const isFiltering = computed(
+  () => activeType.value !== "" || keyword.value.trim() !== ""
+);
+
+// 应用搜索 + 类型筛选
+const filteredNodes = computed(() => {
+  const kw = keyword.value.trim().toLowerCase();
+  const type = activeType.value;
+  return allNodes.value.filter((n) => {
+    if (type && n.type !== type) return false;
+    if (kw) {
+      const name = String(n.name || n.id || "").toLowerCase();
+      const ip = String(n.ip || "").toLowerCase();
+      if (!name.includes(kw) && !ip.includes(kw)) return false;
+    }
+    return true;
+  });
+});
+
+// 按 layers 顺序分组节点（基于筛选后的节点）
 const groupedLayers = computed(() => {
-  const nodes = Array.isArray(graph.value.nodes) ? graph.value.nodes : [];
+  const nodes = filteredNodes.value;
   const layers = Array.isArray(graph.value.layers) ? graph.value.layers : [];
   const byLayer = new Map();
   for (const n of nodes) {
@@ -174,6 +250,41 @@ onBeforeUnmount(() => {
 .chip__label {
   font-size: 11px;
   color: var(--cm-text-secondary);
+}
+
+/* 搜索 */
+.search {
+  margin-top: -2px;
+}
+
+/* 设备类型筛选 chips */
+.type-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  margin: -2px 0;
+}
+.type-chips::-webkit-scrollbar {
+  display: none;
+}
+.type-chip {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  white-space: nowrap;
+  background: var(--cm-bg-card);
+  border: 1px solid var(--cm-border-light);
+  color: var(--cm-text-regular);
+  cursor: pointer;
+}
+.type-chip--active {
+  background: var(--cm-color-primary);
+  border-color: var(--cm-color-primary);
+  color: #fff;
 }
 
 /* 分层 */

@@ -66,6 +66,7 @@ const routes = [
     children: [
       { path: "/m/dashboard", component: () => import("@/views/mobile/MobileDashboard.vue") },
       { path: "/m/topology", component: () => import("@/views/mobile/MobileTopology.vue") },
+      { path: "/m/alerts", component: () => import("@/views/mobile/MobileAlerts.vue") },
       { path: "/m/node/:deviceId", component: () => import("@/views/mobile/MobileNode.vue") },
     ],
   },

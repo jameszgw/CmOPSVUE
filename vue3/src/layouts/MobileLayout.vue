@@ -33,7 +33,7 @@
 <script setup>
 import { computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { ArrowLeft, Odometer, Share } from "@element-plus/icons-vue";
+import { ArrowLeft, Odometer, Share, Bell } from "@element-plus/icons-vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -41,11 +41,13 @@ const route = useRoute();
 const tabs = [
   { path: "/m/dashboard", label: "概览", icon: Odometer },
   { path: "/m/topology", label: "拓扑", icon: Share },
+  { path: "/m/alerts", label: "告警", icon: Bell },
 ];
 
 const TITLES = {
   "/m/dashboard": "监控·移动端",
   "/m/topology": "网络拓扑",
+  "/m/alerts": "告警中心",
 };
 
 // tab 根页面不显示返回箭头；其它页面（如节点详情）显示
