@@ -132,6 +132,7 @@ let timer = null;
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "容器",
   MQ: "消息队列", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+  POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓",
 };
 
 const num = (v) => (v === undefined || v === null ? "-" : v);

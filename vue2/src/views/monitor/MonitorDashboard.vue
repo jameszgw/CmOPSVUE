@@ -125,6 +125,11 @@ const TYPE_LABEL = {
   STORAGE: "存储",
   NETDEV: "网络设备",
   GPU: "GPU",
+  POWER: "电能",
+  ESS: "储能",
+  IOT: "物联",
+  SBC: "单板机",
+  ANDROID: "安卓",
 };
 
 export default {
