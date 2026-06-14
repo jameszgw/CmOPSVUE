@@ -81,9 +81,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import { useChartSkin } from "@/composables/useChartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+
+applyChartTheme(echarts);
 
 const graph = ref({});
 const rootcause = ref({});
@@ -124,7 +128,7 @@ const typeLabel = (t) => TYPE_LABEL[t] || t || "-";
 
 const renderChart = () => {
   if (!chartRef.value) return;
-  if (!chart) chart = echarts.init(chartRef.value);
+  if (!chart) chart = echarts.init(chartRef.value, currentChartTheme());
 
   const nodes = g.value.nodes || [];
   const edges = g.value.edges || [];
@@ -222,6 +226,19 @@ const renderChart = () => {
     true
   );
 };
+
+// Re-create the chart under the current skin theme. Disposes the existing
+// instance and lets renderChart re-init it via currentChartTheme(). Reads the
+// current reactive data only — it does NOT refetch.
+const rerenderChart = () => {
+  if (chart) {
+    chart.dispose();
+    chart = null;
+  }
+  renderChart();
+};
+
+useChartSkin(rerenderChart);
 
 const load = async () => {
   try {

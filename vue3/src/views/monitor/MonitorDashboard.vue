@@ -107,9 +107,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import { useChartSkin } from "@/composables/useChartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getDashboardSummary } from "@/api/monitor-dashboard";
+
+applyChartTheme(echarts);
 
 const loading = ref(false);
 const data = ref({});
@@ -161,7 +165,7 @@ const resourceRows = computed(() => {
 
 const renderGauge = () => {
   if (!gaugeRef.value) return;
-  if (!gaugeChart) gaugeChart = echarts.init(gaugeRef.value);
+  if (!gaugeChart) gaugeChart = echarts.init(gaugeRef.value, currentChartTheme());
   const score = Number(d.value.healthScore) || 0;
   gaugeChart.setOption({
     series: [
@@ -203,7 +207,7 @@ const renderGauge = () => {
 
 const renderPie = () => {
   if (!pieRef.value) return;
-  if (!pieChart) pieChart = echarts.init(pieRef.value);
+  if (!pieChart) pieChart = echarts.init(pieRef.value, currentChartTheme());
   const byType = ds.value.byType || {};
   const items = Object.keys(byType)
     .filter((k) => Number(byType[k]) > 0)
@@ -228,7 +232,7 @@ const renderPie = () => {
 
 const renderTrend = () => {
   if (!trendRef.value) return;
-  if (!trendChart) trendChart = echarts.init(trendRef.value);
+  if (!trendChart) trendChart = echarts.init(trendRef.value, currentChartTheme());
   const t = as.value.trend || {};
   trendChart.setOption({
     tooltip: { trigger: "axis" },
@@ -250,6 +254,24 @@ const renderAll = () => {
   renderPie();
   renderTrend();
 };
+
+const rerenderAllCharts = () => {
+  if (gaugeChart) {
+    gaugeChart.dispose();
+    gaugeChart = null;
+  }
+  if (pieChart) {
+    pieChart.dispose();
+    pieChart = null;
+  }
+  if (trendChart) {
+    trendChart.dispose();
+    trendChart = null;
+  }
+  renderAll();
+};
+
+useChartSkin(rerenderAllCharts);
 
 const resizeAll = () => {
   gaugeChart && gaugeChart.resize();

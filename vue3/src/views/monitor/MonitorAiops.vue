@@ -117,6 +117,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
+import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
+import { useChartSkin } from "@/composables/useChartSkin";
+applyChartTheme(echarts);
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getAiopsAnomalies, getAiopsCost } from "@/api/monitor-aiops";
@@ -172,7 +175,7 @@ let chart = null;
 
 const renderChart = () => {
   if (!chartRef.value) return;
-  if (!chart) chart = echarts.init(chartRef.value);
+  if (!chart) chart = echarts.init(chartRef.value, currentChartTheme());
   const f = cost.value.forecast || {};
   chart.setOption({
     tooltip: { trigger: "axis" },
@@ -188,6 +191,15 @@ const renderChart = () => {
     ],
   });
 };
+
+const rerenderAllCharts = () => {
+  if (chart) {
+    chart.dispose();
+    chart = null;
+  }
+  renderChart();
+};
+useChartSkin(rerenderAllCharts);
 
 const loadAnomalies = async () => {
   anomalyLoading.value = true;
