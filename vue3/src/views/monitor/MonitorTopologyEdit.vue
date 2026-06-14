@@ -326,6 +326,7 @@ import {
   saveTopoGraph,
 } from "@/api/monitor-topology";
 import { listDevices } from "@/api/monitor-device";
+import { nodeSymbol } from "@/utils/topo-symbols";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
 
@@ -444,22 +445,16 @@ const renderChart = () => {
 
   const chartNodes = nodeList.map((n, idx) => {
     const isVirtual = n.type === "VIRTUAL" || n.type === "INTERNET";
+    const color = isVirtual ? "#909399" : STATUS_COLOR[n.status] || "#67c23a";
+    const selected = selectedNode.value && selectedNode.value.id === n.id;
     return {
       id: String(n.id),
       name: n.name,
       x: n.x ?? (idx % 5) * 160 + 80,
       y: n.y ?? Math.floor(idx / 5) * 160 + 80,
-      symbol: isVirtual ? "rect" : "circle",
-      symbolSize: 46,
-      itemStyle: {
-        color: isVirtual ? "#909399" : STATUS_COLOR[n.status] || "#67c23a",
-        borderColor:
-          selectedNode.value && selectedNode.value.id === n.id
-            ? "#409eff"
-            : "transparent",
-        borderWidth:
-          selectedNode.value && selectedNode.value.id === n.id ? 4 : 0,
-      },
+      symbol: nodeSymbol(n.type, color),
+      // 选中节点放大以突出（image 符号无法用 border 高亮）
+      symbolSize: selected ? 54 : 40,
       label: { show: true },
       _meta: n,
     };
