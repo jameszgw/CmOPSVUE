@@ -39,7 +39,7 @@
       </div>
       <el-empty v-if="!alertList.length" description="暂无告警" :image-size="60" />
       <div v-else class="alert-list">
-        <div v-for="(a, i) in alertList" :key="a.id ?? i" class="alert">
+        <div v-for="(a, i) in alertList" :key="a.id != null ? a.id : i" class="alert">
           <span class="alert__bar" :style="{ background: levelColor(a.level || a.severity) }"></span>
           <div class="alert__main">
             <div class="alert__head">
@@ -57,40 +57,9 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { useRoute } from "vue-router";
+<script>
 import { getTopoNodeMetrics } from "@/api/monitor-topology";
 import { nodeSymbol, TYPE_LABEL } from "@/utils/topo-symbols";
-
-const route = useRoute();
-const loading = ref(false);
-const data = ref({});
-let timer = null;
-
-const deviceId = computed(() => route.params.deviceId);
-const node = computed(() => data.value || {});
-
-const typeLabel = (t) => TYPE_LABEL[t] || t || "-";
-
-const statusColor = (s) =>
-  s === "critical" ? "#f56c6c" : s === "warning" ? "#e6a23c" : "#67c23a";
-const softColor = (s) =>
-  s === "critical"
-    ? "var(--cm-danger-soft)"
-    : s === "warning"
-    ? "var(--cm-warning-soft)"
-    : "var(--cm-success-soft)";
-const statusText = (s) =>
-  s === "critical" ? "严重" : s === "warning" ? "警告" : "健康";
-
-const levelColor = (l) =>
-  l === "critical" ? "#f56c6c" : l === "warning" ? "#e6a23c" : "#67c23a";
-const levelText = (l) =>
-  l === "critical" ? "严重" : l === "warning" ? "警告" : "正常";
-
-// 去掉 image:// 前缀，绑定到 <img :src>
-const iconSrc = (type, color) => nodeSymbol(type, color).replace("image://", "");
 
 // 常见父键中文名
 const PARENT_LABEL = {
@@ -114,7 +83,7 @@ const INNER_LABEL = {
 };
 
 // 最小化人性化键名：下划线/驼峰转空格、首字母大写
-const prettify = (key) => {
+function prettify(key) {
   if (key == null) return "";
   return String(key)
     .replace(/[_-]+/g, " ")
@@ -122,85 +91,135 @@ const prettify = (key) => {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^./, (c) => c.toUpperCase());
-};
-const humanize = (key) => PARENT_LABEL[key] || prettify(key);
-const innerLabel = (key) => INNER_LABEL[key] || prettify(key);
+}
 
-// 判断对象是否为标量包装（{value/val/current, unit}）
-const hasScalarField = (o) =>
-  o && typeof o === "object" &&
-  (o.value !== undefined || o.val !== undefined || o.current !== undefined);
-
-// 把对象/标量格式化为显示字符串
-const fmtScalar = (raw) => {
-  let value = raw;
-  if (raw && typeof raw === "object") {
-    const v = raw.value ?? raw.val ?? raw.current ?? "-";
-    const unit = raw.unit ?? "";
-    value = unit ? `${v}${unit}` : v;
-  }
-  if (value === undefined || value === null) value = "-";
-  return value;
-};
-
-// 把 metrics 对象转成可渲染的键值列表；
-// 普通对象（无 value/val/current 字段）展开为多条子行：「父label · 子label」
-const metricEntries = computed(() => {
-  const m = node.value.metrics;
-  if (!m || typeof m !== "object") return [];
-  const rows = [];
-  for (const key of Object.keys(m)) {
-    const raw = m[key];
-    if (raw && typeof raw === "object" && !Array.isArray(raw) && !hasScalarField(raw)) {
-      // 展开为子行
-      const subKeys = Object.keys(raw);
-      if (subKeys.length) {
-        for (const sk of subKeys) {
-          rows.push({
-            key: `${key}.${sk}`,
-            label: `${humanize(key)} · ${innerLabel(sk)}`,
-            value: fmtScalar(raw[sk]),
-          });
+export default {
+  name: "MobileNode",
+  data() {
+    return {
+      loading: false,
+      data: {},
+      timer: null,
+    };
+  },
+  computed: {
+    deviceId() {
+      return this.$route.params.deviceId;
+    },
+    node() {
+      return this.data || {};
+    },
+    // 把 metrics 对象转成可渲染的键值列表；
+    // 普通对象（无 value/val/current 字段）展开为多条子行：「父label · 子label」
+    metricEntries() {
+      const m = this.node.metrics;
+      if (!m || typeof m !== "object") return [];
+      const rows = [];
+      for (const key of Object.keys(m)) {
+        const raw = m[key];
+        if (raw && typeof raw === "object" && !Array.isArray(raw) && !this.hasScalarField(raw)) {
+          // 展开为子行
+          const subKeys = Object.keys(raw);
+          if (subKeys.length) {
+            for (const sk of subKeys) {
+              rows.push({
+                key: key + "." + sk,
+                label: this.humanize(key) + " · " + this.innerLabel(sk),
+                value: this.fmtScalar(raw[sk]),
+              });
+            }
+            continue;
+          }
         }
-        continue;
+        rows.push({ key, label: this.humanize(key), value: this.fmtScalar(raw) });
       }
-    }
-    rows.push({ key, label: humanize(key), value: fmtScalar(raw) });
-  }
-  return rows;
-});
-
-const alertList = computed(() =>
-  Array.isArray(node.value.alerts) ? node.value.alerts : []
-);
-
-const load = async (silent = false) => {
-  const id = deviceId.value;
-  if (id == null) return;
-  if (!silent) loading.value = true;
-  try {
-    const res = await getTopoNodeMetrics(id);
-    data.value = (res && res.content) || {};
-  } catch (e) {
-    /* null-safe：保留旧数据 */
-  } finally {
-    loading.value = false;
-  }
+      return rows;
+    },
+    alertList() {
+      return Array.isArray(this.node.alerts) ? this.node.alerts : [];
+    },
+  },
+  watch: {
+    "$route.params.deviceId"() {
+      this.data = {};
+      this.load();
+    },
+  },
+  mounted() {
+    this.load();
+    this.timer = setInterval(() => this.load(true), 10000);
+  },
+  beforeDestroy() {
+    if (this.timer) clearInterval(this.timer);
+    this.timer = null;
+  },
+  methods: {
+    typeLabel(t) {
+      return TYPE_LABEL[t] || t || "-";
+    },
+    statusColor(s) {
+      return s === "critical" ? "#f56c6c" : s === "warning" ? "#e6a23c" : "#67c23a";
+    },
+    softColor(s) {
+      return s === "critical"
+        ? "var(--cm-danger-soft)"
+        : s === "warning"
+        ? "var(--cm-warning-soft)"
+        : "var(--cm-success-soft)";
+    },
+    statusText(s) {
+      return s === "critical" ? "严重" : s === "warning" ? "警告" : "健康";
+    },
+    levelColor(l) {
+      return l === "critical" ? "#f56c6c" : l === "warning" ? "#e6a23c" : "#67c23a";
+    },
+    levelText(l) {
+      return l === "critical" ? "严重" : l === "warning" ? "警告" : "正常";
+    },
+    // 去掉 image:// 前缀，绑定到 <img :src>
+    iconSrc(type, color) {
+      return nodeSymbol(type, color).replace("image://", "");
+    },
+    humanize(key) {
+      return PARENT_LABEL[key] || prettify(key);
+    },
+    innerLabel(key) {
+      return INNER_LABEL[key] || prettify(key);
+    },
+    // 判断对象是否为标量包装（{value/val/current, unit}）
+    hasScalarField(o) {
+      return (
+        o &&
+        typeof o === "object" &&
+        (o.value !== undefined || o.val !== undefined || o.current !== undefined)
+      );
+    },
+    // 把对象/标量格式化为显示字符串
+    fmtScalar(raw) {
+      let value = raw;
+      if (raw && typeof raw === "object") {
+        const v = raw.value != null ? raw.value : raw.val != null ? raw.val : raw.current != null ? raw.current : "-";
+        const unit = raw.unit != null ? raw.unit : "";
+        value = unit ? "" + v + unit : v;
+      }
+      if (value === undefined || value === null) value = "-";
+      return value;
+    },
+    async load(silent) {
+      const id = this.deviceId;
+      if (id == null) return;
+      if (!silent) this.loading = true;
+      try {
+        const res = await getTopoNodeMetrics(id);
+        this.data = (res && res.content) || {};
+      } catch (e) {
+        /* null-safe：保留旧数据 */
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
 };
-
-onMounted(() => {
-  load();
-  timer = setInterval(() => load(true), 10000);
-});
-// 同一布局下切换不同节点时重新加载
-watch(deviceId, () => {
-  data.value = {};
-  load();
-});
-onBeforeUnmount(() => {
-  if (timer) clearInterval(timer);
-  timer = null;
-});
 </script>
 
 <style scoped>

@@ -61,6 +61,18 @@ const routes = [
       { path: "/devops/system/about", component: () => import("@/views/system/About.vue") },
     ],
   },
+  // ===== 移动端（只读，独立于 BasicLayout） =====
+  {
+    path: "/m",
+    component: () => import("@/layouts/MobileLayout.vue"),
+    redirect: "/m/dashboard",
+    children: [
+      { path: "/m/dashboard", component: () => import("@/views/mobile/MobileDashboard.vue") },
+      { path: "/m/topology", component: () => import("@/views/mobile/MobileTopology.vue") },
+      { path: "/m/alerts", component: () => import("@/views/mobile/MobileAlerts.vue") },
+      { path: "/m/node/:deviceId", component: () => import("@/views/mobile/MobileNode.vue") },
+    ],
+  },
   { path: "/403", component: () => import("@/views/system/NotAuthorized.vue") },
   { path: "*", component: () => import("@/views/system/NotFound.vue") },
 ];
@@ -74,6 +86,11 @@ const router = new VueRouter({
 const WHITE_LIST = ["/", "/403"];
 
 router.beforeEach(async (to, from, next) => {
+  // 移动端为公开只读视图，不走桌面端菜单权限校验
+  if (to.path === "/m" || to.path.startsWith("/m/")) {
+    next();
+    return;
+  }
   if (WHITE_LIST.includes(to.path) || to.matched.length === 0) {
     next();
     return;

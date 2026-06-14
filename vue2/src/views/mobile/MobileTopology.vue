@@ -22,12 +22,7 @@
 
     <!-- 搜索 -->
     <div class="search">
-      <el-input
-        v-model="keyword"
-        placeholder="搜索设备名称 / IP"
-        clearable
-        :prefix-icon="Search"
-      />
+      <el-input v-model="keyword" placeholder="搜索设备名称 / IP" clearable prefix-icon="el-icon-search" />
     </div>
 
     <!-- 设备类型筛选 -->
@@ -88,136 +83,145 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
-import { Search } from "@element-plus/icons-vue";
+<script>
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
 import { nodeSymbol, TYPE_LABEL } from "@/utils/topo-symbols";
 
-const router = useRouter();
-const loading = ref(false);
-const graphData = ref({});
-const incidentCount = ref(null);
-const keyword = ref("");
-const activeType = ref("");
-let timer = null;
-
-const graph = computed(() => graphData.value || {});
-const num = (v) => (v === undefined || v === null ? "-" : v);
-const typeLabel = (t) => TYPE_LABEL[t] || t || "-";
-
-const statusColor = (s) =>
-  s === "critical" ? "#f56c6c" : s === "warning" ? "#e6a23c" : "#67c23a";
-const softColor = (s) =>
-  s === "critical"
-    ? "var(--cm-danger-soft)"
-    : s === "warning"
-    ? "var(--cm-warning-soft)"
-    : "var(--cm-success-soft)";
-const statusText = (s) =>
-  s === "critical" ? "严重" : s === "warning" ? "警告" : "健康";
-
-// 图标：去掉 image:// 前缀后绑定到 <img :src>
-const iconSrc = (type, color) => nodeSymbol(type, color).replace("image://", "");
-
-const allNodes = computed(() =>
-  Array.isArray(graph.value.nodes) ? graph.value.nodes : []
-);
-
-// 当前图中出现过的设备类型（去重，保持出现顺序）
-const typeOptions = computed(() => {
-  const seen = new Set();
-  const out = [];
-  for (const n of allNodes.value) {
-    const t = n && n.type;
-    if (t != null && t !== "" && !seen.has(t)) {
-      seen.add(t);
-      out.push(t);
-    }
-  }
-  return out;
-});
-
-const isFiltering = computed(
-  () => activeType.value !== "" || keyword.value.trim() !== ""
-);
-
-// 应用搜索 + 类型筛选
-const filteredNodes = computed(() => {
-  const kw = keyword.value.trim().toLowerCase();
-  const type = activeType.value;
-  return allNodes.value.filter((n) => {
-    if (type && n.type !== type) return false;
-    if (kw) {
-      const name = String(n.name || n.id || "").toLowerCase();
-      const ip = String(n.ip || "").toLowerCase();
-      if (!name.includes(kw) && !ip.includes(kw)) return false;
-    }
-    return true;
-  });
-});
-
-// 按 layers 顺序分组节点（基于筛选后的节点）
-const groupedLayers = computed(() => {
-  const nodes = filteredNodes.value;
-  const layers = Array.isArray(graph.value.layers) ? graph.value.layers : [];
-  const byLayer = new Map();
-  for (const n of nodes) {
-    const key = n.layer != null ? n.layer : "_";
-    if (!byLayer.has(key)) byLayer.set(key, { layer: key, layerName: n.layerName || "未分层", nodes: [] });
-    byLayer.get(key).nodes.push(n);
-  }
-  // 优先采用 layers 定义的顺序
-  if (layers.length) {
-    const ordered = [];
-    const seen = new Set();
-    for (const l of layers) {
-      const key = l.layer != null ? l.layer : l.id != null ? l.id : l;
-      const g = byLayer.get(key);
-      if (g) {
-        if (l.layerName || l.name) g.layerName = l.layerName || l.name;
-        ordered.push(g);
-        seen.add(key);
+export default {
+  name: "MobileTopology",
+  data() {
+    return {
+      loading: false,
+      graphData: {},
+      incidentCount: null,
+      keyword: "",
+      activeType: "",
+      timer: null,
+    };
+  },
+  computed: {
+    graph() {
+      return this.graphData || {};
+    },
+    allNodes() {
+      return Array.isArray(this.graph.nodes) ? this.graph.nodes : [];
+    },
+    // 当前图中出现过的设备类型（去重，保持出现顺序）
+    typeOptions() {
+      const seen = new Set();
+      const out = [];
+      for (const n of this.allNodes) {
+        const t = n && n.type;
+        if (t != null && t !== "" && !seen.has(t)) {
+          seen.add(t);
+          out.push(t);
+        }
       }
-    }
-    for (const [key, g] of byLayer) if (!seen.has(key)) ordered.push(g);
-    return ordered;
-  }
-  return Array.from(byLayer.values());
-});
-
-const openNode = (node) => {
-  if (node && node.id != null) router.push("/m/node/" + node.id);
+      return out;
+    },
+    isFiltering() {
+      return this.activeType !== "" || this.keyword.trim() !== "";
+    },
+    // 应用搜索 + 类型筛选
+    filteredNodes() {
+      const kw = this.keyword.trim().toLowerCase();
+      const type = this.activeType;
+      return this.allNodes.filter((n) => {
+        if (type && n.type !== type) return false;
+        if (kw) {
+          const name = String(n.name || n.id || "").toLowerCase();
+          const ip = String(n.ip || "").toLowerCase();
+          if (name.indexOf(kw) === -1 && ip.indexOf(kw) === -1) return false;
+        }
+        return true;
+      });
+    },
+    // 按 layers 顺序分组节点（基于筛选后的节点）
+    groupedLayers() {
+      const nodes = this.filteredNodes;
+      const layers = Array.isArray(this.graph.layers) ? this.graph.layers : [];
+      const byLayer = new Map();
+      for (const n of nodes) {
+        const key = n.layer != null ? n.layer : "_";
+        if (!byLayer.has(key)) {
+          byLayer.set(key, { layer: key, layerName: n.layerName || "未分层", nodes: [] });
+        }
+        byLayer.get(key).nodes.push(n);
+      }
+      // 优先采用 layers 定义的顺序
+      if (layers.length) {
+        const ordered = [];
+        const seen = new Set();
+        for (const l of layers) {
+          const key = l.layer != null ? l.layer : l.id != null ? l.id : l;
+          const g = byLayer.get(key);
+          if (g) {
+            if (l.layerName || l.name) g.layerName = l.layerName || l.name;
+            ordered.push(g);
+            seen.add(key);
+          }
+        }
+        for (const [key, g] of byLayer) if (!seen.has(key)) ordered.push(g);
+        return ordered;
+      }
+      return Array.from(byLayer.values());
+    },
+  },
+  mounted() {
+    this.load();
+    this.timer = setInterval(() => this.load(true), 10000);
+  },
+  beforeDestroy() {
+    if (this.timer) clearInterval(this.timer);
+    this.timer = null;
+  },
+  methods: {
+    num(v) {
+      return v === undefined || v === null ? "-" : v;
+    },
+    typeLabel(t) {
+      return TYPE_LABEL[t] || t || "-";
+    },
+    statusColor(s) {
+      return s === "critical" ? "#f56c6c" : s === "warning" ? "#e6a23c" : "#67c23a";
+    },
+    softColor(s) {
+      return s === "critical"
+        ? "var(--cm-danger-soft)"
+        : s === "warning"
+        ? "var(--cm-warning-soft)"
+        : "var(--cm-success-soft)";
+    },
+    statusText(s) {
+      return s === "critical" ? "严重" : s === "warning" ? "警告" : "健康";
+    },
+    // 图标：去掉 image:// 前缀后绑定到 <img :src>
+    iconSrc(type, color) {
+      return nodeSymbol(type, color).replace("image://", "");
+    },
+    openNode(node) {
+      if (node && node.id != null) this.$router.push("/m/node/" + node.id);
+    },
+    async load(silent) {
+      if (!silent) this.loading = true;
+      try {
+        const res = await getTopologyGraph();
+        this.graphData = (res && res.content) || {};
+      } catch (e) {
+        /* null-safe */
+      } finally {
+        this.loading = false;
+      }
+      try {
+        const rc = await getTopologyRootCause();
+        const c = rc && rc.content;
+        this.incidentCount = c && c.incidentCount != null ? c.incidentCount : null;
+      } catch (e) {
+        this.incidentCount = null;
+      }
+    },
+  },
 };
-
-const load = async (silent = false) => {
-  if (!silent) loading.value = true;
-  try {
-    const res = await getTopologyGraph();
-    graphData.value = (res && res.content) || {};
-  } catch (e) {
-    /* null-safe */
-  } finally {
-    loading.value = false;
-  }
-  try {
-    const rc = await getTopologyRootCause();
-    const c = rc && rc.content;
-    incidentCount.value = c && c.incidentCount != null ? c.incidentCount : null;
-  } catch (e) {
-    incidentCount.value = null;
-  }
-};
-
-onMounted(() => {
-  load();
-  timer = setInterval(() => load(true), 10000);
-});
-onBeforeUnmount(() => {
-  if (timer) clearInterval(timer);
-  timer = null;
-});
 </script>
 
 <style scoped>
