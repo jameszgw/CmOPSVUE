@@ -1,11 +1,6 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <template v-if="!d.supported">
-      <SectionCard title="电池" icon="Lightning">
-        <el-empty :description="d.note || '该设备不支持电池监控'" />
-      </SectionCard>
-    </template>
-    <template v-else>
+    <UnsupportedMask :unsupported="!d.supported" :reason="d.note" title="该电源无电池">
       <el-row :gutter="12" class="stat-row">
         <el-col :xs="24" :sm="12" :lg="6">
           <StatCard icon="Lightning" label="电量" :value="`${num(d.soc)}%`"
@@ -26,7 +21,7 @@
       <SectionCard title="电池详情" icon="InfoFilled">
         <InfoTable :rows="detailRows" :columns="2" />
       </SectionCard>
-    </template>
+    </UnsupportedMask>
   </div>
 </template>
 
@@ -35,6 +30,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getPowerBattery } from "@/api/monitor-power";
 
 const props = defineProps({

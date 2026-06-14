@@ -86,6 +86,7 @@ import { useChartSkin } from "@/composables/useChartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+import { nodeSymbol } from "@/utils/topo-symbols";
 
 applyChartTheme(echarts);
 
@@ -153,7 +154,8 @@ const renderChart = () => {
         name: n.name,
         x,
         y,
-        symbolSize: 46,
+        symbol: nodeSymbol(n.type, STATUS_COLOR[n.status] || "#67c23a"),
+        symbolSize: 40,
         category: STATUS_CAT[n.status] ?? 0,
         itemStyle: { color: STATUS_COLOR[n.status] || "#67c23a" },
         label: { show: true },

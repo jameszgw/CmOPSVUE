@@ -260,6 +260,7 @@ import {
   getTopoNodeMetrics,
   saveTopoGraph,
 } from "@/api/monitor-topology";
+import { nodeSymbol } from "@/utils/topo-symbols";
 
 const TYPE_LABEL = {
   SERVER: "服务器",
@@ -643,14 +644,18 @@ export default {
       const nodes = this.graph.nodes || [];
       return nodes.map((n, idx) => {
         const status = n.status || "healthy";
+        const isVirtual = n.type === "VIRTUAL" || n.type === "INTERNET";
+        const color = isVirtual ? "#909399" : STATUS_COLOR[status] || "#67c23a";
+        const selected = this.selectedNodeId != null && n.id === this.selectedNodeId;
         return {
           id: n.id,
           name: n.name,
           x: n.x === undefined || n.x === null ? (idx % 6) * 160 : n.x,
           y: n.y === undefined || n.y === null ? Math.floor(idx / 6) * 140 : n.y,
-          symbolSize: 46,
+          symbol: nodeSymbol(n.type, color),
+          // 选中节点放大以突出（image 符号无法用 border 高亮）
+          symbolSize: selected ? 54 : 40,
           category: STATUS_INDEX[status] === undefined ? 0 : STATUS_INDEX[status],
-          itemStyle: { color: STATUS_COLOR[status] || "#67c23a" },
           label: { show: true },
           _raw: n,
         };
@@ -727,6 +732,8 @@ export default {
         const n = (params.data && params.data._raw) || {};
         this.selectedNodeId = params.data && params.data.id;
         this.selectedEdgeId = null;
+        // 重新渲染以放大选中节点（image 符号无 border 高亮）
+        this.renderChart();
         if (n.deviceId) {
           this.openNodeDetail(n);
         }
