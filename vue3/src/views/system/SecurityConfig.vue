@@ -129,7 +129,7 @@ onMounted(() => {
 <style lang="less" scoped>
 .security-config-container {
   padding: 24px;
-  background: #fff;
+  background: var(--cm-bg-card);
   border-radius: 4px;
 
   h1 {

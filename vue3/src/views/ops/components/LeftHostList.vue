@@ -94,10 +94,10 @@ onMounted(() => {
     .host-item {
       padding: 8px 12px;
       cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--cm-border-lighter);
 
       &.selected {
-        background-color: #f0f0f0;
+        background-color: var(--cm-border-lighter);
       }
 
       .host-name {

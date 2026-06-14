@@ -186,8 +186,7 @@ export default {
     display: flex;
     gap: @space-sm;
     padding: @space-md;
-    // 浅色保持原值 #f0f2f5；深色跟随边框
-    border-bottom: 1px solid #f0f2f5;
+    border-bottom: 1px solid var(--cm-border-light, @border-light);
   }
 
   &__nav {
@@ -213,7 +212,7 @@ export default {
     }
 
     &.active {
-      background: #ecf5ff;
+      background: var(--cm-active-soft, #ecf5ff);
       color: var(--cm-color-primary, @color-primary);
       font-weight: 500;
     }
@@ -270,15 +269,6 @@ export default {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-  }
-}
-
-[data-theme="dark"] .monitor-layout {
-  &__search {
-    border-bottom-color: var(--cm-border-light);
-  }
-  &__nav-item.active {
-    background: rgba(64, 158, 255, 0.16);
   }
 }
 </style>

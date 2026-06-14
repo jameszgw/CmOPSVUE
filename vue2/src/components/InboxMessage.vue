@@ -151,7 +151,7 @@ export default {
 .message-list-wrapper {
   .message-toolbar {
     padding: 8px 24px 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--cm-border-lighter);
     display: flex;
     justify-content: space-between;
   }
@@ -170,7 +170,7 @@ export default {
     padding: 12px 24px;
     transition: all 0.3s;
     cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--cm-border-lighter);
 
     &.unread {
       background-color: #f0f7ff;

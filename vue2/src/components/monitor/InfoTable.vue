@@ -47,35 +47,35 @@ export default {
   font-size: 13px;
 
   td {
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--cm-border-light);
     padding: 9px 12px;
   }
 
   &__label {
-    background: #fafafa;
-    color: #606266;
+    background: var(--cm-bg-muted);
+    color: var(--cm-text-regular);
     width: 160px;
     white-space: nowrap;
   }
 
   &__value {
-    color: #303133;
+    color: var(--cm-text-primary);
     word-break: break-all;
   }
 
   &__tag {
     margin-left: 8px;
-    color: #909399;
+    color: var(--cm-text-secondary);
     font-size: 12px;
   }
 
   &__pad {
-    background: #fff;
+    background: var(--cm-bg-card);
     border-color: transparent;
   }
 
   tr:hover td:not(.info-table__pad) {
-    background: #f5f7fa;
+    background: var(--cm-bg-soft);
   }
 }
 </style>

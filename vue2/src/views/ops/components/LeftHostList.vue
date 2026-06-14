@@ -86,15 +86,15 @@ export default {
 
 .host-item {
   padding: 10px 12px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--cm-border-light);
   cursor: pointer;
 
   &:hover {
-    background-color: #f5f7fa;
+    background-color: var(--cm-bg-soft);
   }
 
   &.is-selected {
-    background-color: #f0f0f0;
+    background-color: var(--cm-border-lighter);
   }
 
   .host-item-title {
@@ -104,7 +104,7 @@ export default {
 
   .host-item-desc {
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 }
 </style>
