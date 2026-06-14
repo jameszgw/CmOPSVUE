@@ -38,6 +38,15 @@
           </el-menu>
         </div>
         <div class="header-right">
+          <el-button
+            class="skin-toggle"
+            circle
+            text
+            :title="isDark ? '切换浅色' : '切换深色'"
+            @click="toggleSkin"
+          >
+            <el-icon><component :is="isDark ? 'Sunny' : 'Moon'" /></el-icon>
+          </el-button>
           <el-dropdown @command="handleUserCommand">
             <span class="user-info">
               <el-avatar
@@ -70,6 +79,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/store/user";
+import { getSkin, setSkin } from "@/utils/skin";
 
 // 后端菜单 icon 为 antd 图标名，这里映射到 Element Plus 图标组件名
 const ICON_MAP = {
@@ -90,6 +100,13 @@ const userStore = useUserStore();
 
 const loading = ref(true);
 const menuLoaded = ref(false);
+
+const isDark = ref(getSkin() === "dark");
+const toggleSkin = () => {
+  const next = isDark.value ? "light" : "dark";
+  setSkin(next);
+  isDark.value = next === "dark";
+};
 
 const menuTree = computed(() => userStore.menu?.menuTree || []);
 const activePath = computed(() => route.path);
@@ -127,6 +144,8 @@ onMounted(async () => {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .basic-layout {
   height: 100vh;
 }
@@ -139,8 +158,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #ebeef5;
-  background: #fff;
+  border-bottom: 1px solid var(--cm-border-light);
+  background: var(--cm-bg-card);
 
   .header-left {
     display: flex;
@@ -163,13 +182,21 @@ onMounted(async () => {
   }
 
   .header-right {
+    display: flex;
+    align-items: center;
+
+    .skin-toggle {
+      margin-right: @space-md;
+      color: var(--cm-text-regular);
+    }
+
     .user-info {
       display: flex;
       align-items: center;
       cursor: pointer;
 
       .user-name {
-        margin-left: 8px;
+        margin-left: @space-sm;
       }
     }
   }
@@ -186,7 +213,7 @@ onMounted(async () => {
   justify-content: center;
   color: #999;
   font-size: 12px;
-  background: #fff;
-  border-top: 1px solid #ebeef5;
+  background: var(--cm-bg-card);
+  border-top: 1px solid var(--cm-border-light);
 }
 </style>

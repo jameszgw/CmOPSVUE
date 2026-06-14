@@ -1,0 +1,56 @@
+// =============================================================
+// Reusable LESS mixins. 依赖 variables.less 的 token。
+// =============================================================
+@import (reference) "./variables.less";
+
+// 卡片表面：背景、圆角、浅边框、阴影。
+// 运行时跟随皮肤（var(--cm-*)），编译期回退到 token。
+.cm-card() {
+  background: var(--cm-bg-card, @bg-card);
+  border: 1px solid var(--cm-border-light, @border-light);
+  border-radius: @radius-lg;
+  box-shadow: @shadow-card;
+}
+
+// 主题化滚动条
+.cm-scrollbar() {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--cm-border-base, @border-base);
+    border-radius: @radius-sm;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--cm-text-placeholder, @text-placeholder);
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+// 单行省略
+.cm-ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 两端对齐的 flex 行
+.cm-flex-between() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 监控语义状态色：.status-color(critical) 等
+.status-color(@s) when (@s = healthy) {
+  color: @status-healthy;
+}
+.status-color(@s) when (@s = warning) {
+  color: @status-warning;
+}
+.status-color(@s) when (@s = critical) {
+  color: @status-critical;
+}

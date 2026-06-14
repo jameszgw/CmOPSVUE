@@ -16,6 +16,7 @@ const routes = [
       // ===== 系统监控 =====
       { path: "/devops/monitor/dashboard", component: () => import("@/views/monitor/MonitorDashboard.vue") },
       { path: "/devops/monitor/topology", component: () => import("@/views/monitor/MonitorTopology.vue") },
+      { path: "/devops/monitor/topology-edit", component: () => import("@/views/monitor/MonitorTopologyEdit.vue") },
       { path: "/devops/monitor/server", component: () => import("@/views/monitor/MonitorServer.vue") },
       { path: "/devops/monitor/redis", component: () => import("@/views/monitor/MonitorRedis.vue") },
       { path: "/devops/monitor/database", component: () => import("@/views/monitor/MonitorDatabase.vue") },

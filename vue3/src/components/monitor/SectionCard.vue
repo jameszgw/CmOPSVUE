@@ -21,38 +21,40 @@ defineProps({
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .section-card {
-  background: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  background: var(--cm-bg-card);
+  border: 1px solid var(--cm-border-light);
+  border-radius: @radius-lg;
+  margin-bottom: @space-lg;
 
   &__head {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f2f5;
+    padding: @space-md @space-lg;
+    border-bottom: 1px solid var(--cm-bg-page);
   }
 
   &__icon {
-    color: #409eff;
-    margin-right: 8px;
+    color: var(--cm-color-primary);
+    margin-right: @space-sm;
   }
 
   &__title {
     font-size: 14px;
     font-weight: 600;
-    color: #303133;
+    color: var(--cm-text-primary);
   }
 
   &__extra {
     margin-left: auto;
     font-size: 12px;
-    color: #909399;
+    color: var(--cm-text-secondary);
   }
 
   &__body {
-    padding: 16px;
+    padding: @space-lg;
   }
 }
 </style>

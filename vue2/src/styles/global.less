@@ -1,3 +1,8 @@
+@import "./variables.less";
+@import "./mixins.less";
+@import "./skin.less";
+
+// ---- resets ----
 html,
 body {
   padding: 0;
@@ -12,6 +17,24 @@ body {
   height: 100vh;
 }
 
+body {
+  background: var(--cm-bg-page, @bg-page);
+  color: var(--cm-text-primary, @text-primary);
+}
+
+// ---- 全局滚动条 ----
+html {
+  .cm-scrollbar();
+}
+
+// ---- 页面通用容器 / 标题（各页面重复的内联样式收敛到这里）----
 .page-container {
-  padding: 16px;
+  padding: @space-lg;
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cm-text-primary, @text-primary);
+  margin: 0 0 @space-lg;
 }
