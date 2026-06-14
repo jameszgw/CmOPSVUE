@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container monitor-page">
+  <div class="page-container">
     <!-- A) 网络扫描 -->
     <SectionCard title="网络扫描" icon="Search">
       <div class="scan-form">
@@ -329,10 +329,8 @@ onBeforeUnmount(clearPoll);
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-.monitor-page {
-  height: calc(100vh - 152px);
-  overflow-y: auto;
-}
+/* 独立页（无 MonitorLayout）：用 page-container 自然高度，由 layout-main 滚动，
+   避免堆叠的 SectionCard(height:100%) 在固定高容器内被拉伸留白 */
 
 .scan-form {
   display: flex;
