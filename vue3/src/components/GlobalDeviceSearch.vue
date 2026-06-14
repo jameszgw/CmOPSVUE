@@ -48,6 +48,9 @@ const TYPE_LABEL = {
   STORAGE: "存储",
   NETDEV: "网络设备",
   GPU: "GPU",
+  POWER: "电能",
+  ESS: "储能",
+  IOT: "物联",
 };
 
 const TYPE_ROUTE = {
@@ -60,6 +63,9 @@ const TYPE_ROUTE = {
   STORAGE: "storage",
   NETDEV: "netdev",
   GPU: "gpu",
+  POWER: "power",
+  ESS: "ess",
+  IOT: "iot",
 };
 
 const router = useRouter();

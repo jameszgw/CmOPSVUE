@@ -178,6 +178,55 @@
           <el-input-number v-model="form.gpuCount" :min="1" :max="256" controls-position="right" />
         </el-form-item>
       </template>
+
+      <!-- 电能专有 -->
+      <template v-if="deviceType === 'POWER'">
+        <el-form-item label="电能类型" prop="powerType">
+          <el-select v-model="form.powerType">
+            <el-option v-for="t in options.powerTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="厂商" prop="powerVendor">
+          <el-input v-model="form.powerVendor" placeholder="如 施耐德 / 华为" />
+        </el-form-item>
+        <el-form-item label="额定功率(kW)" prop="ratedPower">
+          <el-input-number v-model="form.ratedPower" :min="0" :max="100000" controls-position="right" />
+        </el-form-item>
+      </template>
+
+      <!-- 储能专有 -->
+      <template v-if="deviceType === 'ESS'">
+        <el-form-item label="储能类型" prop="essType">
+          <el-select v-model="form.essType">
+            <el-option v-for="t in options.essTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="厂商" prop="essVendor">
+          <el-input v-model="form.essVendor" placeholder="如 宁德时代 / 比亚迪" />
+        </el-form-item>
+        <el-form-item label="容量(kWh)" prop="essCapacity">
+          <el-input-number v-model="form.essCapacity" :min="0" :max="1000000" controls-position="right" />
+        </el-form-item>
+      </template>
+
+      <!-- 物联专有 -->
+      <template v-if="deviceType === 'IOT'">
+        <el-form-item label="物联类型" prop="iotType">
+          <el-select v-model="form.iotType">
+            <el-option v-for="t in options.iotTypes" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="协议" prop="iotProtocol">
+          <el-select v-model="form.iotProtocol">
+            <el-option v-for="t in options.iotProtocols" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="频段" prop="iotBand">
+          <el-select v-model="form.iotBand">
+            <el-option v-for="t in options.iotBands" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -206,12 +255,14 @@ const visible = computed({
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
   MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+  POWER: "电能", ESS: "储能", IOT: "物联",
 };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
 
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
   MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
+  POWER: 502, ESS: 502, IOT: 1883,
 };
 
 const formRef = ref();
@@ -251,6 +302,15 @@ const form = reactive({
   gpuVendor: "NVIDIA",
   gpuModel: "Tesla T4",
   gpuCount: 1,
+  powerType: "UPS",
+  powerVendor: "",
+  ratedPower: 10,
+  essType: "BATTERY",
+  essVendor: "",
+  essCapacity: 100,
+  iotType: "GATEWAY",
+  iotProtocol: "MQTT",
+  iotBand: "2.4G",
 });
 
 const rules = {
@@ -341,6 +401,24 @@ const submit = () => {
           gpuVendor: form.gpuVendor,
           gpuModel: form.gpuModel,
           gpuCount: form.gpuCount,
+        });
+      } else if (props.deviceType === "POWER") {
+        Object.assign(payload, {
+          powerType: form.powerType,
+          powerVendor: form.powerVendor,
+          ratedPower: form.ratedPower,
+        });
+      } else if (props.deviceType === "ESS") {
+        Object.assign(payload, {
+          essType: form.essType,
+          essVendor: form.essVendor,
+          essCapacity: form.essCapacity,
+        });
+      } else if (props.deviceType === "IOT") {
+        Object.assign(payload, {
+          iotType: form.iotType,
+          iotProtocol: form.iotProtocol,
+          iotBand: form.iotBand,
         });
       }
       const res = await addDevice(payload);
