@@ -31,6 +31,11 @@ export default {
   border: 1px solid var(--cm-border-light, @border-light);
   border-radius: @radius-lg;
   margin-bottom: @space-lg;
+  /* 同行卡片等高：在 el-row(flex) 中拉伸；单列堆叠时父高 auto，height:100% 无副作用 */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 
   &__head {
     display: flex;
@@ -38,6 +43,7 @@ export default {
     padding: @space-md @space-lg;
     // 浅色保持原值 #f0f2f5；深色跟随边框
     border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
   }
 
   &__icon {
@@ -59,6 +65,8 @@ export default {
 
   &__body {
     padding: @space-lg;
+    flex: 1;
+    min-height: 0;
   }
 }
 

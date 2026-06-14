@@ -43,6 +43,8 @@ const groupedRows = computed(() => {
 <style lang="less" scoped>
 .info-table {
   width: 100%;
+  /* 等高卡片内填满高度：多余高度按行均分，避免底部留空 */
+  height: 100%;
   border-collapse: collapse;
   font-size: 13px;
 
