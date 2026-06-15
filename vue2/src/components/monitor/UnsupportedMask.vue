@@ -1,12 +1,15 @@
 <template>
-  <!-- 不支持时：渲染紧凑的占位卡片（锁图标 + 真实原因），不再覆盖大段空内容、不留白 -->
-  <div v-if="unsupported" class="unsupported-empty">
-    <i class="el-icon-lock unsupported-empty__icon"></i>
-    <div class="unsupported-empty__title">{{ title }}</div>
-    <div class="unsupported-empty__reason">{{ reason || "该指标在当前设备/采集方式下不可用" }}</div>
+  <!-- 单根包裹：Vue2 不允许 <slot> 作为根节点；wrapper 用 display:contents 不影响布局 -->
+  <div class="unsupported-mask">
+    <!-- 不支持时：渲染紧凑的占位卡片（锁图标 + 真实原因），不再覆盖大段空内容、不留白 -->
+    <div v-if="unsupported" class="unsupported-empty">
+      <i class="el-icon-lock unsupported-empty__icon"></i>
+      <div class="unsupported-empty__title">{{ title }}</div>
+      <div class="unsupported-empty__reason">{{ reason || "该指标在当前设备/采集方式下不可用" }}</div>
+    </div>
+    <!-- 支持时：正常渲染内容 -->
+    <slot v-else />
   </div>
-  <!-- 支持时：正常渲染内容 -->
-  <slot v-else />
 </template>
 
 <script>
@@ -22,6 +25,11 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+
+// 包裹层不生成盒子，子节点按父级布局排布，等价于无 wrapper（规避 Vue2 单根限制）
+.unsupported-mask {
+  display: contents;
+}
 
 .unsupported-empty {
   display: flex;
