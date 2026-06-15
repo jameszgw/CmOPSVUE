@@ -66,7 +66,36 @@
     </SectionCard>
 
     <SectionCard title="下发历史" icon="Tickets">
-      <template #extra>共 {{ history.length }} 条</template>
+      <template #extra>共 {{ total }} 条</template>
+      <el-form inline class="filter-bar" @submit.prevent>
+        <el-form-item label="任务类型">
+          <el-select v-model="filters.taskType" size="small" style="width: 130px">
+            <el-option label="全部" value="" />
+            <el-option label="重启" value="reboot" />
+            <el-option label="GPIO控制" value="gpio-set" />
+            <el-option label="LED" value="led" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="来源">
+          <el-select v-model="filters.source" size="small" style="width: 150px">
+            <el-option label="全部" value="" />
+            <el-option label="真实·agent" value="agent" />
+            <el-option label="模拟·simulated" value="simulated" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结果">
+          <el-select v-model="filters.result" size="small" style="width: 120px">
+            <el-option label="全部" value="" />
+            <el-option label="成功" value="success" />
+            <el-option label="已受理" value="accepted" />
+            <el-option label="失败" value="failed" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" @click="onFilter">查询</el-button>
+          <el-button size="small" @click="onResetFilter">重置</el-button>
+        </el-form-item>
+      </el-form>
       <el-empty v-if="!history.length" description="暂无下发记录" />
       <el-table v-else :data="history" size="small" stripe>
         <el-table-column prop="taskType" label="任务类型" min-width="120">
@@ -92,6 +121,19 @@
           <template #default="{ row }">{{ row.gmtCreate || "-" }}</template>
         </el-table-column>
       </el-table>
+      <div v-if="total > 0" class="pager-wrap">
+        <el-pagination
+          v-model:current-page="pageNo"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          small
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </SectionCard>
 
     <SectionCard title="热区传感器" icon="Sunny">
@@ -140,6 +182,10 @@ const thermals = computed(() => d.value.thermals || []);
 const acting = ref(false);
 const action = reactive({ taskType: "reboot", payload: "" });
 const history = ref([]);
+const total = ref(0);
+const pageNo = ref(1);
+const pageSize = ref(10);
+const filters = reactive({ taskType: "", source: "", result: "" });
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 const tempColor = (v) => {
@@ -175,11 +221,44 @@ const load = async () => {
 const loadHistory = async () => {
   if (!props.deviceId) return;
   try {
-    const res = await getDispatchHistory({ deviceId: props.deviceId, pageNo: 1, pageSize: 10 });
+    const res = await getDispatchHistory({
+      deviceId: props.deviceId,
+      pageNo: pageNo.value,
+      pageSize: pageSize.value,
+      taskType: filters.taskType,
+      source: filters.source,
+      result: filters.result,
+    });
     history.value = res.content?.items || [];
+    total.value = res.content?.total || 0;
   } catch (e) {
     history.value = [];
+    total.value = 0;
   }
+};
+
+const onFilter = () => {
+  pageNo.value = 1;
+  loadHistory();
+};
+
+const onResetFilter = () => {
+  filters.taskType = "";
+  filters.source = "";
+  filters.result = "";
+  pageNo.value = 1;
+  loadHistory();
+};
+
+const onPageChange = (p) => {
+  pageNo.value = p;
+  loadHistory();
+};
+
+const onSizeChange = (s) => {
+  pageSize.value = s;
+  pageNo.value = 1;
+  loadHistory();
 };
 
 const loadAll = () => {
@@ -205,6 +284,7 @@ const onAction = async () => {
     } else {
       ElMessage.success(`已受理(模拟)：${c.note || "-"}`);
     }
+    pageNo.value = 1;
     await loadHistory();
   } finally {
     acting.value = false;
@@ -235,5 +315,16 @@ onMounted(loadAll);
   :deep(.el-form-item) {
     margin-bottom: 0;
   }
+}
+.filter-bar {
+  margin-bottom: 12px;
+  :deep(.el-form-item) {
+    margin-bottom: 8px;
+  }
+}
+.pager-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 </style>

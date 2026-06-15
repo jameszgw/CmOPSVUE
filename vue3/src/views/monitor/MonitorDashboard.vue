@@ -27,6 +27,11 @@
               :sub="`警告 ${num(as.warning)}`" color="#f56c6c" />
           </el-col>
         </el-row>
+        <div class="source-row">
+          <span class="source-row__label">采集来源：</span>
+          <el-tag type="success" size="small">真实采集 {{ ds.agentCount || 0 }}</el-tag>
+          <el-tag type="info" size="small">模拟数据 {{ ds.simulatedCount || 0 }}</el-tag>
+        </div>
       </el-col>
     </el-row>
 
@@ -316,6 +321,17 @@ onBeforeUnmount(() => {
 }
 .stat-row .el-col {
   margin-bottom: 12px;
+}
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+
+  &__label {
+    color: var(--cm-text-regular);
+  }
 }
 .gauge-chart {
   height: 240px;

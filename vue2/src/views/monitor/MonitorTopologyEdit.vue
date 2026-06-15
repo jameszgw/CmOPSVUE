@@ -214,6 +214,12 @@
           <span class="node-detail__label">IP</span>
           <span>{{ nodeDetail.ip || "-" }}</span>
         </div>
+        <div v-if="nodeDetail.source" class="node-detail__row">
+          <span class="node-detail__label">来源</span>
+          <el-tag :type="nodeDetail.source === 'agent' ? 'success' : 'info'" size="mini">
+            {{ nodeDetail.source === 'agent' ? '真实采集' : '模拟数据' }}
+          </el-tag>
+        </div>
 
         <div class="node-detail__section">指标</div>
         <el-empty v-if="!metricEntries.length" description="暂无指标" :image-size="60" />

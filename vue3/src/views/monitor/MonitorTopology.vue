@@ -163,6 +163,7 @@ const renderChart = () => {
           type: typeLabel(n.type),
           ip: n.ip,
           status: n.status,
+          source: n.source,
         },
       });
     });
@@ -193,6 +194,7 @@ const renderChart = () => {
             `类型：${m.type || "-"}`,
             `IP：${m.ip || "-"}`,
             `状态：${m.status || "-"}`,
+            `来源：${m.source === "agent" ? "真实采集" : "模拟数据"}`,
           ].join("<br/>");
         },
       },

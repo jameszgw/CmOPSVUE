@@ -75,7 +75,37 @@
     </SectionCard>
 
     <SectionCard title="下发历史" icon="el-icon-tickets">
-      <template #extra>共 {{ history.length }} 条</template>
+      <template #extra>共 {{ total }} 条</template>
+      <el-form inline class="filter-bar" @submit.native.prevent>
+        <el-form-item label="任务类型">
+          <el-select v-model="filters.taskType" size="mini" style="width: 140px">
+            <el-option label="全部" value="" />
+            <el-option label="批量安装APK" value="install" />
+            <el-option label="批量重启" value="reboot" />
+            <el-option label="Shell命令" value="shell" />
+            <el-option label="清理缓存" value="clearcache" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="来源">
+          <el-select v-model="filters.source" size="mini" style="width: 150px">
+            <el-option label="全部" value="" />
+            <el-option label="真实·agent" value="agent" />
+            <el-option label="模拟·simulated" value="simulated" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结果">
+          <el-select v-model="filters.result" size="mini" style="width: 120px">
+            <el-option label="全部" value="" />
+            <el-option label="成功" value="success" />
+            <el-option label="已受理" value="accepted" />
+            <el-option label="失败" value="failed" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="mini" @click="onFilter">查询</el-button>
+          <el-button size="mini" @click="onResetFilter">重置</el-button>
+        </el-form-item>
+      </el-form>
       <el-table :data="history" size="small" stripe>
         <el-table-column prop="taskType" label="任务类型" min-width="120">
           <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
@@ -101,6 +131,18 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!history.length" description="暂无下发记录" />
+      <div v-if="total > 0" class="pager-wrap">
+        <el-pagination
+          :current-page.sync="pageNo"
+          :page-size.sync="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          background
+          @current-change="onPageChange"
+          @size-change="onSizeChange"
+        />
+      </div>
     </SectionCard>
   </div>
 </template>
@@ -131,6 +173,10 @@ export default {
       submitting: false,
       d: {},
       history: [],
+      total: 0,
+      pageNo: 1,
+      pageSize: 10,
+      filters: { taskType: "", source: "", result: "" },
       form: { taskType: "install", scope: "", payload: "" },
     };
   },
@@ -180,11 +226,40 @@ export default {
     async loadHistory() {
       if (!this.deviceId) return;
       try {
-        const res = await getDispatchHistory({ deviceId: this.deviceId, pageNo: 1, pageSize: 10 });
+        const res = await getDispatchHistory({
+          deviceId: this.deviceId,
+          pageNo: this.pageNo,
+          pageSize: this.pageSize,
+          taskType: this.filters.taskType,
+          source: this.filters.source,
+          result: this.filters.result,
+        });
         this.history = (res && res.content && res.content.items) || [];
+        this.total = (res && res.content && res.content.total) || 0;
       } catch (e) {
         this.history = [];
+        this.total = 0;
       }
+    },
+    onFilter() {
+      this.pageNo = 1;
+      this.loadHistory();
+    },
+    onResetFilter() {
+      this.filters.taskType = "";
+      this.filters.source = "";
+      this.filters.result = "";
+      this.pageNo = 1;
+      this.loadHistory();
+    },
+    onPageChange(p) {
+      this.pageNo = p;
+      this.loadHistory();
+    },
+    onSizeChange(s) {
+      this.pageSize = s;
+      this.pageNo = 1;
+      this.loadHistory();
     },
     async onDispatch() {
       if (!this.deviceId) {
@@ -210,6 +285,7 @@ export default {
           this.$message.success(`已受理(模拟)：${c.note || c.taskId || "-"}`);
         }
         await this.load();
+        this.pageNo = 1;
         await this.loadHistory();
       } finally {
         this.submitting = false;
@@ -229,6 +305,17 @@ export default {
 }
 .dispatch-form ::v-deep .el-form-item {
   margin-bottom: 0;
+}
+.filter-bar {
+  margin-bottom: 12px;
+}
+.filter-bar ::v-deep .el-form-item {
+  margin-bottom: 8px;
+}
+.pager-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 .stat-row {
   margin-bottom: 4px;

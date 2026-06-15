@@ -255,6 +255,12 @@
           <span class="drawer-row__label">IP</span>
           <span>{{ drawer.data?.ip || "-" }}</span>
         </div>
+        <div v-if="drawer.data?.source" class="drawer-row">
+          <span class="drawer-row__label">来源</span>
+          <el-tag :type="drawer.data.source === 'agent' ? 'success' : 'info'" size="small">
+            {{ drawer.data.source === 'agent' ? '真实采集' : '模拟数据' }}
+          </el-tag>
+        </div>
 
         <div class="drawer-section">指标</div>
         <el-empty
