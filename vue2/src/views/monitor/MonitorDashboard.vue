@@ -27,6 +27,11 @@
               :sub="`警告 ${num(alertStats.warning)}`" color="#f56c6c" />
           </el-col>
         </el-row>
+        <div class="source-row">
+          <span class="source-row__label">采集来源：</span>
+          <el-tag type="success" size="mini">真实采集 {{ deviceStats.agentCount || 0 }}</el-tag>
+          <el-tag type="info" size="mini">模拟数据 {{ deviceStats.simulatedCount || 0 }}</el-tag>
+        </div>
       </el-col>
     </el-row>
 
@@ -358,6 +363,17 @@ export default {
 }
 .stat-row .el-col {
   margin-bottom: 12px;
+}
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+
+  &__label {
+    color: var(--cm-text-regular, @text-regular);
+  }
 }
 .gauge-chart {
   height: 240px;

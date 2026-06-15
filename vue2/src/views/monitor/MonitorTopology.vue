@@ -230,7 +230,8 @@ export default {
                 "<b>" + (n.name || "") + "</b><br/>" +
                 "类型: " + this.typeLabel(n.type) + "<br/>" +
                 "IP: " + (n.ip || "-") + "<br/>" +
-                "状态: " + (STATUS_LABEL[n.status] || n.status || "-")
+                "状态: " + (STATUS_LABEL[n.status] || n.status || "-") + "<br/>" +
+                "来源: " + (n.source === "agent" ? "真实采集" : "模拟数据")
               );
             },
           },
