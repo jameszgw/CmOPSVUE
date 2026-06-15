@@ -73,6 +73,35 @@
       </el-table>
       <el-empty v-if="!items.length" description="暂无群控任务" />
     </SectionCard>
+
+    <SectionCard title="下发历史" icon="el-icon-tickets">
+      <template #extra>共 {{ history.length }} 条</template>
+      <el-table :data="history" size="small" stripe>
+        <el-table-column prop="taskType" label="任务类型" min-width="120">
+          <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
+        </el-table-column>
+        <el-table-column prop="scope" label="范围" min-width="140">
+          <template slot-scope="{ row }">{{ val(row.scope) }}</template>
+        </el-table-column>
+        <el-table-column label="来源" width="130" align="center">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" :type="row.source === 'agent' ? 'success' : 'info'">
+              {{ row.source === "agent" ? "真实·agent" : "模拟·simulated" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="result" label="结果" min-width="120">
+          <template slot-scope="{ row }">{{ val(row.result) }}</template>
+        </el-table-column>
+        <el-table-column label="影响" width="100" align="center">
+          <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
+        </el-table-column>
+        <el-table-column prop="gmtCreate" label="时间" min-width="160">
+          <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!history.length" description="暂无下发记录" />
+    </SectionCard>
   </div>
 </template>
 
@@ -80,6 +109,7 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getAndroidGroupControl, dispatchGroupControl } from "@/api/monitor-android";
+import { getDispatchHistory } from "@/api/monitor-dispatch";
 
 const STATUS_TAG = {
   Running: "primary", Pending: "warning", Queued: "warning",
@@ -100,6 +130,7 @@ export default {
       loading: false,
       submitting: false,
       d: {},
+      history: [],
       form: { taskType: "install", scope: "", payload: "" },
     };
   },
@@ -110,14 +141,14 @@ export default {
   },
   watch: {
     deviceId() {
-      this.load();
+      this.loadAll();
     },
     refreshToken() {
-      this.load();
+      this.loadAll();
     },
   },
   mounted() {
-    this.load();
+    this.loadAll();
   },
   methods: {
     val(v) {
@@ -132,6 +163,10 @@ export default {
     statusTag(s) {
       return STATUS_TAG[s] || "info";
     },
+    loadAll() {
+      this.load();
+      this.loadHistory();
+    },
     async load() {
       if (!this.deviceId) return;
       this.loading = true;
@@ -140,6 +175,15 @@ export default {
         this.d = res.content || {};
       } finally {
         this.loading = false;
+      }
+    },
+    async loadHistory() {
+      if (!this.deviceId) return;
+      try {
+        const res = await getDispatchHistory({ deviceId: this.deviceId, pageNo: 1, pageSize: 10 });
+        this.history = (res && res.content && res.content.items) || [];
+      } catch (e) {
+        this.history = [];
       }
     },
     async onDispatch() {
@@ -166,6 +210,7 @@ export default {
           this.$message.success(`已受理(模拟)：${c.note || c.taskId || "-"}`);
         }
         await this.load();
+        await this.loadHistory();
       } finally {
         this.submitting = false;
       }

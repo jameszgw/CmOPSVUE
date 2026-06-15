@@ -7,3 +7,6 @@ export const getSbcOverview = (deviceId) => get("overview", deviceId);
 export const getSbcBoardSensors = (deviceId) => get("boardSensors", deviceId);
 export const getSbcGpio = (deviceId) => get("gpio", deviceId);
 export const getSbcTrend = (deviceId) => get("trend", deviceId);
+// 板级操作下发：reboot / gpio-set / led
+export const dispatchBoardAction = (data) =>
+  request("/api/devops/monitor/sbc/board-action/dispatch", { method: "POST", data });

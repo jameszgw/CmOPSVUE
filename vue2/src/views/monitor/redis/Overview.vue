@@ -20,6 +20,11 @@
     </el-row>
 
     <SectionCard title="Redis 基础信息" icon="el-icon-info">
+      <template #extra>
+        <el-tag size="mini" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
+          {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+        </el-tag>
+      </template>
       <InfoTable :rows="basicRows" :columns="3" />
     </SectionCard>
 

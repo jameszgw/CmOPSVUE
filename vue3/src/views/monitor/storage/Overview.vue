@@ -20,7 +20,12 @@
     </el-row>
 
     <SectionCard title="基础信息" icon="InfoFilled">
-      <template #extra>存储池 {{ d.poolCount ?? "-" }} 个</template>
+      <template #extra>
+        <el-tag size="small" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
+          {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+        </el-tag>
+        存储池 {{ d.poolCount ?? "-" }} 个
+      </template>
       <InfoTable :rows="basicRows" :columns="2" />
     </SectionCard>
 

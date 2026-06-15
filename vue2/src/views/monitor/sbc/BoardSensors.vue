@@ -19,6 +19,62 @@
       </el-col>
     </el-row>
 
+    <SectionCard title="板级操作" icon="el-icon-set-up" class="action-card">
+      <el-form inline class="action-form" @submit.native.prevent>
+        <el-form-item label="操作类型">
+          <el-select v-model="action.taskType" size="small" style="width: 150px">
+            <el-option label="重启" value="reboot" />
+            <el-option label="GPIO 控制" value="gpio-set" />
+            <el-option label="LED" value="led" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="action.taskType === 'gpio-set'" label="参数">
+          <el-input v-model="action.payload" size="small" style="width: 220px"
+            placeholder="BCM引脚=电平, 如 17=1" />
+        </el-form-item>
+        <el-form-item v-else-if="action.taskType === 'led'" label="参数">
+          <el-input v-model="action.payload" size="small" style="width: 220px"
+            placeholder="on / off" />
+        </el-form-item>
+        <el-form-item>
+          <el-popconfirm v-if="action.taskType === 'reboot'" title="确认重启该单板机？"
+            confirm-button-text="确认" cancel-button-text="取消" @confirm="onAction">
+            <el-button slot="reference" type="danger" size="small" :loading="acting">执行</el-button>
+          </el-popconfirm>
+          <el-button v-else type="primary" size="small" :loading="acting" @click="onAction">执行</el-button>
+        </el-form-item>
+      </el-form>
+    </SectionCard>
+
+    <SectionCard title="下发历史" icon="el-icon-tickets">
+      <template #extra>共 {{ history.length }} 条</template>
+      <el-table :data="history" size="small" stripe>
+        <el-table-column prop="taskType" label="任务类型" min-width="120">
+          <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
+        </el-table-column>
+        <el-table-column prop="scope" label="范围" min-width="140">
+          <template slot-scope="{ row }">{{ val(row.scope) }}</template>
+        </el-table-column>
+        <el-table-column label="来源" width="130" align="center">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" :type="row.source === 'agent' ? 'success' : 'info'">
+              {{ row.source === "agent" ? "真实·agent" : "模拟·simulated" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="result" label="结果" min-width="120">
+          <template slot-scope="{ row }">{{ val(row.result) }}</template>
+        </el-table-column>
+        <el-table-column label="影响" width="100" align="center">
+          <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
+        </el-table-column>
+        <el-table-column prop="gmtCreate" label="时间" min-width="160">
+          <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!history.length" description="暂无下发记录" />
+    </SectionCard>
+
     <el-row :gutter="12">
       <el-col :xs="24" :lg="14">
         <SectionCard title="热区状态" icon="el-icon-sunny">
@@ -76,7 +132,8 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
-import { getSbcBoardSensors } from "@/api/monitor-sbc";
+import { getSbcBoardSensors, dispatchBoardAction } from "@/api/monitor-sbc";
+import { getDispatchHistory } from "@/api/monitor-dispatch";
 
 const ZONE_TAG = {
   Normal: "success", OK: "success", Healthy: "success",
@@ -93,7 +150,13 @@ export default {
     refreshToken: { type: Number, default: 0 },
   },
   data() {
-    return { loading: false, d: {} };
+    return {
+      loading: false,
+      d: {},
+      acting: false,
+      action: { taskType: "reboot", payload: "" },
+      history: [],
+    };
   },
   computed: {
     thermals() {
@@ -112,14 +175,14 @@ export default {
   },
   watch: {
     deviceId() {
-      this.load();
+      this.loadAll();
     },
     refreshToken() {
-      this.load();
+      this.loadAll();
     },
   },
   mounted() {
-    this.load();
+    this.loadAll();
   },
   methods: {
     val(v) {
@@ -137,6 +200,10 @@ export default {
     zoneTag(s) {
       return ZONE_TAG[s] || "info";
     },
+    loadAll() {
+      this.load();
+      this.loadHistory();
+    },
     async load() {
       if (!this.deviceId) return;
       this.loading = true;
@@ -145,6 +212,38 @@ export default {
         this.d = res.content || {};
       } finally {
         this.loading = false;
+      }
+    },
+    async loadHistory() {
+      if (!this.deviceId) return;
+      try {
+        const res = await getDispatchHistory({ deviceId: this.deviceId, pageNo: 1, pageSize: 10 });
+        this.history = (res && res.content && res.content.items) || [];
+      } catch (e) {
+        this.history = [];
+      }
+    },
+    async onAction() {
+      if (!this.deviceId) {
+        this.$message.warning("缺少设备ID，无法执行");
+        return;
+      }
+      this.acting = true;
+      try {
+        const res = await dispatchBoardAction({
+          deviceId: this.deviceId,
+          taskType: this.action.taskType,
+          payload: this.action.payload,
+        });
+        const c = (res && res.content) || {};
+        if (c.source === "agent") {
+          this.$message.success("已真实执行");
+        } else {
+          this.$message.success(`已受理(模拟)：${c.note || "-"}`);
+        }
+        await this.loadHistory();
+      } finally {
+        this.acting = false;
       }
     },
   },
@@ -158,6 +257,12 @@ export default {
 }
 .stat-row .el-col {
   margin-bottom: 12px;
+}
+.action-card {
+  margin-bottom: 12px;
+}
+.action-form ::v-deep .el-form-item {
+  margin-bottom: 0;
 }
 .flag-grid {
   display: flex;
