@@ -1,9 +1,9 @@
 <template>
   <div class="page-container">
     <h2 class="page-title">主机管理</h2>
-    <el-row :gutter="16">
+    <el-row :gutter="16" align="top">
       <el-col :span="4">
-        <el-card shadow="never">
+        <el-card shadow="never" class="side-card">
           <HostGroupTree :data="hostGroups" @group-select="handleGroupSelect" />
         </el-card>
       </el-col>
@@ -307,6 +307,12 @@ onMounted(() => {
 
 .page-title {
   margin: 0 0 16px;
+}
+
+// el-row 默认按最高列拉伸，左侧机组树内容较少时会被拉成一个底部留白的边框盒子；
+// align="top" + 自适应高度，让左侧面板贴合内容。
+.side-card {
+  height: auto;
 }
 
 .toolbar {

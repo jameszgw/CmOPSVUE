@@ -5,49 +5,33 @@
         <div class="other-title">关于</div>
         <div class="about-descriptions">
           <el-descriptions v-if="about" :column="1">
-            <el-descriptions-item label="cake-devops-base 版本">
-              <a
-                class="about-value"
-                :href="`https://github.com/zhongshengwang/cake-devops-ops-base/releases/tag/v${about.version}`"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {{ about.version }}
-              </a>
+            <el-descriptions-item label="CmOPS 平台版本">
+              <span class="about-value">{{ about.version }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="cake-tools 版本">
-              <a
-                class="about-value"
-                :href="`https://github.com/zhongshengwang/cake-toolkit/releases/tag/v${about.kitVersion}`"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {{ about.kitVersion }}
-              </a>
+            <el-descriptions-item label="CmOPS 工具集版本">
+              <span class="about-value">{{ about.kitVersion }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="cake-devops-base 作者">
-              <span class="about-value">
-                {{ about.author }} ({{ about.authorCn }})
-              </span>
+            <el-descriptions-item label="维护团队">
+              <span class="about-value">CmOPS Team</span>
             </el-descriptions-item>
             <el-descriptions-item label="github 地址">
               <a
                 class="about-value"
-                href="https://github.com/zhongshengwang/cake-devops-base"
+                :href="about.github || '#'"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                https://github.com/zhongshengwang/cake-devops-base
+                {{ about.github || "—" }}
               </a>
             </el-descriptions-item>
             <el-descriptions-item label="问题反馈">
               <a
                 class="about-value"
-                href="https://github.com/zhongshengwang/cake-devops-base/issues"
+                :href="about.issues || '#'"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                https://github.com/zhongshengwang/cake-devops-base/issues
+                {{ about.issues || "—" }}
               </a>
             </el-descriptions-item>
           </el-descriptions>

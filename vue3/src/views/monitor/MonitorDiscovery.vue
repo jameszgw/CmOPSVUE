@@ -23,6 +23,21 @@
         >
           开始扫描
         </el-button>
+        <el-button
+          type="success"
+          :loading="autoLoading"
+          @click="onAutoDiscovery"
+        >
+          一键自动发现本机网段
+        </el-button>
+      </div>
+      <div v-if="localSubnets.length" class="local-subnets">
+        <span class="local-subnets__label">本机网段：</span>
+        <el-space wrap>
+          <el-tag v-for="(sn, i) in localSubnets" :key="i" size="small" type="info">
+            {{ sn }}
+          </el-tag>
+        </el-space>
       </div>
     </SectionCard>
 
@@ -188,12 +203,16 @@ import {
   getDiscoveryTask,
   listDiscoveryTasks,
   importDiscovery,
+  autoDiscovery,
+  getLocalSubnets,
 } from "@/api/monitor-discovery";
 
 const cidr = ref("");
 const name = ref("");
 const scanning = ref(false);
 const buildTopology = ref(false);
+const autoLoading = ref(false);
+const localSubnets = ref([]);
 
 const task = ref(null);
 const recentTasks = ref([]);
@@ -273,6 +292,34 @@ const onScan = async () => {
   }
 };
 
+const loadLocalSubnets = async () => {
+  try {
+    const res = await getLocalSubnets();
+    localSubnets.value = res?.content || [];
+  } catch (e) {
+    localSubnets.value = [];
+  }
+};
+
+const onAutoDiscovery = async () => {
+  autoLoading.value = true;
+  try {
+    const res = await autoDiscovery({ buildTopology: true });
+    const c = res?.content || {};
+    if (c.subnets?.length) {
+      localSubnets.value = c.subnets;
+    }
+    ElMessage.success(
+      `已自动发现 ${c.imported || 0} 台设备（网段：${(c.subnets || []).length} 个），已生成拓扑`
+    );
+    loadRecent();
+  } catch (e) {
+    ElMessage.error("自动发现失败");
+  } finally {
+    autoLoading.value = false;
+  }
+};
+
 const onSelectionChange = (rows) => {
   selectedRows.value = rows || [];
 };
@@ -322,7 +369,10 @@ const viewTask = async (row) => {
   }
 };
 
-onMounted(loadRecent);
+onMounted(() => {
+  loadRecent();
+  loadLocalSubnets();
+});
 onBeforeUnmount(clearPoll);
 </script>
 
@@ -352,6 +402,19 @@ onBeforeUnmount(clearPoll);
 
   .el-col {
     margin-bottom: @space-lg;
+  }
+}
+
+.local-subnets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: @space-sm;
+  margin-top: @space-md;
+
+  &__label {
+    color: var(--cm-text-secondary);
+    font-size: 13px;
   }
 }
 

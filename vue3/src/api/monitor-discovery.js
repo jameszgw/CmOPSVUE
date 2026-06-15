@@ -10,3 +10,7 @@ export const listDiscoveryTasks = () =>
   request("/api/devops/monitor/discovery/tasks", { method: "GET" });
 export const importDiscovery = (data) =>
   request("/api/devops/monitor/discovery/import", { method: "POST", data });
+export const autoDiscovery = (data) =>
+  request("/api/devops/monitor/discovery/auto", { method: "POST", data });
+export const getLocalSubnets = () =>
+  request("/api/devops/monitor/discovery/local-subnets", { method: "GET" });
