@@ -66,6 +66,35 @@
         </el-table-column>
       </el-table>
     </SectionCard>
+
+    <SectionCard title="下发历史" icon="Tickets">
+      <template #extra>共 {{ history.length }} 条</template>
+      <el-empty v-if="!history.length" description="暂无下发记录" />
+      <el-table v-else :data="history" size="small" stripe>
+        <el-table-column prop="taskType" label="任务类型" min-width="120">
+          <template #default="{ row }">{{ row.taskType || "-" }}</template>
+        </el-table-column>
+        <el-table-column prop="scope" label="范围" min-width="140">
+          <template #default="{ row }">{{ row.scope || "-" }}</template>
+        </el-table-column>
+        <el-table-column label="来源" width="130" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.source === 'agent' ? 'success' : 'info'">
+              {{ row.source === "agent" ? "真实·agent" : "模拟·simulated" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="result" label="结果" min-width="120">
+          <template #default="{ row }">{{ row.result || "-" }}</template>
+        </el-table-column>
+        <el-table-column label="影响" width="100" align="center">
+          <template #default="{ row }">{{ row.affected ?? "-" }}</template>
+        </el-table-column>
+        <el-table-column prop="gmtCreate" label="时间" min-width="170">
+          <template #default="{ row }">{{ row.gmtCreate || "-" }}</template>
+        </el-table-column>
+      </el-table>
+    </SectionCard>
   </div>
 </template>
 
@@ -74,6 +103,7 @@ import { ref, reactive, computed, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getAndroidGroupControl, dispatchGroupControl } from "@/api/monitor-android";
+import { getDispatchHistory } from "@/api/monitor-dispatch";
 
 const props = defineProps({
   deviceId: { type: String, default: "" },
@@ -87,6 +117,7 @@ const form = reactive({ taskType: "install", scope: "", payload: "" });
 const data = ref({});
 const d = computed(() => data.value || {});
 const items = computed(() => d.value.items || []);
+const history = ref([]);
 
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 const pctColor = (v) => {
@@ -114,6 +145,21 @@ const load = async () => {
   }
 };
 
+const loadHistory = async () => {
+  if (!props.deviceId) return;
+  try {
+    const res = await getDispatchHistory({ deviceId: props.deviceId, pageNo: 1, pageSize: 10 });
+    history.value = res.content?.items || [];
+  } catch (e) {
+    history.value = [];
+  }
+};
+
+const loadAll = () => {
+  load();
+  loadHistory();
+};
+
 const onDispatch = async () => {
   if (!props.deviceId) {
     ElMessage.warning("缺少设备ID，无法下发");
@@ -136,13 +182,14 @@ const onDispatch = async () => {
       ElMessage.success(`已受理(模拟)：${c.note || c.taskId || "-"}`);
     }
     await load();
+    await loadHistory();
   } finally {
     submitting.value = false;
   }
 };
 
-watch(() => [props.deviceId, props.refreshToken], load);
-onMounted(load);
+watch(() => [props.deviceId, props.refreshToken], loadAll);
+onMounted(loadAll);
 </script>
 
 <style lang="less" scoped>
