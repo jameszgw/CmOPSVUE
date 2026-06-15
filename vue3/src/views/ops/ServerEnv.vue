@@ -1,9 +1,9 @@
 <template>
   <div class="page-container">
     <h2 class="page-title">主机环境变量</h2>
-    <el-row :gutter="16">
+    <el-row :gutter="16" align="top">
       <el-col :span="6">
-        <el-card shadow="never">
+        <el-card shadow="never" class="side-card">
           <LeftHostList @item-click="handleHostItemClick" />
         </el-card>
       </el-col>
@@ -179,6 +179,12 @@ const handleUpdateHostEnv = async (values) => {
 
 .page-title {
   margin: 0 0 16px;
+}
+
+// el-row 会按最高列拉伸子项，左侧主机列表内容较少时会留下大片空白与多余边框，
+// align="top" + 自适应高度让左侧面板贴合内容高度。
+.side-card {
+  height: auto;
 }
 
 .toolbar {

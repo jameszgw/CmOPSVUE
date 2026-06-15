@@ -20,8 +20,29 @@
               >
                 开始扫描
               </el-button>
+              <el-button
+                type="success"
+                icon="el-icon-magic-stick"
+                :loading="autoLoading"
+                @click="autoDiscover"
+              >
+                一键自动发现本机网段
+              </el-button>
             </el-form-item>
           </el-form>
+
+          <div v-if="localSubnets.length" class="local-subnets">
+            本机网段：
+            <el-tag
+              v-for="s in localSubnets"
+              :key="s"
+              size="mini"
+              effect="plain"
+              class="subnet-tag"
+            >
+              {{ s }}
+            </el-tag>
+          </div>
 
           <div v-if="task" class="scan-progress">
             <div class="scan-progress__head">
@@ -174,6 +195,8 @@ import {
   getDiscoveryTask,
   listDiscoveryTasks,
   importDiscovery,
+  autoDiscovery,
+  getLocalSubnets,
 } from "@/api/monitor-discovery";
 
 const STATUS_LABEL = {
@@ -203,6 +226,8 @@ export default {
       cidr: "",
       name: "",
       scanning: false,
+      autoLoading: false,
+      localSubnets: [],
       task: null,
       tasks: [],
       selected: [],
@@ -225,6 +250,7 @@ export default {
   },
   mounted() {
     this.loadTasks();
+    this.loadLocalSubnets();
   },
   beforeDestroy() {
     this.clearPoll();
@@ -269,6 +295,32 @@ export default {
         this.tasks = res.content || [];
       } catch (e) {
         /* 接口层已提示 */
+      }
+    },
+    async loadLocalSubnets() {
+      try {
+        const res = await getLocalSubnets();
+        this.localSubnets = res.content || [];
+      } catch (e) {
+        this.localSubnets = [];
+      }
+    },
+    async autoDiscover() {
+      this.autoLoading = true;
+      try {
+        const res = await autoDiscovery({ buildTopology: true });
+        const c = res.content || {};
+        if (c.subnets && c.subnets.length) {
+          this.localSubnets = c.subnets;
+        }
+        this.$message.success(
+          `已自动发现 ${this.num0(c.imported)} 台设备（网段：${
+            (c.subnets || []).length
+          } 个），已生成拓扑`
+        );
+        this.loadTasks();
+      } finally {
+        this.autoLoading = false;
       }
     },
     async startScan() {
@@ -392,6 +444,11 @@ export default {
 }
 .subnet-tag {
   margin: 2px 4px 2px 0;
+}
+.local-subnets {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--cm-text-secondary, @text-secondary);
 }
 .task-list {
   list-style: none;

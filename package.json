@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "cake-devops-base",
+  "name": "cmops-monitor",
   "version": "1.0.24",
-  "author": "1528683621@qq.com <18668485565@163.com>",
+  "author": "CmOPS Team",
   "scripts": {
     "dev": "umi dev",
     "build": "cross-env BUILD_ENV=prod umi build",

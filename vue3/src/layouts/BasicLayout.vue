@@ -3,7 +3,7 @@
     <el-container class="layout-container">
       <el-header class="layout-header" height="56px">
         <div class="header-left">
-          <span class="logo">Cake</span>
+          <span class="logo">CmOPS</span>
           <el-menu
             v-if="menuTree.length"
             :default-active="activePath"
@@ -70,7 +70,7 @@
         <router-view v-if="menuLoaded" />
       </el-main>
       <el-footer class="layout-footer" height="48px">
-        <div>© 2024 Made with 钟望 by Cake</div>
+        <div>© 2026 CmOPS · 统一基础设施与边缘监控平台</div>
       </el-footer>
     </el-container>
   </div>
@@ -209,7 +209,8 @@ onMounted(async () => {
 }
 
 .layout-main {
-  background: #f5f5f5;
+  // 与页面容器背景保持一致，避免内容较少的页面在内容下方出现一大片色差“空白区”
+  background: var(--cm-bg-page);
   overflow: auto;
 }
 
