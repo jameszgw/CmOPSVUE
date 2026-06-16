@@ -1,5 +1,7 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
+    <template v-else>
     <el-alert v-if="limited" type="warning" :closable="false" :title="limitNote"
       show-icon class="limit-alert" />
 
@@ -81,6 +83,7 @@
         </SectionCard>
       </el-col>
     </el-row>
+    </template>
   </div>
 </template>
 

@@ -1,5 +1,7 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
+    <template v-else>
     <el-alert v-if="d.limited" type="warning" :closable="false" show-icon class="limit-alert"
       :title="d.limitNote || '当前设备未安装 Agent，进程信息为受限模式。'" />
 
@@ -80,6 +82,7 @@
         </SectionCard>
       </el-col>
     </el-row>
+    </template>
   </div>
 </template>
 
