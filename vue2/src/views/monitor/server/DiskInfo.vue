@@ -24,7 +24,12 @@
     </el-row>
 
     <SectionCard v-for="(p, i) in partitions" :key="i" :title="p.mount || p.device || '分区'" icon="el-icon-folder-opened">
-      <template #extra>{{ p.used || '-' }} / {{ p.total || '-' }} · {{ num(p.usage) }}%</template>
+      <template #extra>
+        <el-tag v-if="i === 0" size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+        </el-tag>
+        {{ p.used || '-' }} / {{ p.total || '-' }} · {{ num(p.usage) }}%
+      </template>
       <div class="part-sub">磁盘空间</div>
       <el-progress :percentage="clamp(p.usage)" :stroke-width="12"
         :color="usageColor(p.usage)" class="block-progress" />
