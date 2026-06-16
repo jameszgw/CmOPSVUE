@@ -1,10 +1,17 @@
 // src/api/monitor-topology.js
 // 全链路拓扑与根因关联 + 可编辑拓扑维护
 import request from "@/utils/request";
-export const getTopologyGraph = () =>
-  request("/api/devops/monitor/topology/graph", { method: "GET" });
-export const getTopologyRootCause = () =>
-  request("/api/devops/monitor/topology/rootcause", { method: "GET" });
+// viewId 可选：留空/省略 = 全局拓扑（全部设备）；非空 = 指定视图
+export const getTopologyGraph = (viewId) =>
+  request("/api/devops/monitor/topology/graph", {
+    method: "GET",
+    params: { viewId },
+  });
+export const getTopologyRootCause = (viewId) =>
+  request("/api/devops/monitor/topology/rootcause", {
+    method: "GET",
+    params: { viewId },
+  });
 
 // ===== 拓扑视图（topo-view） =====
 export const listTopoViews = () =>
