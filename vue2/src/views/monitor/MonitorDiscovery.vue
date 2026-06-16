@@ -149,11 +149,19 @@
       <el-col :xs="24" :lg="17">
         <SectionCard title="扫描结果" icon="el-icon-data-board">
           <template #extra>
-            <span v-if="nodes.length">共 {{ nodes.length }} 个节点</span>
+            <span v-if="unconfirmedCount > 0 && !showUnconfirmed" class="result-hint">
+              共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
+            </span>
+            <span v-else-if="visibleNodes.length">共 {{ visibleNodes.length }} 个节点</span>
           </template>
 
           <div class="result-bar">
             <div class="result-bar__left">
+              <el-switch
+                v-model="showUnconfirmed"
+                :active-text="`显示未确认IP (${unconfirmedCount})`"
+                :disabled="unconfirmedCount === 0"
+              />
               <el-switch
                 v-model="buildTopology"
                 active-text="构建拓扑"
@@ -173,7 +181,7 @@
                 size="small"
                 type="primary"
                 icon="el-icon-folder-add"
-                :disabled="!nodes.length || importing"
+                :disabled="!visibleNodes.length || importing"
                 :loading="importing && importMode === 'all'"
                 @click="doImport(true)"
               >
@@ -182,11 +190,11 @@
             </div>
           </div>
 
-          <el-empty v-if="!nodes.length" description="暂无扫描结果" />
+          <el-empty v-if="!visibleNodes.length" description="暂无扫描结果" />
           <el-table
             v-else
             ref="resultTable"
-            :data="nodes"
+            :data="visibleNodes"
             size="small"
             stripe
             height="100%"
@@ -197,6 +205,13 @@
               <template slot-scope="{ row }">
                 <span class="mono">{{ row.ip || "-" }}</span>
                 <el-tag v-if="row.gateway" size="mini" effect="plain" class="gw-tag">网关</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="确认" width="84">
+              <template slot-scope="{ row }">
+                <el-tag size="mini" effect="light" :type="row.exists ? 'success' : 'info'">
+                  {{ row.exists ? "设备" : "未确认" }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="hostname" label="主机名" min-width="150">
@@ -276,6 +291,7 @@ export default {
       tasks: [],
       selected: [],
       buildTopology: true,
+      showUnconfirmed: false,
       importing: false,
       importMode: "",
       pollTimer: null,
@@ -286,6 +302,13 @@ export default {
     nodes() {
       return (this.task && this.task.nodes) || [];
     },
+    visibleNodes() {
+      if (this.showUnconfirmed) return this.nodes;
+      return this.nodes.filter((n) => n.exists === true);
+    },
+    unconfirmedCount() {
+      return this.nodes.filter((n) => n.exists === false).length;
+    },
     progressPct() {
       if (!this.task) return 0;
       if (this.task.status === "done") return 100;
@@ -295,6 +318,18 @@ export default {
         return 0;
       }
       return Math.max(0, Math.min(100, Math.round((progress / total) * 100)));
+    },
+  },
+  watch: {
+    showUnconfirmed(val) {
+      if (!val) {
+        // 隐藏未确认IP后，清除不再可见的已选中行，避免脏选择
+        const hadUnconfirmed = this.selected.some((r) => r.exists === false);
+        this.selected = this.selected.filter((r) => r.exists === true);
+        if (hadUnconfirmed && this.$refs.resultTable) {
+          this.$refs.resultTable.clearSelection();
+        }
+      }
     },
   },
   mounted() {
@@ -614,10 +649,19 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
   &__right {
     display: flex;
     gap: 8px;
   }
+}
+.result-hint {
+  font-size: 12px;
+  color: var(--cm-text-secondary, @text-secondary);
 }
 .gw-tag {
   margin-left: 6px;

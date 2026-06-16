@@ -135,6 +135,17 @@
       <SectionCard title="发现结果" icon="List">
         <template #extra>
           <el-space>
+            <span
+              v-if="unconfirmedCount > 0 && !showUnconfirmed"
+              class="discovery-hint"
+            >
+              共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
+            </span>
+            <el-switch
+              v-model="showUnconfirmed"
+              :active-text="`显示未确认IP (${unconfirmedCount})`"
+              :disabled="unconfirmedCount === 0"
+            />
             <el-switch v-model="buildTopology" active-text="构建拓扑" />
             <el-button
               size="small"
@@ -148,10 +159,11 @@
             </el-button>
           </el-space>
         </template>
-        <el-empty v-if="!nodes.length" description="暂无节点" />
+        <el-empty v-if="!visibleNodes.length" description="暂无节点" />
         <el-table
           v-else
-          :data="nodes"
+          ref="resultTable"
+          :data="visibleNodes"
           size="small"
           stripe
           @selection-change="onSelectionChange"
@@ -159,6 +171,13 @@
           <el-table-column type="selection" width="48" />
           <el-table-column prop="ip" label="IP" min-width="130">
             <template #default="{ row }">{{ row.ip || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="确认" width="90">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.exists ? 'success' : 'info'">
+                {{ row.exists ? '设备' : '未确认' }}
+              </el-tag>
+            </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="140">
             <template #default="{ row }">{{ row.hostname || '-' }}</template>
@@ -224,7 +243,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage } from "element-plus";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
@@ -242,6 +261,8 @@ const cidr = ref("");
 const name = ref("");
 const scanning = ref(false);
 const buildTopology = ref(false);
+const showUnconfirmed = ref(false);
+const resultTable = ref(null);
 const autoLoading = ref(false);
 const localSubnets = ref([]);
 const autoJob = ref({});
@@ -254,7 +275,26 @@ let pollTimer = null;
 let autoTimer = null;
 
 const nodes = computed(() => task.value?.nodes || []);
+const visibleNodes = computed(() =>
+  showUnconfirmed.value
+    ? nodes.value
+    : nodes.value.filter((n) => n.exists === true)
+);
+const unconfirmedCount = computed(
+  () => nodes.value.filter((n) => n.exists === false).length
+);
 const subnets = computed(() => task.value?.subnets || []);
+
+watch(showUnconfirmed, (val) => {
+  if (!val) {
+    // 隐藏未确认IP后，清除不再可见的已选中行，避免脏选择
+    const stale = (selectedRows.value || []).some((r) => r.exists === false);
+    if (stale) resultTable.value?.clearSelection();
+    selectedRows.value = (selectedRows.value || []).filter(
+      (r) => r.exists === true
+    );
+  }
+});
 const pct = computed(() => {
   const t = task.value || {};
   return t.total ? Math.round((t.progress / t.total) * 100) : 0;
@@ -536,5 +576,10 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: @space-sm;
   margin-top: @space-md;
+}
+
+.discovery-hint {
+  color: var(--cm-text-secondary);
+  font-size: 12px;
 }
 </style>
