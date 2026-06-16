@@ -660,7 +660,7 @@ export default {
           y: n.y === undefined || n.y === null ? Math.floor(idx / 6) * 140 : n.y,
           symbol: nodeSymbol(n.type, color),
           // 选中节点放大以突出（image 符号无法用 border 高亮）
-          symbolSize: selected ? 54 : 40,
+          symbolSize: selected ? 36 : 26,
           category: STATUS_INDEX[status] === undefined ? 0 : STATUS_INDEX[status],
           label: { show: true },
           _raw: n,
