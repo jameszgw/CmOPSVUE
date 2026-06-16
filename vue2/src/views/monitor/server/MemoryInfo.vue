@@ -20,7 +20,12 @@
     </el-row>
 
     <SectionCard title="虚拟内存 (RAM)" icon="el-icon-coin">
-      <template #extra>内存使用进度 {{ num(ramUsage) }}%</template>
+      <template #extra>
+        <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+        </el-tag>
+        内存使用进度 {{ num(ramUsage) }}%
+      </template>
       <el-progress :percentage="clamp(ramUsage)" :stroke-width="12"
         :color="usageColor(ramUsage)" class="block-progress" />
       <InfoTable :rows="ramRows" :columns="2" />
