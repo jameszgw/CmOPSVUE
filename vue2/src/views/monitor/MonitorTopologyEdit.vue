@@ -224,8 +224,8 @@
         </div>
         <div v-if="nodeDetail.source" class="node-detail__row">
           <span class="node-detail__label">来源</span>
-          <el-tag :type="nodeDetail.source === 'agent' ? 'success' : 'info'" size="mini">
-            {{ nodeDetail.source === 'agent' ? '真实采集' : '模拟数据' }}
+          <el-tag :type="['agent','ssh','snmp','winrm','redis'].includes(nodeDetail.source) ? 'success' : 'info'" size="mini">
+            {{ {agent:'真实采集·Agent',ssh:'真实采集·SSH',snmp:'真实采集·SNMP',winrm:'真实采集·WinRM',redis:'真实采集·Redis'}[nodeDetail.source] || '模拟数据' }}
           </el-tag>
         </div>
 

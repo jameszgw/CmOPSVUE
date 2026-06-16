@@ -21,8 +21,8 @@
 
     <SectionCard title="Redis 基础信息" icon="el-icon-info">
       <template #extra>
-        <el-tag size="mini" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
-          {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+        <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
         </el-tag>
       </template>
       <InfoTable :rows="basicRows" :columns="3" />

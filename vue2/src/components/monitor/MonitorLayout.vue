@@ -4,7 +4,8 @@
     <aside class="monitor-layout__side">
       <div class="monitor-layout__search">
         <el-input v-model="keyword" placeholder="搜索" clearable prefix-icon="el-icon-search" />
-        <el-button icon="el-icon-plus" title="新增设备" @click="addVisible = true" />
+        <el-button icon="el-icon-plus" title="新增设备" @click="openAdd" />
+        <el-button icon="el-icon-setting" title="批量设置采集" @click="openBatch" />
       </div>
       <ul class="monitor-layout__nav">
         <li
@@ -35,9 +36,27 @@
             @change="onDeviceChange"
           >
             <el-option-group v-for="g in deviceGroups" :key="g.label" :label="g.label">
-              <el-option v-for="d in g.list" :key="d.id" :label="d.name" :value="d.id">
+              <el-option
+                v-for="d in g.list"
+                :key="d.id"
+                :label="d.name"
+                :value="d.id"
+                class="monitor-layout__device-opt"
+              >
                 <span>{{ d.name }}</span>
                 <span class="monitor-layout__device-sub">{{ d.ip }}</span>
+                <el-dropdown
+                  trigger="click"
+                  class="monitor-layout__device-actions"
+                  @command="(cmd) => onDeviceCommand(cmd, d)"
+                >
+                  <i class="el-icon-more monitor-layout__device-more" @click.stop></i>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="test">测试采集</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
               </el-option>
             </el-option-group>
           </el-select>
@@ -70,13 +89,78 @@
       </div>
     </section>
 
-    <AddDeviceDialog v-model="addVisible" :device-type="deviceType" @added="onDeviceAdded" />
+    <AddDeviceDialog
+      v-model="addVisible"
+      :device-type="deviceType"
+      :edit-device="editingDevice"
+      @added="onDeviceAdded"
+    />
+
+    <!-- 批量设置采集：勾选当前类型设备 + 采集配置 -->
+    <el-dialog title="批量设置采集" :visible.sync="batchVisible" width="560px" @closed="onBatchClosed">
+      <div class="monitor-layout__batch-bar">
+        <el-checkbox
+          :value="allSelected"
+          :indeterminate="someSelected"
+          @change="toggleSelectAll"
+        >
+          全选
+        </el-checkbox>
+        <span class="monitor-layout__batch-count">已选 {{ batchSelected.length }} / {{ devices.length }}</span>
+      </div>
+      <el-checkbox-group v-model="batchSelected" class="monitor-layout__batch-list">
+        <el-checkbox v-for="d in devices" :key="d.id" :label="d.id" class="monitor-layout__batch-item">
+          <span>{{ d.name }}</span>
+          <span class="monitor-layout__device-sub">{{ d.ip }}</span>
+        </el-checkbox>
+      </el-checkbox-group>
+
+      <el-divider content-position="left">采集配置</el-divider>
+      <el-form label-width="90px">
+        <el-form-item label="采集方式">
+          <el-select v-model="batchForm.collectVia" placeholder="请选择">
+            <el-option label="模拟数据" value="NONE" />
+            <el-option label="Agent探针" value="AGENT" />
+            <el-option label="SSH(无探针)" value="SSH" />
+            <el-option label="SNMP(无探针)" value="SNMP" />
+            <el-option label="WinRM(无探针)" value="WINRM" />
+          </el-select>
+        </el-form-item>
+        <template v-if="batchForm.collectVia === 'SSH' || batchForm.collectVia === 'WINRM'">
+          <el-form-item label="端口">
+            <el-input-number v-model="batchForm.collectPort" :min="1" :max="65535" controls-position="right" />
+          </el-form-item>
+          <el-form-item label="用户名">
+            <el-input v-model="batchForm.collectUser" placeholder="如 root / ops" />
+          </el-form-item>
+          <el-form-item label="密码">
+            <el-input v-model="batchForm.collectSecret" type="password" show-password placeholder="登录密码" />
+          </el-form-item>
+        </template>
+        <template v-else-if="batchForm.collectVia === 'SNMP'">
+          <el-form-item label="端口">
+            <el-input-number v-model="batchForm.collectPort" :min="1" :max="65535" controls-position="right" />
+          </el-form-item>
+          <el-form-item label="Community">
+            <el-input v-model="batchForm.collectSecret" placeholder="如 public" />
+          </el-form-item>
+        </template>
+      </el-form>
+
+      <div slot="footer">
+        <el-button @click="batchVisible = false">取消</el-button>
+        <el-button type="primary" :loading="batchSubmitting" @click="submitBatch">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listDevices } from "@/api/monitor-device";
+import { listDevices, deleteDevice, batchCollect, testCollect } from "@/api/monitor-device";
 import AddDeviceDialog from "./AddDeviceDialog.vue";
+
+// 默认采集端口（与 AddDeviceDialog 一致：SSH 22 / SNMP 161 / WinRM 5985）
+const COLLECT_DEFAULT_PORT = { SSH: 22, SNMP: 161, WINRM: 5985 };
 
 export default {
   name: "MonitorLayout",
@@ -97,7 +181,18 @@ export default {
       refreshToken: 0,
       loadingDevices: false,
       addVisible: false,
+      editingDevice: null,
       timer: null,
+      // 批量设置采集
+      batchVisible: false,
+      batchSubmitting: false,
+      batchSelected: [],
+      batchForm: {
+        collectVia: "NONE",
+        collectPort: 22,
+        collectUser: "",
+        collectSecret: "",
+      },
     };
   },
   computed: {
@@ -128,8 +223,22 @@ export default {
       });
       return labels.map((label) => ({ label, list: map.get(label) }));
     },
+    allSelected() {
+      return this.devices.length > 0 && this.batchSelected.length === this.devices.length;
+    },
+    someSelected() {
+      return this.batchSelected.length > 0 && this.batchSelected.length < this.devices.length;
+    },
   },
   watch: {
+    "batchForm.collectVia"(via) {
+      if (COLLECT_DEFAULT_PORT[via]) {
+        this.batchForm.collectPort = COLLECT_DEFAULT_PORT[via];
+      }
+      if (via === "SNMP" && !this.batchForm.collectSecret) {
+        this.batchForm.collectSecret = "public";
+      }
+    },
     autoRefresh() {
       this.setupTimer();
     },
@@ -203,7 +312,97 @@ export default {
       this.refreshNow();
     },
     onDeviceAdded(device) {
+      this.editingDevice = null;
       this.loadDevices(device && device.id);
+    },
+    openAdd() {
+      this.editingDevice = null;
+      this.addVisible = true;
+    },
+    // 每设备操作：编辑 / 测试采集 / 删除
+    onDeviceCommand(cmd, d) {
+      if (cmd === "edit") {
+        this.editDeviceRow(d);
+      } else if (cmd === "test") {
+        this.testDeviceCollect(d);
+      } else if (cmd === "delete") {
+        this.removeDevice(d);
+      }
+    },
+    editDeviceRow(d) {
+      this.editingDevice = d;
+      this.addVisible = true;
+    },
+    async testDeviceCollect(d) {
+      try {
+        const res = await testCollect(d.id);
+        const c = (res && res.content) || {};
+        if (c.ok) {
+          this.$message.success(`采集成功 来源=${c.source} 用时${c.costMs}ms`);
+        } else {
+          this.$alert(c.note || "采集失败", "测试采集", { type: "warning" });
+        }
+      } catch (e) {
+        /* 接口层已提示 */
+      }
+    },
+    removeDevice(d) {
+      this.$confirm(`确认删除设备「${d.name}」？`, "删除确认", {
+        type: "warning",
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
+      })
+        .then(async () => {
+          const res = await deleteDevice(d.id);
+          if (res.success) {
+            this.$message.success("已删除");
+            this.loadDevices();
+          }
+        })
+        .catch(() => {});
+    },
+    // 批量设置采集
+    openBatch() {
+      this.batchSelected = [];
+      this.batchForm.collectVia = "NONE";
+      this.batchForm.collectPort = 22;
+      this.batchForm.collectUser = "";
+      this.batchForm.collectSecret = "";
+      this.batchVisible = true;
+    },
+    onBatchClosed() {
+      this.batchSelected = [];
+    },
+    toggleSelectAll(val) {
+      this.batchSelected = val ? this.devices.map((d) => d.id) : [];
+    },
+    async submitBatch() {
+      if (!this.batchSelected.length) {
+        this.$message.warning("请至少选择一台设备");
+        return;
+      }
+      this.batchSubmitting = true;
+      try {
+        const f = this.batchForm;
+        const payload = { deviceIds: this.batchSelected, collectVia: f.collectVia };
+        if (f.collectVia === "SSH" || f.collectVia === "WINRM") {
+          payload.collectPort = f.collectPort;
+          payload.collectUser = f.collectUser;
+          payload.collectSecret = f.collectSecret;
+        } else if (f.collectVia === "SNMP") {
+          payload.collectPort = f.collectPort;
+          payload.collectSecret = f.collectSecret;
+        }
+        const res = await batchCollect(payload);
+        if (res.success) {
+          const n = (res.content && res.content.updated) != null ? res.content.updated : this.batchSelected.length;
+          this.$message.success(`已设置 ${n} 台`);
+          this.batchVisible = false;
+          this.loadDevices();
+        }
+      } finally {
+        this.batchSubmitting = false;
+      }
     },
     setupTimer() {
       this.clearTimer();
@@ -322,6 +521,54 @@ export default {
     float: right;
     color: var(--cm-text-placeholder, @text-placeholder);
     font-size: 12px;
+  }
+
+  &__device-opt {
+    position: relative;
+  }
+
+  &__device-actions {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &__device-more {
+    color: var(--cm-text-placeholder, @text-placeholder);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--cm-color-primary, @color-primary);
+    }
+  }
+
+  &__batch-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: @space-sm;
+  }
+
+  &__batch-count {
+    color: var(--cm-text-placeholder, @text-placeholder);
+    font-size: 12px;
+  }
+
+  &__batch-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--cm-border-light, @border-light);
+    border-radius: @radius-base;
+    padding: @space-sm @space-md;
+  }
+
+  &__batch-item {
+    display: flex;
+    width: 100%;
+    margin-right: 0;
   }
 
   &__body {

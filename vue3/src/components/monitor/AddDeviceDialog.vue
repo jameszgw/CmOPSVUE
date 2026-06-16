@@ -1,9 +1,10 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="`新增${typeLabel}设备`"
+    :title="dialogTitle"
     width="560px"
     @open="onOpen"
+    @closed="onClosed"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
@@ -261,6 +262,45 @@
           <el-input-number v-model="form.instanceCap" :min="1" :max="1000" controls-position="right" />
         </el-form-item>
       </template>
+
+      <!-- 采集配置（无探针 agentless 凭据） -->
+      <el-divider content-position="left">采集配置</el-divider>
+      <el-form-item label="采集方式" prop="collectVia">
+        <el-select v-model="form.collectVia" placeholder="请选择">
+          <el-option label="模拟数据" value="NONE" />
+          <el-option label="Agent探针" value="AGENT" />
+          <el-option label="SSH(无探针)" value="SSH" />
+          <el-option label="SNMP(无探针)" value="SNMP" />
+          <el-option label="WinRM(无探针)" value="WINRM" />
+        </el-select>
+      </el-form-item>
+      <template v-if="form.collectVia === 'SSH' || form.collectVia === 'WINRM'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="用户名" prop="collectUser">
+          <el-input v-model="form.collectUser" placeholder="如 root / ops" />
+        </el-form-item>
+        <el-form-item label="密码" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
+        </el-form-item>
+        <el-form-item label=" ">
+          <span v-if="form.collectVia === 'WINRM'" style="color: #909399; font-size: 12px; line-height: 1.5">
+            Windows WinRM(默认5985/NTLM)，Windows Server 通常默认开启，无需装Agent/OpenSSH
+          </span>
+          <span v-else style="color: #909399; font-size: 12px; line-height: 1.5">
+            需目标主机开放SSH(Linux/Unix，或Windows OpenSSH)；凭据仅用于只读采集
+          </span>
+        </el-form-item>
+      </template>
+      <template v-else-if="form.collectVia === 'SNMP'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="Community" prop="collectSecret">
+          <el-input v-model="form.collectSecret" placeholder="如 public" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -273,11 +313,13 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { addDevice, getDeviceOptions } from "@/api/monitor-device";
+import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   deviceType: { type: String, default: "SERVER" },
+  // 编辑模式：传入设备对象则进入编辑，提交走 updateDevice；为 null 时与原新增逻辑一致
+  editDevice: { type: Object, default: null },
 });
 const emit = defineEmits(["update:modelValue", "added"]);
 
@@ -292,6 +334,13 @@ const TYPE_LABEL = {
   POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开",
 };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
+
+// 编辑状态：打开时根据 editDevice 是否存在确定
+const isEdit = ref(false);
+const editId = ref(null);
+const dialogTitle = computed(() =>
+  isEdit.value ? "编辑设备" : `新增${typeLabel.value}设备`
+);
 
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
@@ -312,6 +361,10 @@ const form = reactive({
   osType: "LINUX",
   osName: "",
   collectMode: "AGENT",
+  collectVia: "NONE",
+  collectPort: 22,
+  collectUser: "",
+  collectSecret: "",
   redisVersion: "7.2.4",
   redisMode: "standalone",
   redisRole: "master",
@@ -365,7 +418,20 @@ const osLabel = (t) =>
   ({ LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" }[t] || t);
 
 const onOpen = async () => {
-  form.port = DEFAULT_PORT[props.deviceType] || 22;
+  if (props.editDevice) {
+    isEdit.value = true;
+    editId.value = props.editDevice.id;
+    // 用已有设备数据回填表单（含采集配置字段）
+    Object.keys(form).forEach((k) => {
+      if (props.editDevice[k] !== undefined && props.editDevice[k] !== null) {
+        form[k] = props.editDevice[k];
+      }
+    });
+  } else {
+    isEdit.value = false;
+    editId.value = null;
+    form.port = DEFAULT_PORT[props.deviceType] || 22;
+  }
   if (!options.value.osTypes) {
     try {
       const res = await getDeviceOptions();
@@ -376,10 +442,31 @@ const onOpen = async () => {
   }
 };
 
+const onClosed = () => {
+  // 关闭后重置编辑状态与表单，下次打开恢复新增默认
+  isEdit.value = false;
+  editId.value = null;
+  formRef.value?.resetFields();
+};
+
 watch(
   () => props.deviceType,
   () => {
     form.port = DEFAULT_PORT[props.deviceType] || 22;
+  }
+);
+
+watch(
+  () => form.collectVia,
+  (via) => {
+    if (via === "SSH") {
+      form.collectPort = 22;
+    } else if (via === "WINRM") {
+      form.collectPort = 5985;
+    } else if (via === "SNMP") {
+      form.collectPort = 161;
+      if (!form.collectSecret) form.collectSecret = "public";
+    }
   }
 );
 
@@ -389,6 +476,19 @@ const submit = () => {
     submitting.value = true;
     try {
       const payload = { name: form.name, ip: form.ip, port: form.port, type: props.deviceType };
+      if (isEdit.value && editId.value != null) {
+        payload.id = editId.value;
+      }
+      // 采集配置（无探针 agentless 凭据）
+      payload.collectVia = form.collectVia;
+      if (form.collectVia === "SSH" || form.collectVia === "WINRM") {
+        payload.collectPort = form.collectPort;
+        payload.collectUser = form.collectUser;
+        payload.collectSecret = form.collectSecret;
+      } else if (form.collectVia === "SNMP") {
+        payload.collectPort = form.collectPort;
+        payload.collectSecret = form.collectSecret;
+      }
       if (props.deviceType === "SERVER") {
         Object.assign(payload, {
           category: form.category,
@@ -473,12 +573,14 @@ const submit = () => {
           instanceCap: form.instanceCap,
         });
       }
-      const res = await addDevice(payload);
+      const res = isEdit.value
+        ? await updateDevice(payload)
+        : await addDevice(payload);
       if (res.success) {
-        ElMessage.success("新增成功");
+        ElMessage.success(isEdit.value ? "保存成功" : "新增成功");
         visible.value = false;
         emit("added", res.content);
-        formRef.value.resetFields();
+        // 表单重置交由 @closed 处理，避免关闭动画期间字段闪烁
       }
     } finally {
       submitting.value = false;

@@ -1,9 +1,10 @@
 <template>
   <el-dialog
-    :title="`新增${typeLabel}设备`"
+    :title="dialogTitle"
     :visible.sync="visible"
     width="560px"
     @open="onOpen"
+    @closed="onClosed"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
@@ -261,6 +262,45 @@
           <el-input-number v-model="form.instanceCap" :min="1" :max="2000" controls-position="right" />
         </el-form-item>
       </template>
+
+      <!-- 采集配置（无探针 agentless 凭据） -->
+      <el-divider content-position="left">采集配置</el-divider>
+      <el-form-item label="采集方式" prop="collectVia">
+        <el-select v-model="form.collectVia" placeholder="请选择">
+          <el-option label="模拟数据" value="NONE" />
+          <el-option label="Agent探针" value="AGENT" />
+          <el-option label="SSH(无探针)" value="SSH" />
+          <el-option label="SNMP(无探针)" value="SNMP" />
+          <el-option label="WinRM(无探针)" value="WINRM" />
+        </el-select>
+      </el-form-item>
+      <template v-if="form.collectVia === 'SSH' || form.collectVia === 'WINRM'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="用户名" prop="collectUser">
+          <el-input v-model="form.collectUser" placeholder="如 root / ops" />
+        </el-form-item>
+        <el-form-item label="密码" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
+        </el-form-item>
+        <el-form-item label=" ">
+          <span v-if="form.collectVia === 'WINRM'" style="color: #909399; font-size: 12px; line-height: 1.5">
+            Windows WinRM(默认5985/NTLM)，Windows Server 通常默认开启，无需装Agent/OpenSSH
+          </span>
+          <span v-else style="color: #909399; font-size: 12px; line-height: 1.5">
+            需目标主机开放SSH(Linux/Unix，或Windows OpenSSH)；凭据仅用于只读采集
+          </span>
+        </el-form-item>
+      </template>
+      <template v-else-if="form.collectVia === 'SNMP'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="Community" prop="collectSecret">
+          <el-input v-model="form.collectSecret" placeholder="如 public" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <div slot="footer">
@@ -271,7 +311,7 @@
 </template>
 
 <script>
-import { addDevice, getDeviceOptions } from "@/api/monitor-device";
+import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
 
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
@@ -289,11 +329,15 @@ export default {
   props: {
     value: { type: Boolean, default: false },
     deviceType: { type: String, default: "SERVER" },
+    // 编辑模式：传入设备对象则进入编辑，提交走 updateDevice；为 null 时与原新增逻辑一致
+    editDevice: { type: Object, default: null },
   },
   data() {
     return {
       submitting: false,
       options: {},
+      isEdit: false,
+      editId: null,
       form: {
         name: "",
         ip: "",
@@ -303,6 +347,10 @@ export default {
         osType: "LINUX",
         osName: "",
         collectMode: "AGENT",
+        collectVia: "NONE",
+        collectPort: 22,
+        collectUser: "",
+        collectSecret: "",
         redisVersion: "7.2.4",
         redisMode: "standalone",
         redisRole: "master",
@@ -361,6 +409,9 @@ export default {
     typeLabel() {
       return TYPE_LABEL[this.deviceType] || "";
     },
+    dialogTitle() {
+      return this.isEdit ? "编辑设备" : `新增${this.typeLabel}设备`;
+    },
     vmTypeOptions() {
       return (this.options.vmTypes || []).filter((v) => v !== "NONE");
     },
@@ -368,6 +419,16 @@ export default {
   watch: {
     deviceType() {
       this.form.port = DEFAULT_PORT[this.deviceType] || 22;
+    },
+    "form.collectVia"(via) {
+      if (via === "SSH") {
+        this.form.collectPort = 22;
+      } else if (via === "WINRM") {
+        this.form.collectPort = 5985;
+      } else if (via === "SNMP") {
+        this.form.collectPort = 161;
+        if (!this.form.collectSecret) this.form.collectSecret = "public";
+      }
     },
   },
   methods: {
@@ -391,7 +452,20 @@ export default {
       return { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" }[t] || t;
     },
     async onOpen() {
-      this.form.port = DEFAULT_PORT[this.deviceType] || 22;
+      if (this.editDevice) {
+        this.isEdit = true;
+        this.editId = this.editDevice.id;
+        // 用已有设备数据回填表单（含采集配置字段）
+        Object.keys(this.form).forEach((k) => {
+          if (this.editDevice[k] !== undefined && this.editDevice[k] !== null) {
+            this.$set(this.form, k, this.editDevice[k]);
+          }
+        });
+      } else {
+        this.isEdit = false;
+        this.editId = null;
+        this.form.port = DEFAULT_PORT[this.deviceType] || 22;
+      }
       if (!this.options.osTypes) {
         try {
           const res = await getDeviceOptions();
@@ -401,6 +475,14 @@ export default {
         }
       }
     },
+    onClosed() {
+      // 关闭后重置编辑状态与表单，下次打开恢复新增默认
+      this.isEdit = false;
+      this.editId = null;
+      if (this.$refs.formRef) {
+        this.$refs.formRef.resetFields();
+      }
+    },
     submit() {
       this.$refs.formRef.validate(async (ok) => {
         if (!ok) return;
@@ -408,6 +490,19 @@ export default {
         try {
           const f = this.form;
           const payload = { name: f.name, ip: f.ip, port: f.port, type: this.deviceType };
+          if (this.isEdit && this.editId != null) {
+            payload.id = this.editId;
+          }
+          // 采集配置（无探针 agentless 凭据）
+          payload.collectVia = f.collectVia;
+          if (f.collectVia === "SSH" || f.collectVia === "WINRM") {
+            payload.collectPort = f.collectPort;
+            payload.collectUser = f.collectUser;
+            payload.collectSecret = f.collectSecret;
+          } else if (f.collectVia === "SNMP") {
+            payload.collectPort = f.collectPort;
+            payload.collectSecret = f.collectSecret;
+          }
           if (this.deviceType === "SERVER") {
             Object.assign(payload, {
               category: f.category,
@@ -492,12 +587,14 @@ export default {
               instanceCap: f.instanceCap,
             });
           }
-          const res = await addDevice(payload);
+          const res = this.isEdit
+            ? await updateDevice(payload)
+            : await addDevice(payload);
           if (res.success) {
-            this.$message.success("新增成功");
+            this.$message.success(this.isEdit ? "保存成功" : "新增成功");
             this.visible = false;
             this.$emit("added", res.content);
-            this.$refs.formRef.resetFields();
+            // 表单重置交由 @closed 处理，避免关闭动画期间字段闪烁
           }
         } finally {
           this.submitting = false;
