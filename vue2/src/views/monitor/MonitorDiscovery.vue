@@ -61,6 +61,13 @@
               :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : undefined"
               :stroke-width="14"
             />
+            <div
+              v-if="autoJob.found != null || autoJob.currentTarget"
+              class="auto-job__live"
+            >
+              <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
+              <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
+            </div>
             <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
               网段：
               <el-tag
@@ -88,8 +95,12 @@
               :stroke-width="14"
             />
             <div class="scan-progress__meta">
-              已发现 {{ num0(task.found) }} / 共 {{ num0(task.total) }}
+              已探测 {{ num0(task.progress) }} / {{ num0(task.total) }}
+              · 发现 {{ num0(task.found) }}
               <span v-if="task.gatewayIp"> · 网关 {{ task.gatewayIp }}</span>
+            </div>
+            <div class="scan-progress__current">
+              正在扫描: {{ task.currentTarget || "—" }}
             </div>
             <div
               v-if="task.subnets && task.subnets.length"
@@ -278,8 +289,12 @@ export default {
     progressPct() {
       if (!this.task) return 0;
       if (this.task.status === "done") return 100;
-      const p = Number(this.task.progress);
-      return Number.isFinite(p) ? Math.max(0, Math.min(100, Math.round(p))) : 0;
+      const progress = Number(this.task.progress);
+      const total = Number(this.task.total);
+      if (!Number.isFinite(progress) || !Number.isFinite(total) || total <= 0) {
+        return 0;
+      }
+      return Math.max(0, Math.min(100, Math.round((progress / total) * 100)));
     },
   },
   mounted() {
@@ -521,6 +536,11 @@ export default {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
   }
+  &__current {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--cm-text-regular, @text-regular);
+  }
   &__subnets {
     margin-top: 8px;
     font-size: 12px;
@@ -549,6 +569,12 @@ export default {
   }
   &__phase {
     margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cm-text-primary, @text-primary);
+  }
+  &__live {
+    margin-top: 8px;
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
   }

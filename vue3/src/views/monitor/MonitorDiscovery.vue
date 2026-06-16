@@ -57,6 +57,13 @@
         :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : ''"
         :stroke-width="14"
       />
+      <div
+        v-if="autoJob.found != null || autoJob.currentTarget"
+        class="auto-job__live"
+      >
+        <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
+        <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
+      </div>
       <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
         <span class="local-subnets__label">网段：</span>
         <el-space wrap>
@@ -80,14 +87,21 @@
           :status="task.status === 'done' ? 'success' : ''"
           :stroke-width="14"
         />
+        <div v-if="subnets.length" class="task-subnets">
+          <span class="task-subnets__label">子网：</span>
+          <el-space wrap>
+            <el-tag v-for="(sn, i) in subnets" :key="i" size="small" type="info">{{ sn }}</el-tag>
+          </el-space>
+        </div>
       </SectionCard>
 
       <el-row :gutter="12" class="stat-row">
         <el-col :xs="24" :sm="12" :lg="6">
           <StatCard
             icon="Odometer"
-            label="进度"
+            label="已探测"
             :value="`${task.progress || 0}/${task.total || 0}`"
+            :sub="`正在扫描: ${task.currentTarget || '—'}`"
             color="#409eff"
           />
         </el-col>
@@ -116,16 +130,6 @@
           />
         </el-col>
       </el-row>
-
-      <!-- 子网 -->
-      <SectionCard title="子网" icon="Grid">
-        <template v-if="subnets.length">
-          <el-space wrap>
-            <el-tag v-for="(sn, i) in subnets" :key="i" type="info">{{ sn }}</el-tag>
-          </el-space>
-        </template>
-        <span v-else class="empty-text">-</span>
-      </SectionCard>
 
       <!-- 发现结果 -->
       <SectionCard title="发现结果" icon="List">
@@ -500,8 +504,28 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.task-subnets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: @space-sm;
+  margin-top: @space-md;
+
+  &__label {
+    color: var(--cm-text-secondary);
+    font-size: 13px;
+  }
+}
+
 .auto-job__phase {
   margin-bottom: @space-sm;
+  color: var(--cm-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auto-job__live {
+  margin-top: @space-sm;
   color: var(--cm-text-secondary);
   font-size: 13px;
 }

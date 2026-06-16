@@ -23,6 +23,7 @@ const routes = [
       { path: "/devops/monitor/storage", component: () => import("@/views/monitor/MonitorStorage.vue") },
       { path: "/devops/monitor/netdev", component: () => import("@/views/monitor/MonitorNetDev.vue") },
       { path: "/devops/monitor/gpu", component: () => import("@/views/monitor/MonitorGpu.vue") },
+      { path: "/devops/monitor/ai", component: () => import("@/views/monitor/MonitorAi.vue") },
       { path: "/devops/monitor/power", component: () => import("@/views/monitor/MonitorPower.vue") },
       { path: "/devops/monitor/ess", component: () => import("@/views/monitor/MonitorEss.vue") },
       { path: "/devops/monitor/iot", component: () => import("@/views/monitor/MonitorIot.vue") },
