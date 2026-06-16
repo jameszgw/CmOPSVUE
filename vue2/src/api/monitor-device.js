@@ -49,3 +49,14 @@ export async function deleteDevice(id) {
 export async function getDeviceOptions() {
   return request("/api/devops/monitor/device/options", { method: "GET" });
 }
+
+/** 批量设置采集（无探针 agentless 凭据） */
+export const batchCollect = (data) =>
+  request("/api/devops/monitor/device/collect/batch", { method: "POST", data });
+
+/** 测试采集（单设备连通性 / 指标探测） */
+export const testCollect = (deviceId) =>
+  request("/api/devops/monitor/device/collect/test", {
+    method: "GET",
+    params: { deviceId },
+  });
