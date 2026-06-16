@@ -101,6 +101,14 @@
           </el-button>
           <el-button
             size="small"
+            icon="el-icon-s-grid"
+            :disabled="!currentViewId || !nodeTotal"
+            @click="onAutoLayout"
+          >
+            自动布局
+          </el-button>
+          <el-button
+            size="small"
             type="success"
             icon="el-icon-finished"
             :disabled="!currentViewId"
@@ -859,6 +867,24 @@ export default {
       } catch (e) {
         // toasted
       }
+    },
+
+    // ===== 自动布局：将当前视图节点重排为网格 =====
+    onAutoLayout() {
+      const list = (this.graph && this.graph.nodes) || [];
+      const n = list.length;
+      if (!n) return;
+      const cols = Math.max(4, Math.ceil(Math.sqrt(n) * 1.6));
+      const dx = 160;
+      const dy = 120;
+      list.forEach((node, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        node.x = (col - (cols - 1) / 2) * dx;
+        node.y = row * dy;
+      });
+      this.renderChart();
+      this.$message.success("已重新布局，点「保存布局」可持久化");
     },
 
     // ===== 保存布局 =====
