@@ -1,5 +1,7 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
+    <template v-else>
     <el-row :gutter="12" class="stat-row">
       <el-col :xs="24" :sm="12" :lg="6">
         <StatCard icon="Cpu" label="CPU使用率" :value="`${num(d.cpuUsage)}%`"
@@ -64,6 +66,7 @@
         <el-table-column prop="createTime" label="创建时间" width="200" />
       </el-table>
     </SectionCard>
+    </template>
   </div>
 </template>
 

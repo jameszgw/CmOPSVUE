@@ -1,5 +1,7 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
+    <template v-else>
     <el-row :gutter="12" class="stat-row">
       <el-col :xs="24" :sm="12" :lg="6">
         <StatCard icon="el-icon-download" label="读取速度" :value="d.readSpeed || '-'"
@@ -70,6 +72,7 @@
         </el-col>
       </el-row>
     </SectionCard>
+    </template>
   </div>
 </template>
 

@@ -1,5 +1,7 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
+    <template v-else>
     <el-row :gutter="12" class="stat-row">
       <el-col :xs="24" :sm="8">
         <StatCard icon="el-icon-odometer" label="总体使用率" :value="`${num(d.usage)}%`"
@@ -84,6 +86,7 @@
         </SectionCard>
       </el-col>
     </el-row>
+    </template>
   </div>
 </template>
 

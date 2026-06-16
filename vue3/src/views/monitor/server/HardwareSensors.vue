@@ -1,6 +1,8 @@
 <template>
   <div v-loading="loading" class="tab-pane">
+    <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
     <UnsupportedMask
+      v-else
       :unsupported="d.supported === false"
       :reason="d.note"
       title="无物理硬件传感器"
