@@ -106,8 +106,8 @@
         </el-table-column>
         <el-table-column label="来源" width="130" align="center">
           <template #default="{ row }">
-            <el-tag size="small" :type="['agent','ssh','snmp'].includes(row.source) ? 'success' : 'info'">
-              {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp"}[row.source] || "模拟·simulated" }}
+            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(row.source) ? 'success' : 'info'">
+              {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp",winrm:"真实·winrm",redis:"真实·redis"}[row.source] || "模拟·simulated" }}
             </el-tag>
           </template>
         </el-table-column>

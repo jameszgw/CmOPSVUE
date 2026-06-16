@@ -1,9 +1,10 @@
 <template>
   <el-dialog
-    :title="`新增${typeLabel}设备`"
+    :title="dialogTitle"
     :visible.sync="visible"
     width="560px"
     @open="onOpen"
+    @closed="onClosed"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
@@ -310,7 +311,7 @@
 </template>
 
 <script>
-import { addDevice, getDeviceOptions } from "@/api/monitor-device";
+import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
 
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
@@ -328,11 +329,15 @@ export default {
   props: {
     value: { type: Boolean, default: false },
     deviceType: { type: String, default: "SERVER" },
+    // 编辑模式：传入设备对象则进入编辑，提交走 updateDevice；为 null 时与原新增逻辑一致
+    editDevice: { type: Object, default: null },
   },
   data() {
     return {
       submitting: false,
       options: {},
+      isEdit: false,
+      editId: null,
       form: {
         name: "",
         ip: "",
@@ -404,6 +409,9 @@ export default {
     typeLabel() {
       return TYPE_LABEL[this.deviceType] || "";
     },
+    dialogTitle() {
+      return this.isEdit ? "编辑设备" : `新增${this.typeLabel}设备`;
+    },
     vmTypeOptions() {
       return (this.options.vmTypes || []).filter((v) => v !== "NONE");
     },
@@ -444,7 +452,20 @@ export default {
       return { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" }[t] || t;
     },
     async onOpen() {
-      this.form.port = DEFAULT_PORT[this.deviceType] || 22;
+      if (this.editDevice) {
+        this.isEdit = true;
+        this.editId = this.editDevice.id;
+        // 用已有设备数据回填表单（含采集配置字段）
+        Object.keys(this.form).forEach((k) => {
+          if (this.editDevice[k] !== undefined && this.editDevice[k] !== null) {
+            this.$set(this.form, k, this.editDevice[k]);
+          }
+        });
+      } else {
+        this.isEdit = false;
+        this.editId = null;
+        this.form.port = DEFAULT_PORT[this.deviceType] || 22;
+      }
       if (!this.options.osTypes) {
         try {
           const res = await getDeviceOptions();
@@ -454,6 +475,14 @@ export default {
         }
       }
     },
+    onClosed() {
+      // 关闭后重置编辑状态与表单，下次打开恢复新增默认
+      this.isEdit = false;
+      this.editId = null;
+      if (this.$refs.formRef) {
+        this.$refs.formRef.resetFields();
+      }
+    },
     submit() {
       this.$refs.formRef.validate(async (ok) => {
         if (!ok) return;
@@ -461,6 +490,9 @@ export default {
         try {
           const f = this.form;
           const payload = { name: f.name, ip: f.ip, port: f.port, type: this.deviceType };
+          if (this.isEdit && this.editId != null) {
+            payload.id = this.editId;
+          }
           // 采集配置（无探针 agentless 凭据）
           payload.collectVia = f.collectVia;
           if (f.collectVia === "SSH" || f.collectVia === "WINRM") {
@@ -555,12 +587,14 @@ export default {
               instanceCap: f.instanceCap,
             });
           }
-          const res = await addDevice(payload);
+          const res = this.isEdit
+            ? await updateDevice(payload)
+            : await addDevice(payload);
           if (res.success) {
-            this.$message.success("新增成功");
+            this.$message.success(this.isEdit ? "保存成功" : "新增成功");
             this.visible = false;
             this.$emit("added", res.content);
-            this.$refs.formRef.resetFields();
+            // 表单重置交由 @closed 处理，避免关闭动画期间字段闪烁
           }
         } finally {
           this.submitting = false;

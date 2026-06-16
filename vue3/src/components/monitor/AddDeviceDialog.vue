@@ -1,9 +1,10 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="`新增${typeLabel}设备`"
+    :title="dialogTitle"
     width="560px"
     @open="onOpen"
+    @closed="onClosed"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
@@ -312,11 +313,13 @@
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { addDevice, getDeviceOptions } from "@/api/monitor-device";
+import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   deviceType: { type: String, default: "SERVER" },
+  // 编辑模式：传入设备对象则进入编辑，提交走 updateDevice；为 null 时与原新增逻辑一致
+  editDevice: { type: Object, default: null },
 });
 const emit = defineEmits(["update:modelValue", "added"]);
 
@@ -331,6 +334,13 @@ const TYPE_LABEL = {
   POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开",
 };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
+
+// 编辑状态：打开时根据 editDevice 是否存在确定
+const isEdit = ref(false);
+const editId = ref(null);
+const dialogTitle = computed(() =>
+  isEdit.value ? "编辑设备" : `新增${typeLabel.value}设备`
+);
 
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
@@ -408,7 +418,20 @@ const osLabel = (t) =>
   ({ LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" }[t] || t);
 
 const onOpen = async () => {
-  form.port = DEFAULT_PORT[props.deviceType] || 22;
+  if (props.editDevice) {
+    isEdit.value = true;
+    editId.value = props.editDevice.id;
+    // 用已有设备数据回填表单（含采集配置字段）
+    Object.keys(form).forEach((k) => {
+      if (props.editDevice[k] !== undefined && props.editDevice[k] !== null) {
+        form[k] = props.editDevice[k];
+      }
+    });
+  } else {
+    isEdit.value = false;
+    editId.value = null;
+    form.port = DEFAULT_PORT[props.deviceType] || 22;
+  }
   if (!options.value.osTypes) {
     try {
       const res = await getDeviceOptions();
@@ -417,6 +440,13 @@ const onOpen = async () => {
       /* 接口层已提示 */
     }
   }
+};
+
+const onClosed = () => {
+  // 关闭后重置编辑状态与表单，下次打开恢复新增默认
+  isEdit.value = false;
+  editId.value = null;
+  formRef.value?.resetFields();
 };
 
 watch(
@@ -446,6 +476,9 @@ const submit = () => {
     submitting.value = true;
     try {
       const payload = { name: form.name, ip: form.ip, port: form.port, type: props.deviceType };
+      if (isEdit.value && editId.value != null) {
+        payload.id = editId.value;
+      }
       // 采集配置（无探针 agentless 凭据）
       payload.collectVia = form.collectVia;
       if (form.collectVia === "SSH" || form.collectVia === "WINRM") {
@@ -540,12 +573,14 @@ const submit = () => {
           instanceCap: form.instanceCap,
         });
       }
-      const res = await addDevice(payload);
+      const res = isEdit.value
+        ? await updateDevice(payload)
+        : await addDevice(payload);
       if (res.success) {
-        ElMessage.success("新增成功");
+        ElMessage.success(isEdit.value ? "保存成功" : "新增成功");
         visible.value = false;
         emit("added", res.content);
-        formRef.value.resetFields();
+        // 表单重置交由 @closed 处理，避免关闭动画期间字段闪烁
       }
     } finally {
       submitting.value = false;
