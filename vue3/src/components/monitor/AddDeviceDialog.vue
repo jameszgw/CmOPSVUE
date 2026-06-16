@@ -270,9 +270,10 @@
           <el-option label="Agent探针" value="AGENT" />
           <el-option label="SSH(无探针)" value="SSH" />
           <el-option label="SNMP(无探针)" value="SNMP" />
+          <el-option label="WinRM(无探针)" value="WINRM" />
         </el-select>
       </el-form-item>
-      <template v-if="form.collectVia === 'SSH'">
+      <template v-if="form.collectVia === 'SSH' || form.collectVia === 'WINRM'">
         <el-form-item label="端口" prop="collectPort">
           <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
         </el-form-item>
@@ -283,7 +284,10 @@
           <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
         </el-form-item>
         <el-form-item label=" ">
-          <span style="color: #909399; font-size: 12px; line-height: 1.5">
+          <span v-if="form.collectVia === 'WINRM'" style="color: #909399; font-size: 12px; line-height: 1.5">
+            Windows WinRM(默认5985/NTLM)，Windows Server 通常默认开启，无需装Agent/OpenSSH
+          </span>
+          <span v-else style="color: #909399; font-size: 12px; line-height: 1.5">
             需目标主机开放SSH(Linux/Unix，或Windows OpenSSH)；凭据仅用于只读采集
           </span>
         </el-form-item>
@@ -427,6 +431,8 @@ watch(
   (via) => {
     if (via === "SSH") {
       form.collectPort = 22;
+    } else if (via === "WINRM") {
+      form.collectPort = 5985;
     } else if (via === "SNMP") {
       form.collectPort = 161;
       if (!form.collectSecret) form.collectSecret = "public";
@@ -442,7 +448,7 @@ const submit = () => {
       const payload = { name: form.name, ip: form.ip, port: form.port, type: props.deviceType };
       // 采集配置（无探针 agentless 凭据）
       payload.collectVia = form.collectVia;
-      if (form.collectVia === "SSH") {
+      if (form.collectVia === "SSH" || form.collectVia === "WINRM") {
         payload.collectPort = form.collectPort;
         payload.collectUser = form.collectUser;
         payload.collectSecret = form.collectSecret;
