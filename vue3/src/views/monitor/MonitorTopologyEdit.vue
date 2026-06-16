@@ -460,7 +460,7 @@ const renderChart = () => {
       y: n.y ?? Math.floor(idx / 5) * 160 + 80,
       symbol: nodeSymbol(n.type, color),
       // 选中节点放大以突出（image 符号无法用 border 高亮）
-      symbolSize: selected ? 54 : 40,
+      symbolSize: selected ? 36 : 26,
       label: { show: true },
       _meta: n,
     };

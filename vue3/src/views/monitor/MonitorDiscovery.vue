@@ -35,7 +35,33 @@
         <span class="local-subnets__label">本机网段：</span>
         <el-space wrap>
           <el-tag v-for="(sn, i) in localSubnets" :key="i" size="small" type="info">
-            {{ sn }}
+            {{ sn.cidr || sn }}
+          </el-tag>
+        </el-space>
+      </div>
+    </SectionCard>
+
+    <!-- 自动发现进度 -->
+    <SectionCard v-if="autoJob.status" title="自动发现进度" icon="MagicStick">
+      <template #extra>
+        <el-tag
+          :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
+          size="small"
+        >
+          {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
+        </el-tag>
+      </template>
+      <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
+      <el-progress
+        :percentage="autoJob.progress || 0"
+        :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : ''"
+        :stroke-width="14"
+      />
+      <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
+        <span class="local-subnets__label">网段：</span>
+        <el-space wrap>
+          <el-tag v-for="(sn, i) in autoJob.subnets" :key="i" size="small" type="info">
+            {{ sn.cidr || sn }}
           </el-tag>
         </el-space>
       </div>
@@ -204,6 +230,7 @@ import {
   listDiscoveryTasks,
   importDiscovery,
   autoDiscovery,
+  getAutoStatus,
   getLocalSubnets,
 } from "@/api/monitor-discovery";
 
@@ -213,12 +240,14 @@ const scanning = ref(false);
 const buildTopology = ref(false);
 const autoLoading = ref(false);
 const localSubnets = ref([]);
+const autoJob = ref({});
 
 const task = ref(null);
 const recentTasks = ref([]);
 const selectedRows = ref([]);
 
 let pollTimer = null;
+let autoTimer = null;
 
 const nodes = computed(() => task.value?.nodes || []);
 const subnets = computed(() => task.value?.subnets || []);
@@ -301,22 +330,67 @@ const loadLocalSubnets = async () => {
   }
 };
 
-const onAutoDiscovery = async () => {
-  autoLoading.value = true;
+const clearAutoPoll = () => {
+  if (autoTimer) {
+    clearInterval(autoTimer);
+    autoTimer = null;
+  }
+};
+
+const autoPollOnce = async (jobId) => {
   try {
-    const res = await autoDiscovery({ buildTopology: true });
+    const res = await getAutoStatus(jobId);
     const c = res?.content || {};
+    autoJob.value = c;
     if (c.subnets?.length) {
       localSubnets.value = c.subnets;
     }
-    ElMessage.success(
-      `已自动发现 ${c.imported || 0} 台设备（网段：${(c.subnets || []).length} 个），已生成拓扑`
-    );
-    loadRecent();
+    if (c.status === "done") {
+      clearAutoPoll();
+      autoLoading.value = false;
+      ElMessage.success(
+        `已自动发现 ${c.imported || 0} 台设备（网段：${(c.subnets || []).length} 个）${
+          c.viewId ? "，已生成拓扑" : ""
+        }`
+      );
+      loadRecent();
+      loadLocalSubnets();
+      setTimeout(() => {
+        autoJob.value = {};
+      }, 4000);
+    } else if (c.status === "failed") {
+      clearAutoPoll();
+      autoLoading.value = false;
+      ElMessage.error(c.message || "自动发现失败");
+    }
   } catch (e) {
-    ElMessage.error("自动发现失败");
-  } finally {
+    clearAutoPoll();
     autoLoading.value = false;
+    ElMessage.error("自动发现失败");
+  }
+};
+
+const onAutoDiscovery = async () => {
+  autoLoading.value = true;
+  autoJob.value = { status: "running", progress: 0, phase: "正在启动…" };
+  try {
+    const res = await autoDiscovery({ buildTopology: true });
+    const jobId = res?.content?.jobId;
+    if (!jobId) {
+      clearAutoPoll();
+      autoLoading.value = false;
+      autoJob.value = {};
+      ElMessage.error("自动发现启动失败");
+      return;
+    }
+    clearAutoPoll();
+    autoPollOnce(jobId);
+    autoTimer = setInterval(() => autoPollOnce(jobId), 1500);
+  } catch (e) {
+    clearAutoPoll();
+    autoLoading.value = false;
+    autoJob.value = {};
+    ElMessage.error("自动发现失败");
   }
 };
 
@@ -373,7 +447,10 @@ onMounted(() => {
   loadRecent();
   loadLocalSubnets();
 });
-onBeforeUnmount(clearPoll);
+onBeforeUnmount(() => {
+  clearPoll();
+  clearAutoPoll();
+});
 </script>
 
 <style lang="less" scoped>
@@ -421,5 +498,19 @@ onBeforeUnmount(clearPoll);
 .empty-text {
   color: var(--cm-text-secondary);
   font-size: 13px;
+}
+
+.auto-job__phase {
+  margin-bottom: @space-sm;
+  color: var(--cm-text-secondary);
+  font-size: 13px;
+}
+
+.auto-job__subnets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: @space-sm;
+  margin-top: @space-md;
 }
 </style>

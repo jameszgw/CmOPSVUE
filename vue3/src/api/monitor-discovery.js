@@ -12,5 +12,7 @@ export const importDiscovery = (data) =>
   request("/api/devops/monitor/discovery/import", { method: "POST", data });
 export const autoDiscovery = (data) =>
   request("/api/devops/monitor/discovery/auto", { method: "POST", data });
+export const getAutoStatus = (jobId) =>
+  request("/api/devops/monitor/discovery/auto/status", { method: "GET", params: { jobId } });
 export const getLocalSubnets = () =>
   request("/api/devops/monitor/discovery/local-subnets", { method: "GET" });

@@ -34,14 +34,45 @@
           <div v-if="localSubnets.length" class="local-subnets">
             本机网段：
             <el-tag
-              v-for="s in localSubnets"
-              :key="s"
+              v-for="(s, i) in localSubnets"
+              :key="i"
               size="mini"
               effect="plain"
               class="subnet-tag"
             >
-              {{ s }}
+              {{ subnetText(s) }}
             </el-tag>
+          </div>
+
+          <div v-if="autoJob.status" class="auto-job">
+            <div class="auto-job__head">
+              <span class="auto-job__title">自动发现进度</span>
+              <el-tag
+                size="mini"
+                effect="light"
+                :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
+              >
+                {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
+              </el-tag>
+            </div>
+            <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
+            <el-progress
+              :percentage="autoJob.progress || 0"
+              :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : undefined"
+              :stroke-width="14"
+            />
+            <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
+              网段：
+              <el-tag
+                v-for="(s, i) in autoJob.subnets"
+                :key="i"
+                size="mini"
+                effect="plain"
+                class="subnet-tag"
+              >
+                {{ subnetText(s) }}
+              </el-tag>
+            </div>
           </div>
 
           <div v-if="task" class="scan-progress">
@@ -196,6 +227,7 @@ import {
   listDiscoveryTasks,
   importDiscovery,
   autoDiscovery,
+  getAutoStatus,
   getLocalSubnets,
 } from "@/api/monitor-discovery";
 
@@ -228,6 +260,7 @@ export default {
       scanning: false,
       autoLoading: false,
       localSubnets: [],
+      autoJob: {},
       task: null,
       tasks: [],
       selected: [],
@@ -235,6 +268,7 @@ export default {
       importing: false,
       importMode: "",
       pollTimer: null,
+      autoTimer: null,
     };
   },
   computed: {
@@ -254,6 +288,7 @@ export default {
   },
   beforeDestroy() {
     this.clearPoll();
+    this.clearAutoPoll();
   },
   methods: {
     num0(v) {
@@ -283,10 +318,20 @@ export default {
     classTagType(c) {
       return CLASS_TAG[(c || "unknown").toLowerCase()] || "info";
     },
+    subnetText(s) {
+      if (s && typeof s === "object") return s.cidr || "";
+      return s;
+    },
     clearPoll() {
       if (this.pollTimer) {
         clearInterval(this.pollTimer);
         this.pollTimer = null;
+      }
+    },
+    clearAutoPoll() {
+      if (this.autoTimer) {
+        clearInterval(this.autoTimer);
+        this.autoTimer = null;
       }
     },
     async loadTasks() {
@@ -307,20 +352,60 @@ export default {
     },
     async autoDiscover() {
       this.autoLoading = true;
+      this.autoJob = { status: "running", progress: 0, phase: "正在启动…" };
       try {
         const res = await autoDiscovery({ buildTopology: true });
+        const jobId = res.content && res.content.jobId;
+        if (!jobId) {
+          this.clearAutoPoll();
+          this.autoLoading = false;
+          this.autoJob = {};
+          this.$message.error("自动发现启动失败");
+          return;
+        }
+        this.startAutoPoll(jobId);
+      } catch (e) {
+        this.clearAutoPoll();
+        this.autoLoading = false;
+        this.autoJob = {};
+        this.$message.error("自动发现失败");
+      }
+    },
+    startAutoPoll(jobId) {
+      this.clearAutoPoll();
+      this.autoPollOnce(jobId);
+      this.autoTimer = setInterval(() => this.autoPollOnce(jobId), 1500);
+    },
+    async autoPollOnce(jobId) {
+      try {
+        const res = await getAutoStatus(jobId);
         const c = res.content || {};
+        this.autoJob = c;
         if (c.subnets && c.subnets.length) {
           this.localSubnets = c.subnets;
         }
-        this.$message.success(
-          `已自动发现 ${this.num0(c.imported)} 台设备（网段：${
-            (c.subnets || []).length
-          } 个），已生成拓扑`
-        );
-        this.loadTasks();
-      } finally {
+        if (c.status === "done") {
+          this.clearAutoPoll();
+          this.autoLoading = false;
+          this.$message.success(
+            `已自动发现 ${this.num0(c.imported)} 台设备（网段：${
+              (c.subnets || []).length
+            } 个）${c.viewId ? "，已生成拓扑" : ""}`
+          );
+          this.loadTasks();
+          this.loadLocalSubnets();
+          setTimeout(() => {
+            this.autoJob = {};
+          }, 4000);
+        } else if (c.status === "failed") {
+          this.clearAutoPoll();
+          this.autoLoading = false;
+          this.$message.error(c.message || "自动发现失败");
+        }
+      } catch (e) {
+        this.clearAutoPoll();
         this.autoLoading = false;
+        this.$message.error("自动发现失败");
       }
     },
     async startScan() {
@@ -449,6 +534,29 @@ export default {
   margin-top: 8px;
   font-size: 12px;
   color: var(--cm-text-secondary, @text-secondary);
+}
+.auto-job {
+  margin-top: 12px;
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  &__title {
+    font-size: 13px;
+    color: var(--cm-text-primary, @text-primary);
+  }
+  &__phase {
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--cm-text-secondary, @text-secondary);
+  }
+  &__subnets {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--cm-text-secondary, @text-secondary);
+  }
 }
 .task-list {
   list-style: none;

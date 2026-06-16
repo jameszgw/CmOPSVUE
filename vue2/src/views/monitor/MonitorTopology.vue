@@ -183,7 +183,7 @@ export default {
             x: x,
             y: y,
             symbol: nodeSymbol(n.type, color),
-            symbolSize: 40,
+            symbolSize: 26,
             category: STATUS_INDEX[status] === undefined ? 0 : STATUS_INDEX[status],
             label: { show: true },
             _raw: n,

@@ -155,7 +155,7 @@ const renderChart = () => {
         x,
         y,
         symbol: nodeSymbol(n.type, STATUS_COLOR[n.status] || "#67c23a"),
-        symbolSize: 40,
+        symbolSize: 26,
         category: STATUS_CAT[n.status] ?? 0,
         itemStyle: { color: STATUS_COLOR[n.status] || "#67c23a" },
         label: { show: true },
