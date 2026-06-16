@@ -74,6 +74,9 @@
         <el-button :icon="Connection" :disabled="!currentViewId" @click="openAddEdge"
           >添加连线</el-button
         >
+        <el-button :icon="Grid" :disabled="!currentViewId || !nodeCount" @click="autoLayout"
+          >自动布局</el-button
+        >
         <el-button type="primary" :icon="Finished" :disabled="!currentViewId" @click="saveLayout"
           >保存布局</el-button
         >
@@ -314,6 +317,7 @@ import {
   DocumentChecked,
   Download,
   Upload,
+  Grid,
 } from "@element-plus/icons-vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
@@ -764,6 +768,24 @@ const submitEdge = async () => {
   } finally {
     edgeDialog.saving = false;
   }
+};
+
+// ===== 自动布局：将当前视图节点重排为网格 =====
+const autoLayout = () => {
+  const list = nodes.value;
+  const n = list.length;
+  if (!n) return;
+  const cols = Math.max(4, Math.ceil(Math.sqrt(n) * 1.6));
+  const dx = 160;
+  const dy = 120;
+  list.forEach((node, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    node.x = (col - (cols - 1) / 2) * dx;
+    node.y = row * dy;
+  });
+  renderChart();
+  ElMessage.success("已重新布局，点「保存布局」可持久化");
 };
 
 // ===== 保存布局：读取 ECharts 拖拽后坐标 =====
