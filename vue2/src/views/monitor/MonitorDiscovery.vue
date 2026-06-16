@@ -200,22 +200,36 @@
             height="100%"
             @selection-change="onSelectionChange"
           >
-            <el-table-column type="selection" width="44" />
+            <el-table-column type="selection" width="44" :selectable="isSelectable" />
             <el-table-column prop="ip" label="IP" min-width="130" fixed>
               <template slot-scope="{ row }">
                 <span class="mono">{{ row.ip || "-" }}</span>
                 <el-tag v-if="row.gateway" size="mini" effect="plain" class="gw-tag">网关</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="确认" width="84">
+            <el-table-column label="确认" width="120">
               <template slot-scope="{ row }">
                 <el-tag size="mini" effect="light" :type="row.exists ? 'success' : 'info'">
                   {{ row.exists ? "设备" : "未确认" }}
+                </el-tag>
+                <el-tag
+                  v-if="row.imported"
+                  size="mini"
+                  effect="light"
+                  type="primary"
+                  class="imported-tag"
+                >
+                  已导入
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="hostname" label="主机名" min-width="150">
               <template slot-scope="{ row }">{{ row.hostname || row.snmpSysName || "-" }}</template>
+            </el-table-column>
+            <el-table-column prop="mac" label="MAC" min-width="140">
+              <template slot-scope="{ row }">
+                <span class="mono">{{ row.mac || "-" }}</span>
+              </template>
             </el-table-column>
             <el-table-column label="设备类型" width="120">
               <template slot-scope="{ row }">
@@ -516,6 +530,9 @@ export default {
     onSelectionChange(rows) {
       this.selected = rows || [];
     },
+    isSelectable(row) {
+      return !row.imported;
+    },
     async doImport(all) {
       if (!this.task || !this.task.taskId) {
         this.$message.warning("请先完成一次扫描");
@@ -535,9 +552,21 @@ export default {
           buildTopology: this.buildTopology,
         });
         const c = res.content || {};
-        this.$message.success(
-          `导入完成：新增 ${this.num0(c.imported)} 个，跳过 ${this.num0(c.skipped)} 个`
-        );
+        if (c.note) {
+          if (Number(c.imported) > 0) {
+            this.$message.success(c.note);
+          } else {
+            this.$message.info(c.note);
+          }
+        } else {
+          this.$message.success(
+            `导入完成：新增 ${this.num0(c.imported)} 个，跳过 ${this.num0(c.skipped)} 个`
+          );
+        }
+        // 刷新当前任务，更新已导入标记
+        if (this.task && this.task.taskId) {
+          await this.fetchTask(this.task.taskId);
+        }
       } finally {
         this.importing = false;
         this.importMode = "";
@@ -665,6 +694,9 @@ export default {
 }
 .gw-tag {
   margin-left: 6px;
+}
+.imported-tag {
+  margin-left: 4px;
 }
 .ports {
   font-size: 12px;

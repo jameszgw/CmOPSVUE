@@ -21,7 +21,23 @@
     <el-row :gutter="12">
       <el-col :xs="24" :lg="16">
         <SectionCard title="全链路拓扑" icon="el-icon-share">
-          <template #extra>{{ layerLabel }}</template>
+          <template #extra>
+            <el-select
+              v-model="selectedViewId"
+              size="mini"
+              class="view-select"
+              placeholder="选择拓扑视图"
+              @change="onViewChange"
+            >
+              <el-option
+                v-for="opt in viewOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+            <span v-if="layerLabel" class="layer-label">{{ layerLabel }}</span>
+          </template>
           <div ref="graphRef" class="graph-chart"></div>
         </SectionCard>
       </el-col>
@@ -75,7 +91,7 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
-import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+import { getTopologyGraph, getTopologyRootCause, listTopoViews } from "@/api/monitor-topology";
 import { nodeSymbol } from "@/utils/topo-symbols";
 
 const TYPE_LABEL = {
@@ -103,9 +119,18 @@ export default {
       rootcause: {},
       chart: null,
       timer: null,
+      selectedViewId: "",
+      views: [],
     };
   },
   computed: {
+    viewOptions() {
+      const opts = [{ value: "", label: "全局拓扑（全部设备）" }];
+      (this.views || []).forEach((v) => {
+        opts.push({ value: v.id, label: v.name });
+      });
+      return opts;
+    },
     nodeTotal() {
       return ((this.graph.nodes && this.graph.nodes.length) || 0);
     },
@@ -130,6 +155,7 @@ export default {
     },
   },
   mounted() {
+    this.loadViews();
     this.loadAll();
     this.timer = setInterval(this.loadAll, 5000);
   },
@@ -266,9 +292,24 @@ export default {
         true
       );
     },
-    async loadAll() {
+    async loadViews() {
       try {
-        const [g, r] = await Promise.all([getTopologyGraph(), getTopologyRootCause()]);
+        const res = await listTopoViews();
+        this.views = (res && res.content) || [];
+      } catch (e) {
+        this.views = [];
+      }
+    },
+    onViewChange() {
+      this.loadAll();
+    },
+    async loadAll() {
+      const viewId = this.selectedViewId;
+      try {
+        const [g, r] = await Promise.all([
+          getTopologyGraph(viewId),
+          getTopologyRootCause(viewId),
+        ]);
         this.graph = (g && g.content) || {};
         this.rootcause = (r && r.content) || {};
         await this.$nextTick();
@@ -292,6 +333,14 @@ export default {
 }
 .stat-row .el-col {
   margin-bottom: @space-md;
+}
+.view-select {
+  width: 200px;
+}
+.layer-label {
+  margin-left: @space-sm;
+  font-size: 12px;
+  color: var(--cm-text-secondary, @text-secondary);
 }
 .graph-chart {
   height: 560px;

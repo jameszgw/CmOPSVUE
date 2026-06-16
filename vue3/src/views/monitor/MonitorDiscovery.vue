@@ -168,15 +168,27 @@
           stripe
           @selection-change="onSelectionChange"
         >
-          <el-table-column type="selection" width="48" />
+          <el-table-column
+            type="selection"
+            width="48"
+            :selectable="(row) => !row.imported"
+          />
           <el-table-column prop="ip" label="IP" min-width="130">
             <template #default="{ row }">{{ row.ip || '-' }}</template>
           </el-table-column>
-          <el-table-column label="确认" width="90">
+          <el-table-column prop="mac" label="MAC" min-width="150">
+            <template #default="{ row }">{{ row.mac || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="确认" width="140">
             <template #default="{ row }">
-              <el-tag size="small" :type="row.exists ? 'success' : 'info'">
-                {{ row.exists ? '设备' : '未确认' }}
-              </el-tag>
+              <el-space :size="4" wrap>
+                <el-tag size="small" :type="row.exists ? 'success' : 'info'">
+                  {{ row.exists ? '设备' : '未确认' }}
+                </el-tag>
+                <el-tag v-if="row.imported" size="small" type="warning">
+                  已导入
+                </el-tag>
+              </el-space>
             </template>
           </el-table-column>
           <el-table-column prop="hostname" label="主机名" min-width="140">
@@ -450,10 +462,24 @@ const doImport = async (all) => {
   try {
     const res = await importDiscovery(payload);
     const c = res?.content || {};
-    ElMessage.success(
-      `导入成功：新增 ${c.imported || 0} 个，跳过 ${c.skipped || 0}，视图 ${c.viewId || "-"}`
-    );
+    if (c.note) {
+      // 后端已提供可读消息：有新增用成功提示，否则用普通提示
+      (c.imported > 0 ? ElMessage.success : ElMessage.info)(c.note);
+    } else {
+      ElMessage.success(
+        `导入成功：新增 ${c.imported || 0} 个，跳过 ${c.skipped || 0}，视图 ${c.viewId || "-"}`
+      );
+    }
     loadRecent();
+    // 刷新当前任务，使已导入 IP 的标记同步（变为不可选 / 显示已导入）
+    if (taskId) {
+      try {
+        const r = await getDiscoveryTask(taskId);
+        task.value = r?.content || task.value;
+      } catch (e) {
+        /* 忽略刷新失败 */
+      }
+    }
   } catch (e) {
     ElMessage.error("导入失败");
   }

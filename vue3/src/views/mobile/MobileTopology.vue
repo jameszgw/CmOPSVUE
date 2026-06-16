@@ -20,6 +20,18 @@
       </div>
     </div>
 
+    <!-- 视图切换 -->
+    <div class="view-select">
+      <el-select v-model="selectedViewId" size="default" @change="onViewChange">
+        <el-option
+          v-for="opt in viewOptions"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+    </div>
+
     <!-- 搜索 -->
     <div class="search">
       <el-input
@@ -92,7 +104,11 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { Search } from "@element-plus/icons-vue";
-import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+import {
+  getTopologyGraph,
+  getTopologyRootCause,
+  listTopoViews,
+} from "@/api/monitor-topology";
 import { nodeSymbol, TYPE_LABEL } from "@/utils/topo-symbols";
 
 const router = useRouter();
@@ -102,6 +118,14 @@ const incidentCount = ref(null);
 const keyword = ref("");
 const activeType = ref("");
 let timer = null;
+
+// 拓扑视图选择：空字符串表示全局拓扑
+const selectedViewId = ref("");
+const savedViews = ref([]);
+const viewOptions = computed(() => [
+  { value: "", label: "全局拓扑（全部设备）" },
+  ...savedViews.value.map((v) => ({ value: v.id, label: v.name })),
+]);
 
 const graph = computed(() => graphData.value || {});
 const num = (v) => (v === undefined || v === null ? "-" : v);
@@ -193,8 +217,9 @@ const openNode = (node) => {
 
 const load = async (silent = false) => {
   if (!silent) loading.value = true;
+  const viewId = selectedViewId.value;
   try {
-    const res = await getTopologyGraph();
+    const res = await getTopologyGraph(viewId);
     graphData.value = (res && res.content) || {};
   } catch (e) {
     /* null-safe */
@@ -202,7 +227,7 @@ const load = async (silent = false) => {
     loading.value = false;
   }
   try {
-    const rc = await getTopologyRootCause();
+    const rc = await getTopologyRootCause(viewId);
     const c = rc && rc.content;
     incidentCount.value = c && c.incidentCount != null ? c.incidentCount : null;
   } catch (e) {
@@ -210,7 +235,19 @@ const load = async (silent = false) => {
   }
 };
 
+const loadViews = async () => {
+  try {
+    const res = await listTopoViews();
+    savedViews.value = (res && res.content) || [];
+  } catch (e) {
+    savedViews.value = [];
+  }
+};
+
+const onViewChange = () => load();
+
 onMounted(() => {
+  loadViews();
   load();
   timer = setInterval(() => load(true), 10000);
 });
@@ -250,6 +287,14 @@ onBeforeUnmount(() => {
 .chip__label {
   font-size: 11px;
   color: var(--cm-text-secondary);
+}
+
+/* 视图切换 */
+.view-select {
+  margin-top: -2px;
+}
+.view-select :deep(.el-select) {
+  width: 100%;
 }
 
 /* 搜索 */

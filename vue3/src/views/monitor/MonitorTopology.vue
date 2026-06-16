@@ -21,8 +21,29 @@
     <el-row :gutter="12">
       <el-col :xs="24" :lg="16">
         <SectionCard title="全链路拓扑" icon="Share">
-          <template #extra>{{ (g.layers || []).join(" → ") }}</template>
-          <div ref="chartRef" class="topo-chart"></div>
+          <template #extra>
+            <div class="topo-extra">
+              <el-select
+                v-model="selectedViewId"
+                size="small"
+                class="topo-view-select"
+                @change="onViewChange"
+              >
+                <el-option
+                  v-for="opt in viewOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+              <span class="topo-layers">{{ (g.layers || []).join(" → ") }}</span>
+            </div>
+          </template>
+          <el-empty
+            v-if="nodeCount === 0"
+            description="该视图暂无拓扑节点"
+          />
+          <div v-show="nodeCount > 0" ref="chartRef" class="topo-chart"></div>
         </SectionCard>
       </el-col>
       <el-col :xs="24" :lg="8">
@@ -85,7 +106,11 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
-import { getTopologyGraph, getTopologyRootCause } from "@/api/monitor-topology";
+import {
+  getTopologyGraph,
+  getTopologyRootCause,
+  listTopoViews,
+} from "@/api/monitor-topology";
 import { nodeSymbol } from "@/utils/topo-symbols";
 
 applyChartTheme(echarts);
@@ -95,6 +120,14 @@ const rootcause = ref({});
 const g = computed(() => graph.value || {});
 const rc = computed(() => rootcause.value || {});
 const nodeCount = computed(() => (g.value.nodes || []).length);
+
+// 拓扑视图选择：空字符串表示全局拓扑
+const selectedViewId = ref("");
+const savedViews = ref([]);
+const viewOptions = computed(() => [
+  { value: "", label: "全局拓扑（全部设备）" },
+  ...savedViews.value.map((v) => ({ value: v.id, label: v.name })),
+]);
 
 const chartRef = ref(null);
 let chart = null;
@@ -245,10 +278,11 @@ const rerenderChart = () => {
 useChartSkin(rerenderChart);
 
 const load = async () => {
+  const viewId = selectedViewId.value;
   try {
     const [gRes, rRes] = await Promise.all([
-      getTopologyGraph(),
-      getTopologyRootCause(),
+      getTopologyGraph(viewId),
+      getTopologyRootCause(viewId),
     ]);
     graph.value = gRes.content || {};
     rootcause.value = rRes.content || {};
@@ -259,7 +293,22 @@ const load = async () => {
   }
 };
 
+const loadViews = async () => {
+  try {
+    const res = await listTopoViews();
+    savedViews.value = res.content || [];
+  } catch (e) {
+    savedViews.value = [];
+  }
+};
+
+const onViewChange = () => {
+  // 切换视图后立即重载图与根因；轮询继续使用当前选中的 viewId
+  load();
+};
+
 onMounted(() => {
+  loadViews();
   load();
   timer = setInterval(load, 5000);
 });
@@ -287,6 +336,18 @@ onBeforeUnmount(() => {
 .topo-chart {
   height: 560px;
   width: 100%;
+}
+.topo-extra {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+}
+.topo-view-select {
+  width: 200px;
+}
+.topo-layers {
+  color: var(--cm-text-secondary);
+  font-size: 12px;
 }
 
 .incident-list {
