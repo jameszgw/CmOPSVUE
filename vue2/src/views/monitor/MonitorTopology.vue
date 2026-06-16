@@ -231,7 +231,8 @@ export default {
                 "类型: " + this.typeLabel(n.type) + "<br/>" +
                 "IP: " + (n.ip || "-") + "<br/>" +
                 "状态: " + (STATUS_LABEL[n.status] || n.status || "-") + "<br/>" +
-                "来源: " + (n.source === "agent" ? "真实采集" : "模拟数据")
+                "来源: " +
+                ({ agent: "真实采集·Agent", ssh: "真实采集·SSH", snmp: "真实采集·SNMP" }[n.source] || "模拟数据")
               );
             },
           },

@@ -261,6 +261,41 @@
           <el-input-number v-model="form.instanceCap" :min="1" :max="1000" controls-position="right" />
         </el-form-item>
       </template>
+
+      <!-- 采集配置（无探针 agentless 凭据） -->
+      <el-divider content-position="left">采集配置</el-divider>
+      <el-form-item label="采集方式" prop="collectVia">
+        <el-select v-model="form.collectVia" placeholder="请选择">
+          <el-option label="模拟数据" value="NONE" />
+          <el-option label="Agent探针" value="AGENT" />
+          <el-option label="SSH(无探针)" value="SSH" />
+          <el-option label="SNMP(无探针)" value="SNMP" />
+        </el-select>
+      </el-form-item>
+      <template v-if="form.collectVia === 'SSH'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="用户名" prop="collectUser">
+          <el-input v-model="form.collectUser" placeholder="如 root / ops" />
+        </el-form-item>
+        <el-form-item label="密码" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
+        </el-form-item>
+        <el-form-item label=" ">
+          <span style="color: #909399; font-size: 12px; line-height: 1.5">
+            需目标主机开放SSH(Linux/Unix，或Windows OpenSSH)；凭据仅用于只读采集
+          </span>
+        </el-form-item>
+      </template>
+      <template v-else-if="form.collectVia === 'SNMP'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="Community" prop="collectSecret">
+          <el-input v-model="form.collectSecret" placeholder="如 public" />
+        </el-form-item>
+      </template>
     </el-form>
 
     <template #footer>
@@ -312,6 +347,10 @@ const form = reactive({
   osType: "LINUX",
   osName: "",
   collectMode: "AGENT",
+  collectVia: "NONE",
+  collectPort: 22,
+  collectUser: "",
+  collectSecret: "",
   redisVersion: "7.2.4",
   redisMode: "standalone",
   redisRole: "master",
@@ -383,12 +422,34 @@ watch(
   }
 );
 
+watch(
+  () => form.collectVia,
+  (via) => {
+    if (via === "SSH") {
+      form.collectPort = 22;
+    } else if (via === "SNMP") {
+      form.collectPort = 161;
+      if (!form.collectSecret) form.collectSecret = "public";
+    }
+  }
+);
+
 const submit = () => {
   formRef.value.validate(async (ok) => {
     if (!ok) return;
     submitting.value = true;
     try {
       const payload = { name: form.name, ip: form.ip, port: form.port, type: props.deviceType };
+      // 采集配置（无探针 agentless 凭据）
+      payload.collectVia = form.collectVia;
+      if (form.collectVia === "SSH") {
+        payload.collectPort = form.collectPort;
+        payload.collectUser = form.collectUser;
+        payload.collectSecret = form.collectSecret;
+      } else if (form.collectVia === "SNMP") {
+        payload.collectPort = form.collectPort;
+        payload.collectSecret = form.collectSecret;
+      }
       if (props.deviceType === "SERVER") {
         Object.assign(payload, {
           category: form.category,
