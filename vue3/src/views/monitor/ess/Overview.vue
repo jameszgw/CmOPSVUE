@@ -22,8 +22,8 @@
 
     <SectionCard title="基础信息" icon="InfoFilled">
       <template #extra>
-        <el-tag size="small" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
-          {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+        <el-tag size="small" :type="['agent','ssh','snmp'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP"}[d.source] || "模拟数据" }}
         </el-tag>
       </template>
       <InfoTable :rows="basicRows" :columns="2" />

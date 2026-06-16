@@ -21,8 +21,8 @@
 
     <SectionCard title="基础信息" icon="InfoFilled">
       <template #extra>
-        <el-tag size="small" :type="d.source === 'agent' ? 'success' : 'info'" style="margin-right: 6px">
-          {{ d.source === "agent" ? "真实采集" : "模拟数据" }}
+        <el-tag size="small" :type="['agent','ssh','snmp'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP"}[d.source] || "模拟数据" }}
         </el-tag>
         <el-tag v-if="d.underVoltage" type="danger" size="small" effect="dark">欠压</el-tag>
         <el-tag v-if="d.throttled" type="warning" size="small" effect="dark" style="margin-left: 6px">降频</el-tag>

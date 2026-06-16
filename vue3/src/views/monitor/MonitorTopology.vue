@@ -194,7 +194,7 @@ const renderChart = () => {
             `类型：${m.type || "-"}`,
             `IP：${m.ip || "-"}`,
             `状态：${m.status || "-"}`,
-            `来源：${m.source === "agent" ? "真实采集" : "模拟数据"}`,
+            `来源：${{ agent: "真实采集·Agent", ssh: "真实采集·SSH", snmp: "真实采集·SNMP" }[m.source] || "模拟数据"}`,
           ].join("<br/>");
         },
       },

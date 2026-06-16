@@ -260,8 +260,8 @@
         </div>
         <div v-if="drawer.data?.source" class="drawer-row">
           <span class="drawer-row__label">来源</span>
-          <el-tag :type="drawer.data.source === 'agent' ? 'success' : 'info'" size="small">
-            {{ drawer.data.source === 'agent' ? '真实采集' : '模拟数据' }}
+          <el-tag :type="['agent','ssh','snmp'].includes(drawer.data.source) ? 'success' : 'info'" size="small">
+            {{ {agent:'真实采集·Agent',ssh:'真实采集·SSH',snmp:'真实采集·SNMP'}[drawer.data.source] || '模拟数据' }}
           </el-tag>
         </div>
 

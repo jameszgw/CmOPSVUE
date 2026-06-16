@@ -115,8 +115,8 @@
         </el-table-column>
         <el-table-column label="来源" width="130" align="center">
           <template slot-scope="{ row }">
-            <el-tag size="mini" :type="row.source === 'agent' ? 'success' : 'info'">
-              {{ row.source === "agent" ? "真实·agent" : "模拟·simulated" }}
+            <el-tag size="mini" :type="['agent','ssh','snmp'].includes(row.source) ? 'success' : 'info'">
+              {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp"}[row.source] || "模拟·simulated" }}
             </el-tag>
           </template>
         </el-table-column>
