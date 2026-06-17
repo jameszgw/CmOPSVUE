@@ -56,13 +56,16 @@ const groupedRows = computed(() => {
   &__label {
     background: var(--cm-bg-muted);
     color: var(--cm-text-regular);
-    width: 160px;
+    /* 收缩到内容宽度，把剩余空间留给值列：多面板并排时避免值被挤成逐字换行 */
+    width: 1%;
     white-space: nowrap;
   }
 
   &__value {
     color: var(--cm-text-primary);
-    word-break: break-all;
+    /* 仅在必要时换行，且按词/分隔处断行，不再逐字符堆叠（如 standalone / 版本号 / IP） */
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
 
   &__tag {
