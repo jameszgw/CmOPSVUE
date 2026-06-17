@@ -1,24 +1,18 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Box" label="Broker 总数" :value="d.total ?? 0"
-          sub="节点总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleCheck" label="在线" :value="d.online ?? 0"
-          sub="online 节点" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleClose" label="离线" :value="d.offline ?? 0"
-          sub="offline 节点" :color="countColor(d.offline)" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Box" label="Broker 总数" :value="d.total ?? 0"
+        sub="节点总数" color="#409eff" />
+      <StatCard dense icon="CircleCheck" label="在线" :value="d.online ?? 0"
+        sub="online 节点" color="#67c23a" />
+      <StatCard dense icon="CircleClose" label="离线" :value="d.offline ?? 0"
+        sub="offline 节点" :color="countColor(d.offline)" />
+    </CardGrid>
 
-    <SectionCard title="Broker 列表" icon="List">
+    <SectionCard dense title="Broker 列表" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
       <template #extra>共 {{ (d.brokers || []).length }} 个节点</template>
-      <el-empty v-if="!(d.brokers || []).length" description="暂无数据" />
-      <el-table v-else :data="d.brokers || []" size="small" stripe>
+      <el-empty v-if="!(d.brokers || []).length" description="暂无数据" :image-size="60" />
+      <el-table v-else class="dense-table" height="100%" :data="d.brokers || []" size="small" stripe>
         <el-table-column label="ID" width="80" align="center" fixed>
           <template #default="{ row }">{{ row.id ?? "-" }}</template>
         </el-table-column>
@@ -81,6 +75,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getMqBrokers } from "@/api/monitor-mq";
 
 const props = defineProps({
@@ -125,11 +120,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .broker-host {
   font-family: monospace;

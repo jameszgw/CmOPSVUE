@@ -1,38 +1,39 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <SectionCard title="数据库引擎指标" icon="DataAnalysis">
-      <template #extra>{{ d.dbType || "-" }}</template>
-      <div class="engine-head">
-        <span class="engine-head__label">当前引擎:</span>
-        <el-tag size="large" type="primary" effect="dark">{{ d.engineLabel || "-" }}</el-tag>
-      </div>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="数据库引擎指标" icon="DataAnalysis" class="span-all">
+        <template #extra>{{ d.dbType || "-" }}</template>
+        <div class="engine-head">
+          <span class="engine-head__label">当前引擎:</span>
+          <el-tag size="large" type="primary" effect="dark">{{ d.engineLabel || "-" }}</el-tag>
+        </div>
 
-      <el-row :gutter="12" class="metric-grid">
-        <el-col v-for="(s, i) in d.stats || []" :key="i" :xs="12" :sm="8" :lg="6">
-          <div class="metric-card" :style="{ borderTopColor: levelColor(s.level) }">
-            <div class="metric-card__label">
-              {{ s.label }}
-              <el-tag v-if="s.level && s.level !== 'normal'" size="small"
-                :type="s.level === 'critical' ? 'danger' : 'warning'" effect="plain">
-                {{ levelText(s.level) }}
-              </el-tag>
+        <el-row :gutter="12" class="metric-grid">
+          <el-col v-for="(s, i) in d.stats || []" :key="i" :xs="12" :sm="8" :lg="6">
+            <div class="metric-card" :style="{ borderTopColor: levelColor(s.level) }">
+              <div class="metric-card__label">
+                {{ s.label }}
+                <el-tag v-if="s.level && s.level !== 'normal'" size="small"
+                  :type="s.level === 'critical' ? 'danger' : 'warning'" effect="plain">
+                  {{ levelText(s.level) }}
+                </el-tag>
+              </div>
+              <div class="metric-card__value" :style="{ color: levelColor(s.level) }">
+                {{ fmt(s.value) }}<span class="metric-card__unit">{{ s.unit || "" }}</span>
+              </div>
             </div>
-            <div class="metric-card__value" :style="{ color: levelColor(s.level) }">
-              {{ fmt(s.value) }}<span class="metric-card__unit">{{ s.unit || "" }}</span>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+          </el-col>
+        </el-row>
+      </SectionCard>
 
-    <SectionCard v-for="(g, gi) in d.groups || []" :key="gi" :title="g.title || '指标组'" icon="Tickets">
-      <InfoTable :rows="groupRows(g)" :columns="2" />
-    </SectionCard>
+      <SectionCard dense v-for="(g, gi) in d.groups || []" :key="gi" :title="g.title || '指标组'" icon="Tickets">
+        <InfoTable :rows="groupRows(g)" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="Top SQL" icon="List">
-      <template #extra>共 {{ (d.topSql || []).length }} 条</template>
-      <el-empty v-if="!(d.topSql || []).length" description="暂无数据" />
-      <el-table v-else :data="d.topSql || []" size="small" stripe>
+      <SectionCard dense title="Top SQL" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
+        <template #extra>共 {{ (d.topSql || []).length }} 条</template>
+        <el-empty v-if="!(d.topSql || []).length" description="暂无数据" :image-size="60" />
+        <el-table v-else class="dense-table" height="100%" :data="d.topSql || []" size="small" stripe>
         <el-table-column label="排名" width="70" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="rankType(row.rank)" effect="plain">{{ row.rank }}</el-tag>
@@ -56,7 +57,8 @@
           <template #default="{ row }">{{ fmtNum(row.rowsAvg) }}</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -64,6 +66,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getDatabaseEngine } from "@/api/monitor-database";
 
 const props = defineProps({
@@ -111,11 +114,27 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
+}
 .engine-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 
   &__label {
     font-size: 14px;
@@ -123,14 +142,14 @@ onMounted(load);
   }
 }
 .metric-grid .el-col {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .metric-card {
   background: var(--cm-bg-muted);
   border: 1px solid var(--cm-border-light);
   border-top: 3px solid var(--cm-color-primary);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px;
   height: 100%;
   box-sizing: border-box;
 

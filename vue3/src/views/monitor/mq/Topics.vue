@@ -1,24 +1,18 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Collection" label="主题数" :value="d.topicCount ?? 0"
-          sub="Topic 总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Grid" label="分区数" :value="d.partitionCount ?? 0"
-          sub="Partition 总数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="ScaleToOriginal" label="倾斜主题" :value="d.skewedCount ?? 0"
-          sub="分区倾斜数" :color="countColor(d.skewedCount)" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Collection" label="主题数" :value="d.topicCount ?? 0"
+        sub="Topic 总数" color="#409eff" />
+      <StatCard dense icon="Grid" label="分区数" :value="d.partitionCount ?? 0"
+        sub="Partition 总数" color="#67c23a" />
+      <StatCard dense icon="ScaleToOriginal" label="倾斜主题" :value="d.skewedCount ?? 0"
+        sub="分区倾斜数" :color="countColor(d.skewedCount)" />
+    </CardGrid>
 
-    <SectionCard title="主题列表" icon="List">
+    <SectionCard dense title="主题列表" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
       <template #extra>共 {{ (d.topics || []).length }} 个主题</template>
-      <el-empty v-if="!(d.topics || []).length" description="暂无数据" />
-      <el-table v-else :data="d.topics || []" size="small" stripe>
+      <el-empty v-if="!(d.topics || []).length" description="暂无数据" :image-size="60" />
+      <el-table v-else class="dense-table" height="100%" :data="d.topics || []" size="small" stripe>
         <el-table-column prop="name" label="主题名称" min-width="180" fixed>
           <template #default="{ row }">
             <span class="topic-name">{{ row.name || "-" }}</span>
@@ -63,6 +57,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getMqTopics } from "@/api/monitor-mq";
 
 const props = defineProps({
@@ -97,11 +92,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .topic-name {
   font-family: monospace;

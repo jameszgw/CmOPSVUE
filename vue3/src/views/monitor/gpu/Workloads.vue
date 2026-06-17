@@ -1,23 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="推理服务" icon="MagicStick">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="Files" label="模型数" :value="inf.modelCount ?? 0"
-            sub="部署模型" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="Odometer" label="总 QPS" :value="inf.totalQps ?? 0"
-            sub="请求/秒" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="Timer" label="P99 延迟" :value="`${inf.avgLatencyP99 ?? '-'} ms`"
-            :sub="`队列深度 ${inf.queueDepth ?? 0}`" color="#e6a23c" />
-        </el-col>
-      </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <SectionCard title="推理服务" icon="MagicStick" dense scrollable bodyClass="dense-table fill" class="fill">
+      <CardGrid min="220px" gap="8px" class="wl-stats">
+        <StatCard icon="Files" label="模型数" :value="inf.modelCount ?? 0"
+          sub="部署模型" color="#409eff" dense />
+        <StatCard icon="Odometer" label="总 QPS" :value="inf.totalQps ?? 0"
+          sub="请求/秒" color="#67c23a" dense />
+        <StatCard icon="Timer" label="P99 延迟" :value="`${inf.avgLatencyP99 ?? '-'} ms`"
+          :sub="`队列深度 ${inf.queueDepth ?? 0}`" color="#e6a23c" dense />
+      </CardGrid>
 
       <el-empty v-if="!(inf.models || []).length" description="暂无模型" />
-      <el-table v-else :data="inf.models || []" size="small" stripe>
+      <el-table v-else :data="inf.models || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="模型名称" min-width="180">
           <template #default="{ row }">{{ row.name || "-" }}</template>
         </el-table-column>
@@ -43,20 +37,16 @@
       </el-table>
     </SectionCard>
 
-    <SectionCard v-if="showEdge" title="边缘节点" icon="Connection">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12">
-          <StatCard icon="CircleCheck" label="在线" :value="edge.online ?? 0"
-            sub="Online 节点" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <StatCard icon="CircleClose" label="离线" :value="edge.offline ?? 0"
-            sub="Offline 节点" :color="(edge.offline || 0) > 0 ? '#f56c6c' : '#909399'" />
-        </el-col>
-      </el-row>
+    <SectionCard v-if="showEdge" title="边缘节点" icon="Connection" dense scrollable bodyClass="dense-table fill" class="fill">
+      <CardGrid min="220px" gap="8px" class="wl-stats">
+        <StatCard icon="CircleCheck" label="在线" :value="edge.online ?? 0"
+          sub="Online 节点" color="#67c23a" dense />
+        <StatCard icon="CircleClose" label="离线" :value="edge.offline ?? 0"
+          sub="Offline 节点" :color="(edge.offline || 0) > 0 ? '#f56c6c' : '#909399'" dense />
+      </CardGrid>
 
       <el-empty v-if="!(edge.nodes || []).length" description="暂无节点" />
-      <el-table v-else :data="edge.nodes || []" size="small" stripe>
+      <el-table v-else :data="edge.nodes || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="节点名称" min-width="160">
           <template #default="{ row }">{{ row.name || "-" }}</template>
         </el-table-column>
@@ -86,6 +76,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getGpuWorkloads } from "@/api/monitor-gpu";
@@ -127,11 +118,26 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+// 让卡片正文成为纵向 flex：上方 KPI 固定，下方表格填满并内部滚动
+:deep(.section-card__body.fill) {
+  display: flex;
+  flex-direction: column;
+}
+.wl-stats {
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+:deep(.section-card__body.fill .el-table) {
+  flex: 1;
+  min-height: 0;
 }
 .plain-tag {
   border: none;

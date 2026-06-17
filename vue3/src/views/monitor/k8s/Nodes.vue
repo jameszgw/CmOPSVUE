@@ -1,24 +1,18 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Cpu" label="节点总数" :value="d.total ?? 0"
-          sub="集群节点数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleCheck" label="就绪" :value="d.ready ?? 0"
-          sub="Ready 节点" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleClose" label="未就绪" :value="d.notReady ?? 0"
-          sub="NotReady 节点" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Cpu" label="节点总数" :value="d.total ?? 0"
+        sub="集群节点数" color="#409eff" />
+      <StatCard dense icon="CircleCheck" label="就绪" :value="d.ready ?? 0"
+        sub="Ready 节点" color="#67c23a" />
+      <StatCard dense icon="CircleClose" label="未就绪" :value="d.notReady ?? 0"
+        sub="NotReady 节点" color="#f56c6c" />
+    </CardGrid>
 
-    <SectionCard title="节点列表" icon="List">
+    <SectionCard dense title="节点列表" icon="List" class="fill" scrollable bodyClass="dense-table fill">
       <template #extra>共 {{ (d.nodes || []).length }} 个节点</template>
-      <el-empty v-if="!(d.nodes || []).length" description="暂无数据" />
-      <el-table v-else :data="d.nodes || []" size="small" stripe>
+      <el-empty v-if="!(d.nodes || []).length" description="暂无数据" :image-size="60" />
+      <el-table v-else class="dense-table" height="100%" :data="d.nodes || []" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="160" fixed>
           <template #default="{ row }">
             <span class="node-name">{{ row.name || "-" }}</span>
@@ -84,6 +78,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sNodes } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -127,11 +122,15 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
 }
 .node-name {
   font-family: monospace;

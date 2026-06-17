@@ -1,23 +1,17 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="User" label="连接客户端" :value="d.connectedClients ?? '-'"
-          sub="当前连接数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Lock" label="阻塞客户端" :value="d.blockedClients ?? '-'"
-          sub="阻塞中" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Connection" label="总连接数" :value="fmt(d.totalConnections)"
-          sub="累计连接" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="User" label="连接客户端" :value="d.connectedClients ?? '-'"
+        sub="当前连接数" color="#409eff" />
+      <StatCard dense icon="Lock" label="阻塞客户端" :value="d.blockedClients ?? '-'"
+        sub="阻塞中" color="#e6a23c" />
+      <StatCard dense icon="Connection" label="总连接数" :value="fmt(d.totalConnections)"
+        sub="累计连接" color="#67c23a" />
+    </CardGrid>
 
-    <SectionCard title="客户端连接列表" icon="List">
+    <SectionCard dense title="客户端连接列表" icon="List" class="fill" scrollable bodyClass="dense-table fill">
       <template #extra>共 {{ (d.clients || []).length }} 个连接</template>
-      <el-table :data="d.clients || []" size="small" stripe>
+      <el-table class="dense-table" height="100%" :data="d.clients || []" size="small" stripe>
         <el-table-column prop="id" label="客户端ID" width="100" />
         <el-table-column prop="addr" label="地址" min-width="180" />
         <el-table-column label="名称" width="120">
@@ -60,6 +54,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getRedisClients } from "@/api/monitor-redis";
 
 const props = defineProps({
@@ -99,10 +94,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
 }
 </style>

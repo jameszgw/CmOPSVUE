@@ -1,28 +1,20 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="磁盘总数" :value="d.total ?? '-'"
-          :sub="d.type || '磁盘/OSD'" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleCheck" label="健康" :value="d.healthy ?? '-'"
-          sub="健康磁盘数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleClose" label="故障" :value="d.failed ?? '-'"
-          sub="故障磁盘数" :color="(d.failed ? '#f56c6c' : '#67c23a')" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="慢盘" :value="d.slowCount ?? '-'"
-          sub="慢盘数量" :color="(d.slowCount ? '#e6a23c' : '#67c23a')" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Coin" label="磁盘总数" :value="d.total ?? '-'"
+        :sub="d.type || '磁盘/OSD'" color="#409eff" dense />
+      <StatCard icon="CircleCheck" label="健康" :value="d.healthy ?? '-'"
+        sub="健康磁盘数" color="#67c23a" dense />
+      <StatCard icon="CircleClose" label="故障" :value="d.failed ?? '-'"
+        sub="故障磁盘数" :color="(d.failed ? '#f56c6c' : '#67c23a')" dense />
+      <StatCard icon="Warning" label="慢盘" :value="d.slowCount ?? '-'"
+        sub="慢盘数量" :color="(d.slowCount ? '#e6a23c' : '#67c23a')" dense />
+    </CardGrid>
 
-    <SectionCard title="磁盘列表" icon="List">
+    <SectionCard title="磁盘列表" icon="List" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (d.disks || []).length }} 块</template>
       <el-empty v-if="!(d.disks || []).length" description="暂无数据" />
-      <el-table v-else :data="d.disks || []" size="small" stripe>
+      <el-table v-else :data="d.disks || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="id" label="ID" width="100" />
         <el-table-column prop="host" label="主机" min-width="140" />
         <el-table-column label="状态" width="110">
@@ -67,6 +59,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getStorageDisks } from "@/api/monitor-storage";
 
 const props = defineProps({
@@ -114,10 +107,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

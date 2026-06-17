@@ -1,60 +1,52 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="API Server" icon="Connection">
-          <template #extra>
-            <el-tag size="small" :color="statusColor(apiserver.health)" effect="dark"
-              style="border: none; color: #fff">
-              {{ apiserver.health || "-" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="apiserverRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="etcd" icon="Coin">
-          <template #extra>
-            <el-tag size="small" :color="statusColor(etcd.health)" effect="dark"
-              style="border: none; color: #fff">
-              {{ etcd.health || "-" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="etcdRows" />
-          <div class="progress-row">
-            <span class="progress-row__label">DB 使用率</span>
-            <el-progress :percentage="clamp(etcd.dbSizeUsagePct)" :stroke-width="10"
-              :color="usageColor(etcd.dbSizeUsagePct)" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(etcd.dbSizeUsagePct) }}%</span>
-          </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="API Server" icon="Connection">
+        <template #extra>
+          <el-tag size="small" :color="statusColor(apiserver.health)" effect="dark"
+            style="border: none; color: #fff">
+            {{ apiserver.health || "-" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="apiserverRows" />
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Scheduler" icon="SetUp">
-          <template #extra>
-            <el-tag size="small" :color="statusColor(scheduler.health)" effect="dark"
-              style="border: none; color: #fff">
-              {{ scheduler.health || "-" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="schedulerRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Controller Manager" icon="Operation">
-          <template #extra>
-            <el-tag size="small" :color="statusColor(controllerManager.health)" effect="dark"
-              style="border: none; color: #fff">
-              {{ controllerManager.health || "-" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="cmRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <SectionCard dense title="etcd" icon="Coin">
+        <template #extra>
+          <el-tag size="small" :color="statusColor(etcd.health)" effect="dark"
+            style="border: none; color: #fff">
+            {{ etcd.health || "-" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="etcdRows" />
+        <div class="progress-row">
+          <span class="progress-row__label">DB 使用率</span>
+          <el-progress :percentage="clamp(etcd.dbSizeUsagePct)" :stroke-width="10"
+            :color="usageColor(etcd.dbSizeUsagePct)" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(etcd.dbSizeUsagePct) }}%</span>
+        </div>
+      </SectionCard>
+
+      <SectionCard dense title="Scheduler" icon="SetUp">
+        <template #extra>
+          <el-tag size="small" :color="statusColor(scheduler.health)" effect="dark"
+            style="border: none; color: #fff">
+            {{ scheduler.health || "-" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="schedulerRows" />
+      </SectionCard>
+
+      <SectionCard dense title="Controller Manager" icon="Operation">
+        <template #extra>
+          <el-tag size="small" :color="statusColor(controllerManager.health)" effect="dark"
+            style="border: none; color: #fff">
+            {{ controllerManager.health || "-" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="cmRows" />
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -62,6 +54,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sControlPlane } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -146,10 +139,23 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
 .progress-row {
   display: flex;
   align-items: center;
-  margin-top: 14px;
+  margin-top: 10px;
   &__label {
     font-size: 13px;
     color: var(--cm-text-regular);

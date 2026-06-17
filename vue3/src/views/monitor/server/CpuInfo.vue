@@ -2,90 +2,74 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Odometer" label="总体使用率" :value="`${num(d.usage)}%`"
-          :percent="d.usage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Cpu" label="物理核心" :value="d.physicalCores ?? '-'"
-          sub="核心数量" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Cpu" label="逻辑处理器" :value="d.logicalCores ?? '-'"
-          sub="线程数量" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px">
+      <StatCard dense icon="Odometer" label="总体使用率" :value="`${num(d.usage)}%`"
+        :percent="d.usage" color="#409eff" />
+      <StatCard dense icon="Cpu" label="物理核心" :value="d.physicalCores ?? '-'"
+        sub="核心数量" color="#909399" />
+      <StatCard dense icon="Cpu" label="逻辑处理器" :value="d.logicalCores ?? '-'"
+        sub="线程数量" color="#67c23a" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基本信息" icon="InfoFilled">
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="频率信息" icon="Odometer">
-          <InfoTable :rows="freqRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="各核心使用率" icon="Histogram">
-      <el-row :gutter="16">
-        <el-col v-for="c in d.perCore || []" :key="c.name" :xs="24" :sm="12" :lg="8">
-          <div class="core-item">
-            <span class="core-item__name">{{ c.name }}</span>
-            <el-progress :percentage="clamp(c.usage)" :stroke-width="10"
-              :color="coreColor(c.usage)" class="core-item__bar" />
+    <CardGrid min="300px" gap="8px">
+      <SectionCard dense title="基本信息" icon="InfoFilled">
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+      <SectionCard dense title="频率信息" icon="Odometer">
+        <InfoTable :rows="freqRows" />
+      </SectionCard>
+      <SectionCard dense title="系统负载" icon="TrendCharts">
+        <div class="load-row">
+          <div class="load-item">
+            <div class="load-item__label">1 分钟</div>
+            <div class="load-item__value">{{ d.load?.load1 ?? "-" }}</div>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <SectionCard title="CPU 时间统计" icon="Timer">
-      <el-row :gutter="12">
-        <el-col v-for="(v, k) in d.times || {}" :key="k" :xs="12" :sm="8" :lg="6">
-          <div class="grid-metric">
-            <div class="grid-metric__label">{{ k }}</div>
-            <div class="grid-metric__value">{{ fmt(v) }}</div>
+          <div class="load-item">
+            <div class="load-item__label">5 分钟</div>
+            <div class="load-item__value">{{ d.load?.load5 ?? "-" }}</div>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="16">
-        <SectionCard title="CPU 统计信息" icon="DataLine">
-          <el-row :gutter="12">
-            <el-col v-for="(v, k) in d.stats || {}" :key="k" :xs="12" :sm="6">
-              <div class="grid-metric">
-                <div class="grid-metric__label">{{ k }}</div>
-                <div class="grid-metric__value">{{ fmt(v) }}</div>
-              </div>
-            </el-col>
-          </el-row>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="系统负载" icon="TrendCharts">
-          <div class="load-row">
-            <div class="load-item">
-              <div class="load-item__label">1 分钟</div>
-              <div class="load-item__value">{{ d.load?.load1 ?? "-" }}</div>
-            </div>
-            <div class="load-item">
-              <div class="load-item__label">5 分钟</div>
-              <div class="load-item__value">{{ d.load?.load5 ?? "-" }}</div>
-            </div>
-            <div class="load-item">
-              <div class="load-item__label">15 分钟</div>
-              <div class="load-item__value">{{ d.load?.load15 ?? "-" }}</div>
-            </div>
+          <div class="load-item">
+            <div class="load-item__label">15 分钟</div>
+            <div class="load-item__value">{{ d.load?.load15 ?? "-" }}</div>
           </div>
-          <div class="load-cores">CPU 核心数: {{ d.load?.cores ?? "-" }}</div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </div>
+        <div class="load-cores">CPU 核心数: {{ d.load?.cores ?? "-" }}</div>
+      </SectionCard>
+    </CardGrid>
+
+    <CardGrid min="320px" gap="8px">
+      <SectionCard dense title="各核心使用率" icon="Histogram" scrollable class="grid-tall">
+        <el-row :gutter="12">
+          <el-col v-for="c in d.perCore || []" :key="c.name" :xs="24" :sm="12">
+            <div class="core-item">
+              <span class="core-item__name">{{ c.name }}</span>
+              <el-progress :percentage="clamp(c.usage)" :stroke-width="8"
+                :color="coreColor(c.usage)" class="core-item__bar" />
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="CPU 时间统计" icon="Timer" scrollable class="grid-tall">
+        <el-row :gutter="8">
+          <el-col v-for="(v, k) in d.times || {}" :key="k" :xs="12" :sm="8">
+            <div class="grid-metric">
+              <div class="grid-metric__label">{{ k }}</div>
+              <div class="grid-metric__value">{{ fmt(v) }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="CPU 统计信息" icon="DataLine" scrollable class="grid-tall">
+        <el-row :gutter="8">
+          <el-col v-for="(v, k) in d.stats || {}" :key="k" :xs="12" :sm="8">
+            <div class="grid-metric">
+              <div class="grid-metric__label">{{ k }}</div>
+              <div class="grid-metric__value">{{ fmt(v) }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -95,6 +79,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerCpu } from "@/api/monitor-server";
 
 const props = defineProps({
@@ -149,33 +134,35 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.grid-tall {
+  max-height: @chart-h-md;
 }
 .core-item {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   &__name {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--cm-text-regular);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 }
 .grid-metric {
   border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__value {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--cm-text-primary);
   }
@@ -192,14 +179,14 @@ onMounted(load);
     color: var(--cm-text-secondary);
   }
   &__value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--cm-text-primary);
-    margin-top: 6px;
+    margin-top: 4px;
   }
 }
 .load-cores {
-  margin-top: 12px;
+  margin-top: 8px;
   font-size: 12px;
   color: var(--cm-text-secondary);
 }

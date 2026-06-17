@@ -1,18 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="tab-screen">
     <UnsupportedMask
       :unsupported="d.supported === false"
       :reason="d.reason"
       title="无频谱扫描能力"
     >
-    <SectionCard title="信号趋势" icon="TrendCharts">
+    <SectionCard dense title="信号趋势" icon="TrendCharts" class="row-mid">
       <template #extra>频段 {{ d.band ?? "-" }} · 底噪 {{ d.noiseFloor ?? "-" }} dBm</template>
       <div ref="chartRef" class="trend-chart"></div>
     </SectionCard>
 
-    <SectionCard title="信道占用" icon="List">
-      <el-empty v-if="!channels.length" description="暂无数据" />
-      <el-table v-else :data="channels" size="small" stripe>
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill row-tables" title="信道占用" icon="List">
+      <el-table :data="channels" class="dense-table" height="100%" size="small" stripe>
         <el-table-column prop="channel" label="信道" width="100" align="center">
           <template #default="{ row }">{{ row.channel ?? "-" }}</template>
         </el-table-column>
@@ -28,6 +27,7 @@
         <el-table-column prop="devices" label="设备数" width="100" align="center">
           <template #default="{ row }">{{ row.devices ?? 0 }}</template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
     </UnsupportedMask>
@@ -124,8 +124,23 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.row-mid {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
+}
 .trend-chart {
-  height: 300px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

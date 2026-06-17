@@ -1,25 +1,30 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">集群管理</h2>
-    <el-card shadow="never">
-      <div class="toolbar">
-        <el-button type="primary" @click="handleCreateClusterDrawer">新增集群</el-button>
-      </div>
+  <ScreenPage title="集群管理" gap="8px">
+    <template #header-extra>
+      <el-button type="primary" size="small" @click="handleCreateClusterDrawer">新增集群</el-button>
+    </template>
 
-      <CreateClusterDrawer
-        :create-cluster-visible="createClusterVisible"
-        @submit="handleCreateCluster"
-        @connect="connectCluster"
-        @close="handleCreateClusterDrawer"
-      />
+    <CreateClusterDrawer
+      :create-cluster-visible="createClusterVisible"
+      @submit="handleCreateCluster"
+      @connect="connectCluster"
+      @close="handleCreateClusterDrawer"
+    />
 
-      <el-table :data="pagedClusterList" row-key="clusterId" style="width: 100%">
+    <SectionCard
+      dense
+      bodyClass="dense-table fill table-pane"
+      class="fill"
+      title="集群列表"
+      icon="Connection"
+    >
+      <el-table class="dense-table fill" height="100%" :data="pagedClusterList" row-key="clusterId" size="small" stripe>
         <el-table-column prop="clusterName" label="集群名称" />
         <el-table-column prop="version" label="版本" />
         <el-table-column prop="clusterType" label="集群类型" />
         <el-table-column label="状态">
           <template #default="{ row }">
-            <el-tag :type="row.status === '0' ? 'success' : 'danger'">
+            <el-tag :type="row.status === '0' ? 'success' : 'danger'" size="small">
               {{ row.status === "0" ? "正常" : "停用" }}
             </el-tag>
           </template>
@@ -27,7 +32,7 @@
         <el-table-column label="标签">
           <template #default="{ row }">
             <el-space wrap>
-              <el-tag v-for="(tag, index) in row.tags || []" :key="index">{{ tag }}</el-tag>
+              <el-tag v-for="(tag, index) in row.tags || []" :key="index" size="small">{{ tag }}</el-tag>
             </el-space>
           </template>
         </el-table-column>
@@ -37,19 +42,22 @@
       <el-pagination
         class="pagination"
         background
+        small
         layout="total, prev, pager, next"
         :total="clusterList.length"
         :current-page="pageNo"
         :page-size="pageSize"
         @current-change="(page) => (pageNo = page)"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateClusterDrawer from "./components/CreateClusterDrawer.vue";
 import { listAll, createCluster, connect } from "@/api/cluster";
 
@@ -97,20 +105,16 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(160, 242, 121);
-}
+@import (reference) "@/styles/variables.less";
 
-.page-title {
-  margin: 0 0 16px;
-}
-
-.toolbar {
-  margin-bottom: 16px;
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 </style>

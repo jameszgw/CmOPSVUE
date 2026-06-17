@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="tab-screen">
     <el-alert
       title="群控批量为模拟结果"
       type="warning"
@@ -9,7 +9,7 @@
       class="note-banner"
     />
 
-    <SectionCard title="下发批量任务" icon="Promotion" class="dispatch-card">
+    <SectionCard dense title="下发批量任务" icon="Promotion" class="dispatch-card row-mid">
       <el-form inline class="dispatch-form" @submit.prevent>
         <el-form-item label="任务类型">
           <el-select v-model="form.taskType" size="small" style="width: 150px">
@@ -37,10 +37,10 @@
       </el-form>
     </SectionCard>
 
-    <SectionCard title="群控任务" icon="Operation">
+    <CardGrid min="340px" gap="8px" class="row-tables fill">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="群控任务" icon="Operation">
       <template #extra>运行中 {{ d.runningTasks ?? 0 }}</template>
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
+      <el-table :data="items" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="任务名称" min-width="160">
           <template #default="{ row }">{{ row.name || "-" }}</template>
         </el-table-column>
@@ -64,10 +64,13 @@
         <el-table-column prop="gmtCreate" label="创建时间" min-width="170">
           <template #default="{ row }">{{ row.gmtCreate || "-" }}</template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无数据" :image-size="60" />
+        </template>
       </el-table>
     </SectionCard>
 
-    <SectionCard title="下发历史" icon="Tickets">
+    <SectionCard dense bodyClass="history-body" title="下发历史" icon="Tickets" class="history-card fill">
       <template #extra>共 {{ total }} 条</template>
       <el-form inline class="filter-bar" @submit.prevent>
         <el-form-item label="任务类型">
@@ -99,8 +102,8 @@
           <el-button size="small" @click="onResetFilter">重置</el-button>
         </el-form-item>
       </el-form>
-      <el-empty v-if="!history.length" description="暂无下发记录" />
-      <el-table v-else :data="history" size="small" stripe>
+      <div class="history-table fill">
+      <el-table :data="history" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="taskType" label="任务类型" min-width="120">
           <template #default="{ row }">{{ row.taskType || "-" }}</template>
         </el-table-column>
@@ -123,7 +126,11 @@
         <el-table-column prop="gmtCreate" label="时间" min-width="170">
           <template #default="{ row }">{{ row.gmtCreate || "-" }}</template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无下发记录" :image-size="60" />
+        </template>
       </el-table>
+      </div>
       <div v-if="total > 0" class="pager-wrap">
         <el-pagination
           v-model:current-page="pageNo"
@@ -138,6 +145,7 @@
         />
       </div>
     </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -145,6 +153,7 @@
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getAndroidGroupControl, dispatchGroupControl } from "@/api/monitor-android";
 import { getDispatchHistory } from "@/api/monitor-dispatch";
 
@@ -275,11 +284,23 @@ onMounted(loadAll);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.note-banner {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.dispatch-card {
-  margin-bottom: 12px;
+.note-banner {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
 .dispatch-form {
   :deep(.el-form-item) {
@@ -287,14 +308,25 @@ onMounted(loadAll);
   }
 }
 .filter-bar {
-  margin-bottom: 12px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
   :deep(.el-form-item) {
     margin-bottom: 8px;
   }
 }
+.history-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.history-table {
+  flex: 1;
+  min-height: 0;
+}
 .pager-wrap {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 </style>

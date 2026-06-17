@@ -1,63 +1,54 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="CNI 丢包率"
-          :value="`${num(network.packetLossPct)}%`" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Picture" label="镜像拉取失败率"
-          :value="`${num(imagePull.failureRatePct)}%`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="PV"
-          :value="`${storage.pvBound ?? '-'} / ${storage.pvTotal ?? '-'}`"
-          sub="已绑定 / 总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Files" label="PVC"
-          :value="`${storage.pvcBound ?? '-'} / ${storage.pvcTotal ?? '-'}`"
-          sub="已绑定 / 总数" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Connection" label="CNI 丢包率"
+        :value="`${num(network.packetLossPct)}%`" color="#f56c6c" />
+      <StatCard dense icon="Picture" label="镜像拉取失败率"
+        :value="`${num(imagePull.failureRatePct)}%`" color="#e6a23c" />
+      <StatCard dense icon="Coin" label="PV"
+        :value="`${storage.pvBound ?? '-'} / ${storage.pvTotal ?? '-'}`"
+        sub="已绑定 / 总数" color="#409eff" />
+      <StatCard dense icon="Files" label="PVC"
+        :value="`${storage.pvcBound ?? '-'} / ${storage.pvcTotal ?? '-'}`"
+        sub="已绑定 / 总数" color="#67c23a" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="网络" icon="Connection">
-          <InfoTable :rows="networkRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="镜像拉取" icon="Picture">
-          <InfoTable :rows="imagePullRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="网络" icon="Connection">
+        <InfoTable :rows="networkRows" />
+      </SectionCard>
 
-    <SectionCard title="存储概况" icon="Coin">
-      <InfoTable :rows="storageRows" :columns="2" />
-    </SectionCard>
+      <SectionCard dense title="镜像拉取" icon="Picture">
+        <InfoTable :rows="imagePullRows" />
+      </SectionCard>
 
-    <SectionCard title="卷列表" icon="List">
-      <el-table :data="storage.volumes || []" size="small" stripe>
-        <el-table-column prop="name" label="名称" min-width="160" />
-        <el-table-column prop="namespace" label="命名空间" width="140" />
-        <el-table-column label="状态" width="110">
-          <template #default="{ row }">
-            <el-tag size="small" :color="statusColor(row.status)" effect="dark"
-              style="border: none; color: #fff">
-              {{ row.status }}
-            </el-tag>
+      <SectionCard dense title="存储概况" icon="Coin" class="span-all">
+        <InfoTable :rows="storageRows" :columns="2" />
+      </SectionCard>
+
+      <SectionCard dense title="卷列表" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
+        <el-table class="dense-table" height="100%" :data="storage.volumes || []" size="small" stripe>
+          <el-table-column prop="name" label="名称" min-width="160" />
+          <el-table-column prop="namespace" label="命名空间" width="140" />
+          <el-table-column label="状态" width="110">
+            <template #default="{ row }">
+              <el-tag size="small" :color="statusColor(row.status)" effect="dark"
+                style="border: none; color: #fff">
+                {{ row.status }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="capacity" label="容量" width="110" />
+          <el-table-column prop="storageClass" label="存储类" min-width="140" />
+          <el-table-column label="时延" width="110">
+            <template #default="{ row }">{{ ms(row.latencyMs) }}</template>
+          </el-table-column>
+          <template #empty>
+            <el-empty description="暂无卷数据" :image-size="60" />
           </template>
-        </el-table-column>
-        <el-table-column prop="capacity" label="容量" width="110" />
-        <el-table-column prop="storageClass" label="存储类" min-width="140" />
-        <el-table-column label="时延" width="110">
-          <template #default="{ row }">{{ ms(row.latencyMs) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!(storage.volumes && storage.volumes.length)" description="暂无卷数据" />
-    </SectionCard>
+        </el-table>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -66,6 +57,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sNetStorage } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -144,10 +136,23 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 </style>

@@ -1,81 +1,83 @@
 <template>
-  <div class="page-container">
-    <div class="system-analysis-container">
+  <ScreenPage title="系统统计分析" gap="8px">
+    <template #header-extra>
+      <el-button
+        size="small"
+        type="primary"
+        :loading="reAnalysisLoading"
+        @click="reAnalysis"
+      >
+        重新分析
+      </el-button>
+    </template>
+
+    <div class="analysis-body">
       <!-- 清理配置 -->
-      <div class="system-clean-container">
-        <div class="system-clean-title">清理配置</div>
-        <div class="system-clean-form-wrapper">
-          <el-form label-width="120px">
-            <el-form-item label="清理阈值(天)">
+      <SectionCard dense title="清理配置" icon="Setting" class="clean-card">
+        <el-form label-width="100px" label-position="left" class="clean-form">
+          <el-form-item label="清理阈值(天)">
+            <div class="clean-threshold">
               <el-input
                 v-model="fileCleanThreshold"
+                size="small"
                 class="clean-threshold-input"
                 :disabled="fileCleanThresholdLoading"
               />
               <el-button
+                size="small"
                 type="primary"
                 :loading="fileCleanThresholdLoading"
-                style="margin-left: 8px"
                 @click="saveCleanThreshold"
               >
                 保存
               </el-button>
-              <div class="extra">
-                设置后清理文件时会删除当前时间减当前值之前修改的所有文件,
-                如果设置为0则全部清理
-              </div>
-            </el-form-item>
-            <el-form-item label="自动清理">
-              <el-switch
-                v-model="autoCleanFile"
-                :loading="autoCleanFileLoading"
-                @change="changeAutoClean"
-              />
-              <div class="extra">
-                开启后每天1:30会自动清理超过所配置阈值的文件
-              </div>
-            </el-form-item>
-          </el-form>
-        </div>
-      </div>
+            </div>
+            <div class="extra">
+              设置后清理文件时会删除当前时间减当前值之前修改的所有文件,
+              如果设置为0则全部清理
+            </div>
+          </el-form-item>
+          <el-form-item label="自动清理">
+            <el-switch
+              v-model="autoCleanFile"
+              :loading="autoCleanFileLoading"
+              @change="changeAutoClean"
+            />
+            <div class="extra">
+              开启后每天1:30会自动清理超过所配置阈值的文件
+            </div>
+          </el-form-item>
+        </el-form>
+      </SectionCard>
 
       <!-- 系统统计分析 -->
-      <div class="system-analysis-descriptions">
-        <div class="system-analysis-title">系统统计分析</div>
-        <div class="analysis-items">
-          <div
-            v-for="item in analysisItems"
-            :key="item.key"
-            class="analysis-item"
-          >
-            <span class="analysis-label">{{ item.label }}：</span>
-            <span class="analysis-count">{{ analysis[item.countField] }} 个</span>
-            <span class="analysis-size">{{ analysis[item.sizeField] }}</span>
+      <CardGrid min="240px" gap="8px" class="analysis-grid">
+        <SectionCard
+          v-for="item in analysisItems"
+          :key="item.key"
+          dense
+          :title="item.label"
+          icon="Files"
+        >
+          <template #extra>
             <el-button
               v-if="visibleClean[item.clearType.key]"
               type="danger"
               link
-              class="clean-button"
+              size="small"
               @click="clear(item.clearType)"
             >
               清理
             </el-button>
+          </template>
+          <div class="analysis-stat">
+            <span class="analysis-count">{{ analysis[item.countField] }} 个</span>
+            <span class="analysis-size">{{ analysis[item.sizeField] }}</span>
           </div>
-        </div>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="system-analysis-handler-container">
-        <el-button
-          class="re-analysis-button"
-          :loading="reAnalysisLoading"
-          @click="reAnalysis"
-        >
-          重新分析
-        </el-button>
-      </div>
+        </SectionCard>
+      </CardGrid>
     </div>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -87,6 +89,9 @@ import {
   cleanSystemFile,
   reAnalysisSystem,
 } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 // 系统配置项 (对齐原 React 版 SYSTEM_OPTION_KEY)
 const SYSTEM_OPTION_KEY = {
@@ -268,83 +273,56 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.system-analysis-container {
-  padding: 24px;
-  background: var(--cm-bg-card);
-  border-radius: 4px;
+@import (reference) "@/styles/variables.less";
 
-  .system-clean-container {
-    margin-bottom: 24px;
+.analysis-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+}
 
-    .system-clean-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.85);
-      margin-bottom: 16px;
-    }
+.clean-card {
+  flex-shrink: 0;
+}
 
-    .system-clean-form-wrapper {
-      .clean-threshold-input {
-        width: 200px;
-      }
+.clean-threshold {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
 
-      .extra {
-        width: 100%;
-        color: rgba(0, 0, 0, 0.45);
-        margin-top: 8px;
-      }
-    }
+  .clean-threshold-input {
+    width: 160px;
   }
+}
 
-  .system-analysis-descriptions {
-    .system-analysis-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.85);
-      margin: 24px 0 16px;
-    }
+.analysis-grid {
+  align-content: start;
+}
 
-    .analysis-items {
-      .analysis-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 16px;
+.analysis-stat {
+  display: flex;
+  align-items: baseline;
+  gap: @space-md;
+}
 
-        .analysis-label {
-          width: 120px;
-          text-align: right;
-          margin-right: 16px;
-          color: rgba(0, 0, 0, 0.65);
-        }
+.analysis-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+}
 
-        .analysis-count,
-        .analysis-size {
-          font-size: 14px;
-          color: rgba(0, 0, 0, 0.65);
-        }
+.analysis-size {
+  font-size: 13px;
+  color: var(--cm-color-primary);
+}
 
-        .analysis-size {
-          margin-left: 16px;
-          color: #1890ff;
-        }
-
-        .clean-button {
-          margin-left: 16px;
-        }
-      }
-    }
-  }
-
-  .system-analysis-handler-container {
-    margin-top: 24px;
-    text-align: left;
-
-    .re-analysis-button {
-      padding: 0 16px;
-      height: 32px;
-      line-height: 32px;
-      font-size: 14px;
-    }
-  }
+.extra {
+  width: 100%;
+  color: var(--cm-text-secondary);
+  font-size: 12px;
+  margin-top: 4px;
 }
 </style>

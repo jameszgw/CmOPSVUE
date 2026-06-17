@@ -1,38 +1,32 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="PieChart" label="容量使用率" :value="`${num(d.usagePct)}%`"
-          :percent="d.usagePct" :color="usageColor" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="IOPS" :value="kfmt(d.iops)"
-          sub="每秒读写次数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="吞吐" :value="d.throughput || '-'"
-          sub="读写吞吐量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Timer" label="平均延迟" :value="`${num(d.avgLatencyMs)} ms`"
-          sub="平均访问延迟" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="PieChart" label="容量使用率" :value="`${num(d.usagePct)}%`"
+        :percent="d.usagePct" :color="usageColor" dense />
+      <StatCard icon="Odometer" label="IOPS" :value="kfmt(d.iops)"
+        sub="每秒读写次数" color="#67c23a" dense />
+      <StatCard icon="DataLine" label="吞吐" :value="d.throughput || '-'"
+        sub="读写吞吐量" color="#e6a23c" dense />
+      <StatCard icon="Timer" label="平均延迟" :value="`${num(d.avgLatencyMs)} ms`"
+        sub="平均访问延迟" color="#909399" dense />
+    </CardGrid>
 
-    <SectionCard title="基础信息" icon="InfoFilled">
-      <template #extra>
-        <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-        存储池 {{ d.poolCount ?? "-" }} 个
-      </template>
-      <InfoTable :rows="basicRows" :columns="2" />
-    </SectionCard>
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="基础信息" icon="InfoFilled" dense>
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          存储池 {{ d.poolCount ?? "-" }} 个
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard v-if="isCeph" title="OSD / PG 状态" icon="Cpu">
-      <template #extra>Ceph 集群</template>
-      <InfoTable :rows="cephRows" :columns="2" />
-    </SectionCard>
+      <SectionCard v-if="isCeph" title="OSD / PG 状态" icon="Cpu" dense>
+        <template #extra>Ceph 集群</template>
+        <InfoTable :rows="cephRows" :columns="2" />
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -40,6 +34,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getStorageOverview } from "@/api/monitor-storage";
 
@@ -118,10 +113,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

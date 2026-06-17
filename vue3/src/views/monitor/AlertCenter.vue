@@ -1,55 +1,45 @@
 <template>
-  <div class="page-container">
-    <div class="page-title-row">
-      <div class="page-title">
-        <el-icon class="title-icon"><Bell /></el-icon>
-        <span>告警中心</span>
-      </div>
-      <el-button :icon="Refresh" :loading="loading" @click="refreshAll">刷新</el-button>
-    </div>
+  <ScreenPage v-loading="loading" title="告警中心" gap="8px" class="alert-center">
+    <template #header-extra>
+      <el-button :icon="Refresh" size="small" :loading="loading" @click="refreshAll">刷新</el-button>
+    </template>
 
     <!-- 顶部统计卡 -->
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Bell" label="活跃告警" :value="num(stats.activeTotal)"
-          :sub="`规则 ${num(stats.ruleEnabled)}/${num(stats.ruleTotal)} 启用`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleCloseFilled" label="严重" :value="num(stats.critical)"
-          :sub="`历史 ${num(stats.historyTotal)} 条`" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="WarningFilled" label="警告" :value="num(stats.warning)"
-          :sub="`已确认 ${num(stats.acknowledged)} 条`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleCheckFilled" label="已恢复" :value="num(stats.resolved)"
-          :sub="byTypeSub" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px" class="row-stats">
+      <StatCard dense icon="Bell" label="活跃告警" :value="num(stats.activeTotal)"
+        :sub="`规则 ${num(stats.ruleEnabled)}/${num(stats.ruleTotal)} 启用`" color="#409eff" />
+      <StatCard dense icon="CircleCloseFilled" label="严重" :value="num(stats.critical)"
+        :sub="`历史 ${num(stats.historyTotal)} 条`" color="#f56c6c" />
+      <StatCard dense icon="WarningFilled" label="警告" :value="num(stats.warning)"
+        :sub="`已确认 ${num(stats.acknowledged)} 条`" color="#e6a23c" />
+      <StatCard dense icon="CircleCheckFilled" label="已恢复" :value="num(stats.resolved)"
+        :sub="byTypeSub" color="#67c23a" />
+    </CardGrid>
 
-    <el-tabs v-model="activeTab" class="alert-tabs">
+    <el-tabs v-model="activeTab" class="alert-tabs fill">
       <!-- 告警概览 -->
       <el-tab-pane label="告警概览" name="overview">
-        <SectionCard title="活跃告警" icon="AlarmClock">
-          <template #extra>
-            <div class="filter-row">
-              <el-select v-model="filterLevel" placeholder="级别" size="small"
-                style="width: 120px" @change="loadActive">
-                <el-option label="全部级别" value="" />
-                <el-option label="严重" value="critical" />
-                <el-option label="警告" value="warning" />
-              </el-select>
-              <el-select v-model="filterType" placeholder="设备类型" size="small"
-                style="width: 140px" @change="loadActive">
-                <el-option label="全部类型" value="" />
-                <el-option label="SERVER" value="SERVER" />
-                <el-option label="REDIS" value="REDIS" />
-                <el-option label="DATABASE" value="DATABASE" />
-              </el-select>
-            </div>
-          </template>
-          <el-table :data="activeAlerts" size="small" stripe>
+        <div class="tab-body">
+          <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+            title="活跃告警" icon="AlarmClock">
+            <template #extra>
+              <div class="filter-row">
+                <el-select v-model="filterLevel" placeholder="级别" size="small"
+                  style="width: 120px" @change="loadActive">
+                  <el-option label="全部级别" value="" />
+                  <el-option label="严重" value="critical" />
+                  <el-option label="警告" value="warning" />
+                </el-select>
+                <el-select v-model="filterType" placeholder="设备类型" size="small"
+                  style="width: 140px" @change="loadActive">
+                  <el-option label="全部类型" value="" />
+                  <el-option label="SERVER" value="SERVER" />
+                  <el-option label="REDIS" value="REDIS" />
+                  <el-option label="DATABASE" value="DATABASE" />
+                </el-select>
+              </div>
+            </template>
+            <el-table class="dense-table" height="100%" :data="activeAlerts" size="small" stripe>
             <el-table-column label="级别" width="90">
               <template #default="{ row }">
                 <el-tag size="small" :type="levelTagType(row.level)" effect="dark">
@@ -74,13 +64,16 @@
             <el-table-column label="持续" width="100">
               <template #default="{ row }">{{ num(row.durationMin) }} 分钟</template>
             </el-table-column>
+            <template #empty>
+              <el-empty description="暂无活跃告警" :image-size="60" />
+            </template>
           </el-table>
-          <el-empty v-if="!activeAlerts.length" description="暂无活跃告警" :image-size="80" />
         </SectionCard>
 
-        <SectionCard title="历史告警" icon="Clock">
+        <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+          title="历史告警" icon="Clock">
           <template #extra>最近 {{ history.length }} 条</template>
-          <el-table :data="history" size="small" stripe>
+          <el-table class="dense-table" height="100%" :data="history" size="small" stripe>
             <el-table-column label="级别" width="90">
               <template #default="{ row }">
                 <el-tag size="small" :type="levelTagType(row.level)" effect="dark">
@@ -110,20 +103,25 @@
                 </el-tag>
               </template>
             </el-table-column>
+            <template #empty>
+              <el-empty description="暂无历史告警" :image-size="60" />
+            </template>
           </el-table>
-          <el-empty v-if="!history.length" description="暂无历史告警" :image-size="80" />
         </SectionCard>
+        </div>
       </el-tab-pane>
 
       <!-- 阈值规则 -->
       <el-tab-pane label="阈值规则" name="rules">
-        <SectionCard title="阈值规则" icon="SetUp">
+        <div class="tab-body">
+        <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+          title="阈值规则" icon="SetUp">
           <template #extra>
             <el-button type="primary" size="small" :icon="Plus" @click="openAddDialog">
               新增规则
             </el-button>
           </template>
-          <el-table :data="rules" size="small" stripe>
+          <el-table class="dense-table" height="100%" :data="rules" size="small" stripe>
             <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
             <el-table-column label="设备类型" width="110">
               <template #default="{ row }">
@@ -159,9 +157,12 @@
                 </el-button>
               </template>
             </el-table-column>
+            <template #empty>
+              <el-empty description="暂无规则" :image-size="60" />
+            </template>
           </el-table>
-          <el-empty v-if="!rules.length" description="暂无规则" :image-size="80" />
         </SectionCard>
+        </div>
       </el-tab-pane>
     </el-tabs>
 
@@ -244,13 +245,15 @@
         <el-button type="primary" :loading="saving" @click="submitForm">确定</el-button>
       </template>
     </el-dialog>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Bell, Refresh, Plus } from "@element-plus/icons-vue";
+import { Refresh, Plus } from "@element-plus/icons-vue";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
@@ -470,36 +473,46 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
-.page-title-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.page-title {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--cm-text-primary);
-  margin-right: auto;
 
-  .title-icon {
-    color: var(--cm-color-primary);
-    margin-right: 8px;
+.row-stats {
+  flex-shrink: 0;
+}
+
+// el-tabs 填满剩余高度，内容区随之成为可用空间
+.alert-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :deep(.el-tabs__header) {
+    margin: 0 0 8px;
+    flex-shrink: 0;
+  }
+
+  :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :deep(.el-tab-pane) {
+    height: 100%;
   }
 }
-.stat-row {
-  margin-bottom: 4px;
+
+// 概览页两表并排填满；规则页单表填满
+.tab-body {
+  display: flex;
+  gap: @space-sm;
+  height: 100%;
+  min-height: 0;
+
+  > .section-card {
+    flex: 1;
+    min-width: 0;
+  }
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
-.alert-tabs {
-  margin-top: 8px;
-}
+
 .filter-row {
   display: flex;
   align-items: center;

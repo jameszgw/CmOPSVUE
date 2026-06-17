@@ -1,43 +1,39 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Coin" label="内存使用率" :value="`${num(d.usage)}%`"
-          :percent="d.usage" :sub="usageSub" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="TrendCharts" label="内存峰值" :value="d.peak ?? '-'"
-          sub="历史最高使用量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="PieChart" label="内存碎片率" :value="num(d.fragRatio)"
-          :tag="fragTag" color="#909399" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Coin" label="内存使用率" :value="`${num(d.usage)}%`"
+        :percent="d.usage" :sub="usageSub" color="#409eff" />
+      <StatCard dense icon="TrendCharts" label="内存峰值" :value="d.peak ?? '-'"
+        sub="历史最高使用量" color="#e6a23c" />
+      <StatCard dense icon="PieChart" label="内存碎片率" :value="num(d.fragRatio)"
+        :tag="fragTag" color="#909399" />
+    </CardGrid>
 
-    <SectionCard title="内存使用详情" icon="Coin">
-      <InfoTable :rows="detailRows" :columns="2" />
-    </SectionCard>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="内存使用详情" icon="Coin">
+        <InfoTable :rows="detailRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="内存策略配置" icon="SetUp">
-      <InfoTable :rows="policyRows" :columns="2" />
-      <div class="policy-desc">
-        <div class="policy-desc__title">
-          <el-icon><InfoFilled /></el-icon>
-          <span>内存淘汰策略说明</span>
+      <SectionCard dense title="内存策略配置" icon="SetUp">
+        <InfoTable :rows="policyRows" :columns="2" />
+        <div class="policy-desc">
+          <div class="policy-desc__title">
+            <el-icon><InfoFilled /></el-icon>
+            <span>内存淘汰策略说明</span>
+          </div>
+          <ul class="policy-desc__list">
+            <li v-for="p in evictionDocs" :key="p.key">
+              <b>{{ p.key }}:</b> {{ p.text }}
+            </li>
+          </ul>
         </div>
-        <ul class="policy-desc__list">
-          <li v-for="p in evictionDocs" :key="p.key">
-            <b>{{ p.key }}:</b> {{ p.text }}
-          </li>
-        </ul>
-      </div>
-    </SectionCard>
+      </SectionCard>
 
-    <SectionCard title="内存使用趋势" icon="TrendCharts">
-      <template #extra>最近 {{ d.trend?.times?.length || 0 }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+      <SectionCard dense title="内存使用趋势" icon="TrendCharts" class="span-all">
+        <template #extra>最近 {{ d.trend?.times?.length || 0 }} 个数据点</template>
+        <div ref="chartRef" class="trend-chart"></div>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -50,6 +46,7 @@ applyChartTheme(echarts);
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getRedisMemory } from "@/api/monitor-redis";
 
 const props = defineProps({
@@ -165,14 +162,27 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .policy-desc {
-  margin-top: 16px;
+  margin-top: 12px;
   background: var(--cm-bg-muted);
   border-radius: 6px;
   padding: 14px 16px;
@@ -203,7 +213,7 @@ onBeforeUnmount(() => {
   }
 }
 .trend-chart {
-  height: 300px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

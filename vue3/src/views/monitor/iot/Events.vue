@@ -1,14 +1,11 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Bell" label="事件总数" :value="d.total ?? 0" color="#409eff" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Bell" label="事件总数" :value="d.total ?? 0" color="#409eff" />
+    </CardGrid>
 
-    <SectionCard title="事件列表" icon="List">
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill row-tables" title="事件列表" icon="List">
+      <el-table :data="items" class="dense-table" height="100%" size="small" stripe>
         <el-table-column prop="time" label="时间" min-width="160">
           <template #default="{ row }">{{ row.time ?? "-" }}</template>
         </el-table-column>
@@ -26,6 +23,7 @@
         <el-table-column prop="desc" label="描述" min-width="200">
           <template #default="{ row }">{{ row.desc || "-" }}</template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
   </div>
@@ -35,6 +33,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getIotEvents } from "@/api/monitor-iot";
 
 const props = defineProps({
@@ -71,10 +70,19 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
 </style>

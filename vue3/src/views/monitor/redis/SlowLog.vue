@@ -1,23 +1,18 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Timer" label="慢日志总数" :value="fmt(d.total)"
-          sub="记录条数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Clock" label="平均耗时" :value="d.avgTime ?? '-'"
-          :sub="d.avgTimeUs != null ? `${d.avgTimeUs} μs` : ''" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Histogram" label="最大耗时" :value="d.maxTime ?? '-'"
-          :sub="d.maxTimeUs != null ? `${d.maxTimeUs} μs` : ''" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Timer" label="慢日志总数" :value="fmt(d.total)"
+        sub="记录条数" color="#409eff" />
+      <StatCard dense icon="Clock" label="平均耗时" :value="d.avgTime ?? '-'"
+        :sub="d.avgTimeUs != null ? `${d.avgTimeUs} μs` : ''" color="#e6a23c" />
+      <StatCard dense icon="Histogram" label="最大耗时" :value="d.maxTime ?? '-'"
+        :sub="d.maxTimeUs != null ? `${d.maxTimeUs} μs` : ''" color="#f56c6c" />
+    </CardGrid>
 
-    <SectionCard title="慢日志列表" icon="List">
+    <CardGrid min="340px" gap="8px" class="body-grid">
+    <SectionCard dense title="慢日志列表" icon="List" scrollable bodyClass="fill">
       <template #extra>最近 {{ (d.logs || []).length }} 条记录</template>
-      <el-empty v-if="!Number(d.total)" description="暂无慢日志记录" :image-size="100" />
+      <el-empty v-if="!Number(d.total)" description="暂无慢日志记录" :image-size="80" />
       <div v-else>
         <div v-for="(log, i) in d.logs || []" :key="log.id ?? i" class="log-card">
           <div class="log-card__head">
@@ -61,9 +56,9 @@
       </div>
     </SectionCard>
 
-    <SectionCard title="慢日志说明" icon="InfoFilled">
-      <el-row :gutter="12">
-        <el-col v-for="doc in slowlogDocs" :key="doc.key" :xs="24" :sm="12" :lg="8">
+    <SectionCard dense title="慢日志说明" icon="InfoFilled" scrollable bodyClass="fill">
+      <el-row :gutter="8">
+        <el-col v-for="doc in slowlogDocs" :key="doc.key" :xs="24" :sm="12">
           <div class="doc-item">
             <div class="doc-item__title">{{ doc.key }}</div>
             <div class="doc-item__text">{{ doc.text }}</div>
@@ -71,6 +66,7 @@
         </el-col>
       </el-row>
     </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -78,6 +74,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getRedisSlowlog } from "@/api/monitor-redis";
 
 const props = defineProps({
@@ -124,17 +121,27 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
 }
 .log-card {
   border: 1px solid var(--cm-bg-page);
   border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   &__head {
     display: flex;
     align-items: center;

@@ -1,41 +1,29 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Grid" label="电池簇" :value="d.packs ?? 0"
-          :sub="`每簇 ${d.cellsPerPack ?? '-'} 电芯`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="电芯总数" :value="d.cellTotal ?? 0"
-          color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="压差" :value="`${num(d.cellVoltDiff)} V`"
-          color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Sunny" label="温差" :value="`${num(d.cellTempDiff)} °C`"
-          :color="tempColor(d.cellTempDiff)" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Grid" label="电池簇" :value="d.packs ?? 0"
+        :sub="`每簇 ${d.cellsPerPack ?? '-'} 电芯`" color="#409eff" />
+      <StatCard dense icon="Coin" label="电芯总数" :value="d.cellTotal ?? 0"
+        color="#9254de" />
+      <StatCard dense icon="Odometer" label="压差" :value="`${num(d.cellVoltDiff)} V`"
+        color="#e6a23c" />
+      <StatCard dense icon="Sunny" label="温差" :value="`${num(d.cellTempDiff)} °C`"
+        :color="tempColor(d.cellTempDiff)" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="单体电压" icon="DataLine">
-          <InfoTable :rows="voltRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="单体温度" icon="Sunny">
-          <InfoTable :rows="tempRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="300px" gap="8px" class="row-mid">
+      <SectionCard dense title="单体电压" icon="DataLine">
+        <InfoTable :rows="voltRows" />
+      </SectionCard>
+      <SectionCard dense title="单体温度" icon="Sunny">
+        <InfoTable :rows="tempRows" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="电池簇明细" icon="List">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="row-tables fill"
+      title="电池簇明细" icon="List">
       <template #extra>共 {{ (d.items || []).length }} 簇</template>
-      <el-empty v-if="!(d.items || []).length" description="暂无数据" />
-      <el-table v-else :data="d.items || []" size="small" stripe>
+      <el-table class="dense-table" height="100%" :data="d.items || []" size="small" stripe>
         <el-table-column prop="packId" label="簇" min-width="120">
           <template #default="{ row }">{{ row.packId ?? "-" }}</template>
         </el-table-column>
@@ -57,6 +45,7 @@
             <el-tag v-else type="info" size="small">—</el-tag>
           </template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
   </div>
@@ -67,6 +56,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getEssCells } from "@/api/monitor-ess";
 
 const props = defineProps({
@@ -129,10 +119,22 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
 </style>

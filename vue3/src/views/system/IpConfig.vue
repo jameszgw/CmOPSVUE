@@ -1,12 +1,15 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="ip-config-container">
-        <div class="other-title">IP配置信息</div>
+  <ScreenPage title="IP配置信息" gap="8px">
+    <template #header-extra>
+      <el-button size="small" type="primary" :loading="loading" @click="handleSubmit">
+        保存
+      </el-button>
+    </template>
 
-        <!-- 当前IP信息 -->
-        <div class="ip-info-section">
-          <el-descriptions :column="1">
+    <div class="ip-body">
+      <CardGrid min="320px" gap="8px" class="ip-grid">
+        <SectionCard dense title="当前IP信息" icon="Location">
+          <el-descriptions :column="1" size="small">
             <el-descriptions-item label="当前访问IP">
               <span class="ip-value">{{ formData.currentIp || "未知" }}</span>
             </el-descriptions-item>
@@ -14,35 +17,10 @@
               <span class="ip-value">{{ formData.ipLocation || "未知" }}</span>
             </el-descriptions-item>
           </el-descriptions>
-        </div>
+        </SectionCard>
 
-        <!-- IP配置表单 -->
-        <div class="ip-config-form">
-          <el-form :model="formData" label-width="120px">
-            <el-form-item label="IP黑名单">
-              <el-input
-                v-model="formData.blackIpList"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入IP黑名单"
-              />
-              <div class="extra">
-                请输入IP黑名单规则，多个则使用换行 仅支持IPv4地址.
-              </div>
-            </el-form-item>
-
-            <el-form-item label="IP白名单">
-              <el-input
-                v-model="formData.whiteIpList"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入IP白名单"
-              />
-              <div class="extra">
-                请输入IP白名单规则，多个则使用换行 仅支持IPv4地址.
-              </div>
-            </el-form-item>
-
+        <SectionCard dense title="访问控制" icon="Lock">
+          <el-form :model="formData" label-width="80px" label-position="left">
             <el-form-item label="是否启用">
               <el-switch
                 v-model="formData.enableIpFilter"
@@ -53,7 +31,6 @@
                 启用后将根据配置的IP白名单和黑名单进行访问控制
               </div>
             </el-form-item>
-
             <el-form-item label="规则类型">
               <el-switch
                 v-model="formData.enableWhiteIpList"
@@ -64,23 +41,44 @@
                 启用后只有白名单中的IP可以访问，否则只有黑名单中的IP不能访问
               </div>
             </el-form-item>
-
-            <el-form-item>
-              <el-button type="primary" :loading="loading" @click="handleSubmit">
-                保 存
-              </el-button>
-            </el-form-item>
           </el-form>
-        </div>
-      </div>
-    </el-card>
-  </div>
+        </SectionCard>
+
+        <SectionCard dense title="IP黑名单" icon="CircleClose">
+          <el-input
+            v-model="formData.blackIpList"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入IP黑名单"
+          />
+          <div class="extra">
+            请输入IP黑名单规则，多个则使用换行 仅支持IPv4地址.
+          </div>
+        </SectionCard>
+
+        <SectionCard dense title="IP白名单" icon="CircleCheck">
+          <el-input
+            v-model="formData.whiteIpList"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入IP白名单"
+          />
+          <div class="extra">
+            请输入IP白名单规则，多个则使用换行 仅支持IPv4地址.
+          </div>
+        </SectionCard>
+      </CardGrid>
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { getIpConfig, updateIpConfig } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 const loading = ref(false);
 
@@ -124,36 +122,28 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.ip-config-container {
-  .other-title {
-    margin: 16px 0;
-    font-weight: 500;
-    font-size: 16px;
-  }
+@import (reference) "@/styles/variables.less";
 
-  .ip-info-section {
-    margin: 18px 0 24px 0;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    padding: 16px;
-  }
+.ip-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
 
-  .ip-config-form {
-    margin: 24px 0 0 0;
-    max-width: 720px;
-  }
+.ip-grid {
+  align-content: start;
+}
 
-  .ip-value {
-    color: #1890ff;
-    font-weight: 500;
-  }
+.ip-value {
+  color: var(--cm-color-primary);
+  font-weight: 500;
+}
 
-  .extra {
-    width: 100%;
-    color: rgba(0, 0, 0, 0.45);
-    font-size: 12px;
-    line-height: 1.5;
-    margin-top: 4px;
-  }
+.extra {
+  width: 100%;
+  color: var(--cm-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 </style>

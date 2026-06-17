@@ -1,59 +1,61 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">主机环境变量</h2>
-    <el-row :gutter="16" align="top">
-      <el-col :span="6">
-        <el-card shadow="never" class="side-card">
-          <LeftHostList @item-click="handleHostItemClick" />
-        </el-card>
-      </el-col>
-      <el-col :span="18">
-        <el-card shadow="never">
-          <el-form inline :model="searchForm" @submit.prevent>
-            <el-form-item label="变量名称">
-              <el-input v-model="searchForm.name" placeholder="变量名称" clearable />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="onSearch">查询</el-button>
-              <el-button @click="onReset">重置</el-button>
-            </el-form-item>
-          </el-form>
+  <ScreenPage title="主机环境变量" gap="8px">
+    <template #header-extra>
+      <el-form inline :model="searchForm" class="toolbar-form" @submit.prevent>
+        <el-form-item label="变量名称">
+          <el-input v-model="searchForm.name" placeholder="变量名称" clearable size="small" style="width: 160px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" size="small" @click="onSearch">查询</el-button>
+          <el-button size="small" @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="handleAddNew">新增环境变量</el-button>
+        </el-form-item>
+      </el-form>
+    </template>
 
-          <div class="toolbar">
-            <el-button type="primary" @click="handleAddNew">新增环境变量</el-button>
-          </div>
+    <div class="two-pane fill">
+      <SectionCard dense scrollable class="side-pane" title="主机" icon="Monitor">
+        <LeftHostList @item-click="handleHostItemClick" />
+      </SectionCard>
 
-          <el-table :data="hostEnvs.items" row-key="id" style="width: 100%">
-            <el-table-column prop="attrKey" label="Key" />
-            <el-table-column prop="attrValue" label="Value" />
-            <el-table-column prop="description" label="描述" />
-            <el-table-column label="创建时间">
-              <template #default="{ row }">{{ formatTime(row.gmtCreate) }}</template>
-            </el-table-column>
-            <el-table-column label="修改时间">
-              <template #default="{ row }">{{ formatTime(row.gmtModified) }}</template>
-            </el-table-column>
-            <el-table-column label="操作" width="140">
-              <template #default="{ row }">
-                <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-                <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+      <SectionCard
+        dense
+        bodyClass="dense-table fill table-pane"
+        class="fill main-pane"
+        title="环境变量"
+        icon="Setting"
+      >
+        <el-table class="dense-table fill" height="100%" :data="hostEnvs.items" row-key="id" size="small" stripe>
+          <el-table-column prop="attrKey" label="Key" />
+          <el-table-column prop="attrValue" label="Value" />
+          <el-table-column prop="description" label="描述" />
+          <el-table-column label="创建时间">
+            <template #default="{ row }">{{ formatTime(row.gmtCreate) }}</template>
+          </el-table-column>
+          <el-table-column label="修改时间">
+            <template #default="{ row }">{{ formatTime(row.gmtModified) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="140">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
+              <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
-          <el-pagination
-            class="pagination"
-            background
-            layout="total, sizes, prev, pager, next"
-            :total="hostEnvs.total"
-            :current-page="pagination.pageNo"
-            :page-size="pagination.pageSize"
-            @current-change="handlePageChange"
-            @size-change="handleSizeChange"
-          />
-        </el-card>
-      </el-col>
-    </el-row>
+        <el-pagination
+          class="pagination"
+          background
+          small
+          layout="total, sizes, prev, pager, next"
+          :total="hostEnvs.total"
+          :current-page="pagination.pageNo"
+          :page-size="pagination.pageSize"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </SectionCard>
+    </div>
 
     <el-drawer
       v-model="drawerVisible"
@@ -69,13 +71,15 @@
         @cancel="onCloseDrawer"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive } from "vue";
 import { ElMessage } from "element-plus";
 import dayjs from "dayjs";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import LeftHostList from "./components/LeftHostList.vue";
 import CreateHostEnvForm from "./components/CreateHostEnvForm.vue";
 import {
@@ -173,26 +177,42 @@ const handleUpdateHostEnv = async (values) => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(242, 171, 121);
+@import (reference) "@/styles/variables.less";
+
+.toolbar-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+    margin-right: @space-md;
+  }
 }
 
-.page-title {
-  margin: 0 0 16px;
+.two-pane {
+  display: flex;
+  gap: @space-sm;
+  min-height: 0;
 }
 
-// el-row 会按最高列拉伸子项，左侧主机列表内容较少时会留下大片空白与多余边框，
-// align="top" + 自适应高度让左侧面板贴合内容高度。
-.side-card {
-  height: auto;
+.side-pane {
+  width: 260px;
+  flex-shrink: 0;
 }
 
-.toolbar {
-  margin-bottom: 16px;
+.main-pane {
+  min-width: 0;
+}
+
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 </style>

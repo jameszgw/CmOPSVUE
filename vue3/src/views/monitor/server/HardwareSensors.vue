@@ -7,30 +7,23 @@
       :reason="d.note"
       title="无物理硬件传感器"
     >
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="CircleCheck" label="整体健康"
-            :value="d.summary?.overallHealth || '-'"
-            :color="d.summary?.overallHealth === '正常' ? '#67c23a' : '#f56c6c'"
-            :sub="`异常传感器 ${d.summary?.criticalSensors ?? 0} 个`" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Odometer" label="温度传感器" :value="d.summary?.tempSensors ?? 0"
-            :sub="`采集方式 ${d.bmc || '-'}`" color="#e6a23c" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Cpu" label="风扇 / 电源" :value="`${d.summary?.fanCount ?? 0} / ${d.summary?.psuCount ?? 0}`"
-            sub="风扇 / 电源模块" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Files" label="物理磁盘" :value="d.summary?.diskCount ?? 0"
-            sub="SMART 监测" color="#909399" />
-        </el-col>
-      </el-row>
+      <div class="hw-stack">
+      <CardGrid min="200px" gap="8px">
+        <StatCard dense icon="CircleCheck" label="整体健康"
+          :value="d.summary?.overallHealth || '-'"
+          :color="d.summary?.overallHealth === '正常' ? '#67c23a' : '#f56c6c'"
+          :sub="`异常传感器 ${d.summary?.criticalSensors ?? 0} 个`" />
+        <StatCard dense icon="Odometer" label="温度传感器" :value="d.summary?.tempSensors ?? 0"
+          :sub="`采集方式 ${d.bmc || '-'}`" color="#e6a23c" />
+        <StatCard dense icon="Cpu" label="风扇 / 电源" :value="`${d.summary?.fanCount ?? 0} / ${d.summary?.psuCount ?? 0}`"
+          sub="风扇 / 电源模块" color="#409eff" />
+        <StatCard dense icon="Files" label="物理磁盘" :value="d.summary?.diskCount ?? 0"
+          sub="SMART 监测" color="#909399" />
+      </CardGrid>
 
-      <SectionCard title="温度传感器" icon="Odometer">
-        <el-row :gutter="12">
-          <el-col v-for="t in d.temperature || []" :key="t.name" :xs="12" :sm="8" :lg="4">
+      <SectionCard dense title="温度传感器" icon="Odometer" scrollable class="temp-card">
+        <el-row :gutter="8">
+          <el-col v-for="t in d.temperature || []" :key="t.name" :xs="8" :sm="6" :lg="4">
             <div class="sensor" :class="t.status">
               <div class="sensor__name">{{ t.name }}</div>
               <div class="sensor__val">{{ t.value }}<span class="sensor__unit">{{ t.unit }}</span></div>
@@ -40,52 +33,50 @@
         </el-row>
       </SectionCard>
 
-      <el-row :gutter="12">
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="风扇" icon="Refresh">
-            <el-table :data="d.fans || []" size="small" stripe>
-              <el-table-column prop="name" label="风扇" width="100" />
-              <el-table-column label="转速">
-                <template #default="{ row }">{{ row.rpm }} RPM</template>
-              </el-table-column>
-              <el-table-column label="占比" width="160">
-                <template #default="{ row }">
-                  <el-progress :percentage="clamp(row.pct)" :stroke-width="8"
-                    :color="row.status === 'normal' ? '#409eff' : '#f56c6c'" />
-                </template>
-              </el-table-column>
-              <el-table-column label="状态" width="90">
-                <template #default="{ row }">
-                  <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-          </SectionCard>
-        </el-col>
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="电源模块" icon="Lightning">
-            <el-table :data="d.power || []" size="small" stripe>
-              <el-table-column prop="name" label="电源" width="90" />
-              <el-table-column label="功率">
-                <template #default="{ row }">{{ row.watt }} W / {{ row.capacity }} W</template>
-              </el-table-column>
-              <el-table-column prop="inputVoltage" label="输入电压" width="110" />
-              <el-table-column label="状态" width="90">
-                <template #default="{ row }">
-                  <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-          </SectionCard>
-        </el-col>
-      </el-row>
+      <CardGrid min="340px" gap="8px">
+        <SectionCard dense title="风扇" icon="Refresh" scrollable
+          bodyClass="dense-table fill" class="fill hw-card">
+          <el-table class="dense-table" height="100%" :data="d.fans || []" size="small" stripe>
+            <el-table-column prop="name" label="风扇" width="90" />
+            <el-table-column label="转速">
+              <template #default="{ row }">{{ row.rpm }} RPM</template>
+            </el-table-column>
+            <el-table-column label="占比" width="140">
+              <template #default="{ row }">
+                <el-progress :percentage="clamp(row.pct)" :stroke-width="8"
+                  :color="row.status === 'normal' ? '#409eff' : '#f56c6c'" />
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+        <SectionCard dense title="电源模块" icon="Lightning" scrollable
+          bodyClass="dense-table fill" class="fill hw-card">
+          <el-table class="dense-table" height="100%" :data="d.power || []" size="small" stripe>
+            <el-table-column prop="name" label="电源" width="80" />
+            <el-table-column label="功率">
+              <template #default="{ row }">{{ row.watt }} W / {{ row.capacity }} W</template>
+            </el-table-column>
+            <el-table-column prop="inputVoltage" label="输入电压" width="100" />
+            <el-table-column label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+      </CardGrid>
 
-      <SectionCard v-if="d.raid" title="RAID 卡" icon="Coin">
+      <SectionCard dense v-if="d.raid" title="RAID 卡" icon="Coin">
         <template #extra>
           <el-tag :type="d.raid.status === 'Optimal' ? 'success' : 'danger'" size="small">{{ d.raid.status }}</el-tag>
         </template>
         <InfoTable :rows="raidRows" :columns="2" />
-        <el-table :data="d.raid.logicalDrives || []" size="small" stripe style="margin-top: 12px">
+        <el-table class="dense-table" :data="d.raid.logicalDrives || []" size="small" stripe style="margin-top: 8px">
           <el-table-column prop="name" label="逻辑盘" width="100" />
           <el-table-column prop="level" label="级别" width="100" />
           <el-table-column label="容量"><template #default="{ row }">{{ row.sizeTB }} TB</template></el-table-column>
@@ -97,18 +88,19 @@
         </el-table>
       </SectionCard>
 
-      <SectionCard title="硬盘 SMART" icon="Files">
-        <el-table :data="d.disks || []" size="small" stripe>
-          <el-table-column prop="slot" label="槽位" width="90" />
-          <el-table-column prop="model" label="型号" min-width="180" />
-          <el-table-column prop="type" label="类型" width="110" />
-          <el-table-column prop="capacity" label="容量" width="90" />
-          <el-table-column label="温度" width="90">
+      <SectionCard dense title="硬盘 SMART" icon="Files" scrollable
+        bodyClass="dense-table fill" class="fill smart-card">
+        <el-table class="dense-table" height="100%" :data="d.disks || []" size="small" stripe>
+          <el-table-column prop="slot" label="槽位" width="80" />
+          <el-table-column prop="model" label="型号" min-width="160" />
+          <el-table-column prop="type" label="类型" width="100" />
+          <el-table-column prop="capacity" label="容量" width="80" />
+          <el-table-column label="温度" width="80">
             <template #default="{ row }">
               <span :style="{ color: row.temperature > 70 ? '#f56c6c' : '#303133' }">{{ row.temperature }}°C</span>
             </template>
           </el-table-column>
-          <el-table-column label="重映射扇区" width="110">
+          <el-table-column label="重映射扇区" width="100">
             <template #default="{ row }">
               <span :style="{ color: row.reallocatedSectors > 100 ? '#e6a23c' : '#303133' }">{{ row.reallocatedSectors }}</span>
             </template>
@@ -119,16 +111,17 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="powerOnHours" label="通电时长" width="110">
+          <el-table-column prop="powerOnHours" label="通电时长" width="100">
             <template #default="{ row }">{{ row.powerOnHours }} h</template>
           </el-table-column>
-          <el-table-column label="健康" width="90" fixed="right">
+          <el-table-column label="健康" width="80" fixed="right">
             <template #default="{ row }">
               <el-tag :type="diskTag(row.health)" size="small">{{ diskText(row.health) }}</el-tag>
             </template>
           </el-table-column>
         </el-table>
       </SectionCard>
+      </div>
     </UnsupportedMask>
   </div>
 </template>
@@ -138,6 +131,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getServerHardware } from "@/api/monitor-server";
 
@@ -184,28 +178,38 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.hw-stack {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.temp-card {
+  max-height: @chart-h-md;
+}
+.hw-card {
+  min-height: @chart-h-sm;
+  max-height: @chart-h-md;
+}
+.smart-card {
+  min-height: @chart-h-sm;
+  max-height: 340px;
 }
 .sensor {
   border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
-  padding: 12px;
+  padding: 8px;
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 
   &__name {
     font-size: 12px;
     color: var(--cm-text-secondary);
   }
   &__val {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--cm-text-primary);
-    margin: 6px 0;
+    margin: 4px 0;
   }
   &__unit {
     font-size: 12px;

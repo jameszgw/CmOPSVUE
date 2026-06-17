@@ -1,13 +1,6 @@
 <template>
-  <div v-loading="loading" class="page-container">
-    <SectionCard title="指标字典" icon="Collection">
-      <template #extra>
-        <span class="dict-note">
-          解释每个监控指标"是什么/怎么看/从哪来"，阈值为推荐值（可在告警规则中调整）。
-        </span>
-      </template>
-
-      <!-- 过滤区 -->
+  <ScreenPage v-loading="loading" title="指标字典" gap="8px">
+    <template #header-extra>
       <div class="dict-filter">
         <el-radio-group v-model="activeType" size="small">
           <el-radio-button label="">全部</el-radio-button>
@@ -29,6 +22,15 @@
         />
         <span class="dict-filter__count">共 {{ filtered.length }} 项</span>
       </div>
+    </template>
+
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+      title="指标字典" icon="Collection">
+      <template #extra>
+        <span class="dict-note">
+          解释每个监控指标"是什么/怎么看/从哪来"，阈值为推荐值（可在告警规则中调整）。
+        </span>
+      </template>
 
       <!-- 指标表 -->
       <el-table
@@ -36,8 +38,8 @@
         size="small"
         stripe
         border
-        height="calc(100vh - 230px)"
-        class="dict-table"
+        height="100%"
+        class="dense-table dict-table"
       >
         <el-table-column label="类型" width="100">
           <template #default="{ row }">
@@ -91,13 +93,14 @@
         </template>
       </el-table>
     </SectionCard>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getMetricDeviceTypes, getMetricGlossary } from "@/api/monitor-metric";
 
@@ -170,18 +173,16 @@ onMounted(load);
 .dict-filter {
   display: flex;
   align-items: center;
-  gap: @space-md;
+  gap: @space-sm;
   flex-wrap: wrap;
-  margin-bottom: @space-md;
 
   &__search {
-    width: 240px;
+    width: 220px;
   }
 
   &__count {
     color: @text-secondary;
     font-size: 12px;
-    margin-left: auto;
   }
 }
 

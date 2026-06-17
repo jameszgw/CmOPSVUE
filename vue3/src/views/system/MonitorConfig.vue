@@ -1,52 +1,58 @@
 <template>
-  <div v-loading="loading" class="page-container monitor-config">
-    <div class="page-header">
-      <h1 class="page-header__title">监控开关</h1>
-      <p class="page-header__desc">
+  <ScreenPage v-loading="loading" title="监控开关" gap="8px" class="monitor-config">
+    <template #header-extra>
+      <span class="page-desc">
         这些开关运行时生效（个别项 remark 标注“重启生效”），优先级高于配置文件。
-      </p>
-    </div>
+      </span>
+    </template>
 
-    <SectionCard
-      v-for="g in groups"
-      :key="g.name"
-      :title="g.name"
-      icon="Setting"
-    >
-      <div class="cfg-grid">
-        <div v-for="item in g.items" :key="item.key" class="cfg-item">
-          <div class="cfg-item__main">
-            <div class="cfg-item__label">{{ item.label }}</div>
-            <div class="cfg-item__control">
-              <el-switch
-                v-if="item.type === 'BOOL'"
-                v-model="item.value"
-                :loading="!!savingMap[item.key]"
-                @change="(val) => onChange(item, val)"
-              />
-              <el-input-number
-                v-else
-                v-model="item.value"
-                :min="0"
-                :controls-position="'right'"
-                size="small"
-                style="width: 140px"
-                @change="(val) => onChange(item, val)"
-              />
+    <div class="cfg-scroll fill">
+      <CardGrid min="320px" gap="8px">
+        <SectionCard
+          v-for="g in groups"
+          :key="g.name"
+          dense
+          :title="g.name"
+          icon="Setting"
+        >
+          <div class="cfg-grid">
+            <div v-for="item in g.items" :key="item.key" class="cfg-item">
+              <div class="cfg-item__main">
+                <div class="cfg-item__label">{{ item.label }}</div>
+                <div class="cfg-item__control">
+                  <el-switch
+                    v-if="item.type === 'BOOL'"
+                    v-model="item.value"
+                    :loading="!!savingMap[item.key]"
+                    @change="(val) => onChange(item, val)"
+                  />
+                  <el-input-number
+                    v-else
+                    v-model="item.value"
+                    :min="0"
+                    :controls-position="'right'"
+                    size="small"
+                    style="width: 120px"
+                    @change="(val) => onChange(item, val)"
+                  />
+                </div>
+              </div>
+              <div v-if="item.remark" class="cfg-item__remark">{{ item.remark }}</div>
             </div>
           </div>
-          <div v-if="item.remark" class="cfg-item__remark">{{ item.remark }}</div>
-        </div>
-      </div>
-    </SectionCard>
+        </SectionCard>
+      </CardGrid>
 
-    <el-empty v-if="!loading && !groups.length" description="暂无监控配置项" />
-  </div>
+      <el-empty v-if="!loading && !groups.length" description="暂无监控配置项" />
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, computed, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { listMonitorConfig, updateMonitorConfig } from "@/api/monitor-config";
 
@@ -103,38 +109,31 @@ onMounted(fetchConfig);
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
+.page-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--cm-text-secondary);
+}
+
+// 多个分组卡片整体可滚动，内部各组紧凑排布
+.cfg-scroll {
+  overflow: auto;
+}
+
 .monitor-config {
-  .page-header {
-    margin-bottom: @space-lg;
-
-    &__title {
-      margin: 0 0 6px;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--cm-text-primary);
-    }
-
-    &__desc {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--cm-text-secondary);
-    }
-  }
-
   .cfg-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: @space-md @space-lg;
-
-    @media (min-width: 992px) {
-      grid-template-columns: 1fr 1fr;
-    }
+    gap: @space-xs @space-lg;
   }
 
   .cfg-item {
-    padding: @space-sm 0;
+    padding: 6px 0;
     border-bottom: 1px dashed var(--cm-border-light);
+
+    &:last-child {
+      border-bottom: none;
+    }
 
     &__main {
       display: flex;
@@ -154,9 +153,9 @@ onMounted(fetchConfig);
     }
 
     &__remark {
-      margin-top: 4px;
+      margin-top: 2px;
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.3;
       color: var(--cm-text-secondary);
     }
   }

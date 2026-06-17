@@ -1,102 +1,93 @@
 <template>
-  <div class="page-container">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="4">
-        <StatCard icon="Share" label="节点总数" :value="nodeCount" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="5">
-        <StatCard icon="CircleCheck" label="健康" :value="g.healthy ?? 0" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="5">
-        <StatCard icon="Warning" label="警告" :value="g.warning ?? 0" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="5">
-        <StatCard icon="CircleClose" label="严重" :value="g.critical ?? 0" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="5">
-        <StatCard icon="Bell" label="根因事件" :value="rc.incidentCount ?? 0" color="#909399" />
-      </el-col>
-    </el-row>
+  <ScreenPage title="全链路拓扑" gap="8px">
+    <template #header-extra>
+      <div class="topo-extra">
+        <el-select
+          v-model="selectedViewId"
+          size="small"
+          class="topo-view-select"
+          @change="onViewChange"
+        >
+          <el-option
+            v-for="opt in viewOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+        <span class="topo-layers">{{ (g.layers || []).join(" → ") }}</span>
+      </div>
+    </template>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="16">
-        <SectionCard title="全链路拓扑" icon="Share">
-          <template #extra>
-            <div class="topo-extra">
-              <el-select
-                v-model="selectedViewId"
+    <!-- 顶部统计卡 -->
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Share" label="节点总数" :value="nodeCount" color="#409eff" />
+      <StatCard dense icon="CircleCheck" label="健康" :value="g.healthy ?? 0" color="#67c23a" />
+      <StatCard dense icon="Warning" label="警告" :value="g.warning ?? 0" color="#e6a23c" />
+      <StatCard dense icon="CircleClose" label="严重" :value="g.critical ?? 0" color="#f56c6c" />
+      <StatCard dense icon="Bell" label="根因事件" :value="rc.incidentCount ?? 0" color="#909399" />
+    </CardGrid>
+
+    <!-- 主体：拓扑图（填满高度）+ 根因分析（内部滚动），并排 -->
+    <div class="row-main fill">
+      <SectionCard dense title="全链路拓扑" icon="Share" class="topo-card fill">
+        <el-empty
+          v-if="nodeCount === 0"
+          description="该视图暂无拓扑节点"
+        />
+        <div v-show="nodeCount > 0" ref="chartRef" class="topo-chart"></div>
+      </SectionCard>
+
+      <SectionCard dense scrollable bodyClass="fill" class="rc-card fill"
+        title="根因分析" icon="Aim">
+        <template #extra>共 {{ rc.incidentCount ?? 0 }} 个事件</template>
+        <el-empty
+          v-if="!(rc.incidentCount > 0)"
+          description="当前无根因事件"
+        />
+        <div v-else class="incident-list">
+          <div
+            v-for="inc in rc.incidents || []"
+            :key="inc.id"
+            class="incident"
+          >
+            <div class="incident__head">
+              <span class="incident__title">{{ inc.title }}</span>
+              <el-tag
                 size="small"
-                class="topo-view-select"
-                @change="onViewChange"
+                :type="inc.severity === 'critical' ? 'danger' : 'warning'"
+                effect="dark"
               >
-                <el-option
-                  v-for="opt in viewOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
-              <span class="topo-layers">{{ (g.layers || []).join(" → ") }}</span>
+                {{ inc.severityText }}
+              </el-tag>
             </div>
-          </template>
-          <el-empty
-            v-if="nodeCount === 0"
-            description="该视图暂无拓扑节点"
-          />
-          <div v-show="nodeCount > 0" ref="chartRef" class="topo-chart"></div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="根因分析" icon="Aim">
-          <template #extra>共 {{ rc.incidentCount ?? 0 }} 个事件</template>
-          <el-empty
-            v-if="!(rc.incidentCount > 0)"
-            description="当前无根因事件"
-          />
-          <div v-else class="incident-list">
-            <div
-              v-for="inc in rc.incidents || []"
-              :key="inc.id"
-              class="incident"
-            >
-              <div class="incident__head">
-                <span class="incident__title">{{ inc.title }}</span>
-                <el-tag
-                  size="small"
-                  :type="inc.severity === 'critical' ? 'danger' : 'warning'"
-                  effect="dark"
+            <div class="incident__meta">
+              <span>置信度 {{ num(inc.confidence) }}%</span>
+              <span>受影响 {{ inc.affectedCount ?? 0 }}</span>
+            </div>
+            <div class="incident__chain">
+              <template v-for="(c, i) in inc.chain || []" :key="i">
+                <el-icon v-if="i > 0" class="chain-arrow"><Right /></el-icon>
+                <div
+                  class="chain-node"
+                  :class="{ 'chain-node--root': c.role === '根因' }"
                 >
-                  {{ inc.severityText }}
-                </el-tag>
-              </div>
-              <div class="incident__meta">
-                <span>置信度 {{ num(inc.confidence) }}%</span>
-                <span>受影响 {{ inc.affectedCount ?? 0 }}</span>
-              </div>
-              <div class="incident__chain">
-                <template v-for="(c, i) in inc.chain || []" :key="i">
-                  <el-icon v-if="i > 0" class="chain-arrow"><Right /></el-icon>
-                  <div
-                    class="chain-node"
-                    :class="{ 'chain-node--root': c.role === '根因' }"
-                  >
-                    <div class="chain-node__role">{{ c.role }}</div>
-                    <div class="chain-node__name">{{ c.deviceName }}</div>
-                    <div class="chain-node__type">{{ typeLabel(c.type) }}</div>
-                    <div class="chain-node__symptom">{{ c.symptom }}</div>
-                  </div>
-                </template>
-              </div>
-              <div v-if="inc.recommendation" class="incident__rec">
-                <el-icon><MagicStick /></el-icon>
-                <span>处置建议：{{ inc.recommendation }}</span>
-              </div>
+                  <div class="chain-node__role">{{ c.role }}</div>
+                  <div class="chain-node__name">{{ c.deviceName }}</div>
+                  <div class="chain-node__type">{{ typeLabel(c.type) }}</div>
+                  <div class="chain-node__symptom">{{ c.symptom }}</div>
+                </div>
+              </template>
+            </div>
+            <div v-if="inc.recommendation" class="incident__rec">
+              <el-icon><MagicStick /></el-icon>
+              <span>处置建议：{{ inc.recommendation }}</span>
             </div>
           </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
-  </div>
+        </div>
+      </SectionCard>
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -104,6 +95,8 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
@@ -277,6 +270,10 @@ const rerenderChart = () => {
 
 useChartSkin(rerenderChart);
 
+const resizeChart = () => {
+  chart && chart.resize();
+};
+
 const load = async () => {
   const viewId = selectedViewId.value;
   try {
@@ -311,11 +308,13 @@ onMounted(() => {
   loadViews();
   load();
   timer = setInterval(load, 5000);
+  window.addEventListener("resize", resizeChart);
 });
 
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer);
   timer = null;
+  window.removeEventListener("resize", resizeChart);
   chart && chart.dispose();
   chart = null;
 });
@@ -324,19 +323,32 @@ onBeforeUnmount(() => {
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-.page-container {
-  padding: @space-lg;
+.row-stats {
+  flex-shrink: 0;
 }
-.stat-row {
-  margin-bottom: @space-xs;
+
+// 主体并排：拓扑图占 2 份宽，根因面板占 1 份；均填满剩余高度
+.row-main {
+  display: flex;
+  gap: @space-sm;
+  flex: 1;
+  min-height: 0;
 }
-.stat-row .el-col {
-  margin-bottom: @space-md;
+.topo-card {
+  flex: 2;
+  min-width: 0;
 }
+.rc-card {
+  flex: 1;
+  min-width: 280px;
+}
+
 .topo-chart {
-  height: 560px;
+  height: 100%;
+  min-height: @chart-h-md;
   width: 100%;
 }
+
 .topo-extra {
   display: flex;
   align-items: center;
@@ -351,8 +363,7 @@ onBeforeUnmount(() => {
 }
 
 .incident-list {
-  max-height: 560px;
-  overflow-y: auto;
+  width: 100%;
 }
 .incident {
   border: 1px solid var(--cm-border-light);

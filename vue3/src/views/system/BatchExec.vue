@@ -1,168 +1,189 @@
 <template>
-  <div class="page-container">
-    <div class="toolbar">
-      <el-button @click="fetchCommandExecPage">
+  <ScreenPage title="批量执行命令" gap="8px">
+    <template #header-extra>
+      <el-button size="small" @click="fetchCommandExecPage">
         <el-icon style="margin-right: 4px"><Refresh /></el-icon>
         刷新
       </el-button>
-    </div>
+    </template>
 
-    <el-card class="exec-card">
-      <template #header>批量执行命令</template>
-      <el-form
-        ref="formRef"
-        :model="execForm"
-        :rules="rules"
-        label-position="top"
+    <div class="exec-layout">
+      <!-- 执行表单 -->
+      <SectionCard
+        dense
+        scrollable
+        title="批量执行命令"
+        icon="VideoPlay"
+        class="exec-form-card"
       >
-        <el-form-item label="选择主机" prop="hosts">
-          <el-select
-            v-model="execForm.hosts"
-            multiple
-            filterable
-            placeholder="请选择要执行的主机"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="host in hostList"
-              :key="host.hostId"
-              :label="`${host.name} (${host.hostName})`"
-              :value="host.hostId"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="执行命令" prop="command">
-          <div style="width: 100%">
-            <div style="margin-bottom: 8px">
-              <el-select
-                v-model="selectedScriptId"
-                placeholder="选择脚本模板"
-                clearable
-                filterable
-                style="width: 100%"
-                @change="handleScriptChange"
-              >
-                <el-option
-                  v-for="script in scriptList"
-                  :key="script.id"
-                  :label="script.templateName"
-                  :value="script.id"
-                />
-              </el-select>
-            </div>
-            <el-input
-              v-model="execForm.command"
-              type="textarea"
-              :rows="4"
-              placeholder="请输入要执行的命令"
-            />
-          </div>
-        </el-form-item>
-
-        <el-form-item label="备注" prop="description">
-          <el-input
-            v-model="execForm.description"
-            type="textarea"
-            :rows="1"
-            placeholder="请输入指令备注"
-          />
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" :loading="loading" @click="handleExecute">
-            <el-icon style="margin-right: 4px"><VideoPlay /></el-icon>
-            执行
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <el-card>
-      <template #header>执行历史</template>
-      <el-table :data="commandExecPage.items" row-key="id">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="hostName" label="主机" />
-        <el-table-column prop="host" label="主机IP" />
-        <el-table-column prop="execType" label="脚本类型" width="90" />
-        <el-table-column label="退出码" width="80">
-          <template #default="{ row }">
-            {{ statusOf(row, "exitCode") }}
-          </template>
-        </el-table-column>
-        <el-table-column label="命令" show-overflow-tooltip min-width="160">
-          <template #default="{ row }">
-            {{ row.command || row.execCommand }}
-          </template>
-        </el-table-column>
-        <el-table-column label="执行状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="renderStatus(execStatusOf(row)).type">
-              {{ renderStatus(execStatusOf(row)).text }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="开始时间" width="170">
-          <template #default="{ row }">
-            {{ formatTime(row.startTime || row.startDate) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="开始至今">
-          <template #default="{ row }">
-            {{ row.startTimeAgo || row.startDateAgo }}
-          </template>
-        </el-table-column>
-        <el-table-column label="耗时(ms)" width="90">
-          <template #default="{ row }">
-            {{ statusOf(row, "used") }}
-          </template>
-        </el-table-column>
-        <el-table-column label="使用时间">
-          <template #default="{ row }">
-            {{ statusOf(row, "keepTime") }}
-          </template>
-        </el-table-column>
-        <el-table-column label="结束时间" width="170">
-          <template #default="{ row }">
-            {{ formatTime(row.endDate) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="结束至今">
-          <template #default="{ row }">
-            {{ row.endTimeAgo || row.endDateAgo }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleViewDetail(row)">
-              查看
-            </el-button>
-            <el-button
-              v-if="execStatusOf(row) === 20"
-              type="danger"
-              link
-              @click="handleTerminate(row.id)"
+        <el-form
+          ref="formRef"
+          :model="execForm"
+          :rules="rules"
+          label-position="top"
+        >
+          <el-form-item label="选择主机" prop="hosts">
+            <el-select
+              v-model="execForm.hosts"
+              multiple
+              filterable
+              placeholder="请选择要执行的主机"
+              style="width: 100%"
             >
-              停止
-            </el-button>
-            <el-button type="danger" link @click="handleDelete(row.id)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+              <el-option
+                v-for="host in hostList"
+                :key="host.hostId"
+                :label="`${host.name} (${host.hostName})`"
+                :value="host.hostId"
+              />
+            </el-select>
+          </el-form-item>
 
-      <el-pagination
-        class="pagination"
-        layout="total, sizes, prev, pager, next"
-        :total="commandExecPage.total"
-        :current-page="commandPagination.pageNo"
-        :page-size="commandPagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-    </el-card>
+          <el-form-item label="执行命令" prop="command">
+            <div style="width: 100%">
+              <div style="margin-bottom: 8px">
+                <el-select
+                  v-model="selectedScriptId"
+                  placeholder="选择脚本模板"
+                  clearable
+                  filterable
+                  style="width: 100%"
+                  @change="handleScriptChange"
+                >
+                  <el-option
+                    v-for="script in scriptList"
+                    :key="script.id"
+                    :label="script.templateName"
+                    :value="script.id"
+                  />
+                </el-select>
+              </div>
+              <el-input
+                v-model="execForm.command"
+                type="textarea"
+                :rows="6"
+                placeholder="请输入要执行的命令"
+              />
+            </div>
+          </el-form-item>
+
+          <el-form-item label="备注" prop="description">
+            <el-input
+              v-model="execForm.description"
+              type="textarea"
+              :rows="1"
+              placeholder="请输入指令备注"
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleExecute">
+              <el-icon style="margin-right: 4px"><VideoPlay /></el-icon>
+              执行
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </SectionCard>
+
+      <!-- 执行历史 -->
+      <div class="exec-history">
+        <SectionCard
+          dense
+          scrollable
+          bodyClass="dense-table fill"
+          class="fill"
+          title="执行历史"
+          icon="List"
+        >
+          <el-table class="dense-table" height="100%" :data="commandExecPage.items" row-key="id" size="small" stripe>
+            <el-table-column prop="id" label="ID" width="70" />
+            <el-table-column prop="hostName" label="主机" min-width="120" />
+            <el-table-column prop="host" label="主机IP" min-width="120" />
+            <el-table-column prop="execType" label="脚本类型" width="90" />
+            <el-table-column label="退出码" width="80">
+              <template #default="{ row }">
+                {{ statusOf(row, "exitCode") }}
+              </template>
+            </el-table-column>
+            <el-table-column label="命令" show-overflow-tooltip min-width="160">
+              <template #default="{ row }">
+                {{ row.command || row.execCommand }}
+              </template>
+            </el-table-column>
+            <el-table-column label="执行状态" width="100">
+              <template #default="{ row }">
+                <el-tag :type="renderStatus(execStatusOf(row)).type" size="small">
+                  {{ renderStatus(execStatusOf(row)).text }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="开始时间" width="160">
+              <template #default="{ row }">
+                {{ formatTime(row.startTime || row.startDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="开始至今" min-width="110">
+              <template #default="{ row }">
+                {{ row.startTimeAgo || row.startDateAgo }}
+              </template>
+            </el-table-column>
+            <el-table-column label="耗时(ms)" width="90">
+              <template #default="{ row }">
+                {{ statusOf(row, "used") }}
+              </template>
+            </el-table-column>
+            <el-table-column label="使用时间" min-width="110">
+              <template #default="{ row }">
+                {{ statusOf(row, "keepTime") }}
+              </template>
+            </el-table-column>
+            <el-table-column label="结束时间" width="160">
+              <template #default="{ row }">
+                {{ formatTime(row.endDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="结束至今" min-width="110">
+              <template #default="{ row }">
+                {{ row.endTimeAgo || row.endDateAgo }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="160" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="handleViewDetail(row)">
+                  查看
+                </el-button>
+                <el-button
+                  v-if="execStatusOf(row) === 20"
+                  type="danger"
+                  link
+                  size="small"
+                  @click="handleTerminate(row.id)"
+                >
+                  停止
+                </el-button>
+                <el-button type="danger" link size="small" @click="handleDelete(row.id)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+
+        <div class="pager">
+          <el-pagination
+            background
+            small
+            layout="total, sizes, prev, pager, next"
+            :total="commandExecPage.total"
+            :current-page="commandPagination.pageNo"
+            :page-size="commandPagination.pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
+          />
+        </div>
+      </div>
+    </div>
 
     <!-- 执行详情 -->
     <el-dialog v-model="detailVisible" title="执行详情" width="640px">
@@ -191,7 +212,7 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -208,6 +229,8 @@ import {
 } from "@/api/batch-exec";
 import { fetchHosts } from "@/api/host";
 import { fetchScripts } from "@/api/script-template";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 const formRef = ref(null);
 const loading = ref(false);
@@ -380,18 +403,31 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.toolbar {
+@import (reference) "@/styles/variables.less";
+
+.exec-layout {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
+  gap: @space-sm;
 }
 
-.exec-card {
-  margin-bottom: 16px;
+.exec-form-card {
+  width: 360px;
+  flex-shrink: 0;
 }
 
-.pagination {
-  margin-top: 16px;
+.exec-history {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+}
+
+.pager {
+  flex-shrink: 0;
+  display: flex;
   justify-content: flex-end;
 }
 

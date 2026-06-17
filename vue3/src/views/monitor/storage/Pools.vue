@@ -1,20 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12">
-        <StatCard icon="Coin" label="存储池数量" :value="d.poolCount ?? '-'"
-          sub="存储池总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12">
-        <StatCard icon="Warning" label="接近满载" :value="d.nearFullCount ?? '-'"
-          sub="near-full 存储池数" :color="(d.nearFullCount ? '#e6a23c' : '#67c23a')" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Coin" label="存储池数量" :value="d.poolCount ?? '-'"
+        sub="存储池总数" color="#409eff" dense />
+      <StatCard icon="Warning" label="接近满载" :value="d.nearFullCount ?? '-'"
+        sub="near-full 存储池数" :color="(d.nearFullCount ? '#e6a23c' : '#67c23a')" dense />
+    </CardGrid>
 
-    <SectionCard title="存储池列表" icon="List">
+    <SectionCard title="存储池列表" icon="List" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (d.pools || []).length }} 个</template>
       <el-empty v-if="!(d.pools || []).length" description="暂无数据" />
-      <el-table v-else :data="d.pools || []" size="small" stripe>
+      <el-table v-else :data="d.pools || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="140" />
         <el-table-column prop="capacity" label="容量" width="120" />
         <el-table-column prop="used" label="已用" width="120" />
@@ -45,6 +41,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getStoragePools } from "@/api/monitor-storage";
 
 const props = defineProps({
@@ -94,10 +91,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

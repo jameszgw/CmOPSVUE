@@ -1,21 +1,15 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Top" label="今日充电" :value="`${num(d.todayChargeKwh)} kWh`"
-          color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Bottom" label="今日放电" :value="`${num(d.todayDischargeKwh)} kWh`"
-          color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="吞吐量" :value="`${num(d.throughputKwh)} kWh`"
-          color="#409eff" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Top" label="今日充电" :value="`${num(d.todayChargeKwh)} kWh`"
+        color="#67c23a" />
+      <StatCard dense icon="Bottom" label="今日放电" :value="`${num(d.todayDischargeKwh)} kWh`"
+        color="#e6a23c" />
+      <StatCard dense icon="DataLine" label="吞吐量" :value="`${num(d.throughputKwh)} kWh`"
+        color="#409eff" />
+    </CardGrid>
 
-    <SectionCard title="充放电曲线" icon="TrendCharts">
+    <SectionCard dense title="充放电曲线" icon="TrendCharts" class="row-mid">
       <template #extra>最近 {{ (d.times || []).length }} 个数据点</template>
       <div ref="chartRef" class="trend-chart"></div>
     </SectionCard>
@@ -29,6 +23,7 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getEssChargeDischarge } from "@/api/monitor-ess";
 
 applyChartTheme(echarts);
@@ -106,14 +101,22 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
 }
 .trend-chart {
-  height: 300px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

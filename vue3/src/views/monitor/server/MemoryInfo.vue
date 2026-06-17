@@ -2,70 +2,63 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="总内存" :value="d.total || '-'"
-          sub="物理内存总量" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="已使用" :value="d.used || '-'"
-          :sub="`占用 ${num(d.usage)}% 内存空间`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="可用内存" :value="d.available || '-'"
-          sub="可立即使用" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="内存使用率" :value="`${num(d.usage)}%`"
-          :percent="d.usage" color="#409eff" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px">
+      <StatCard dense icon="Coin" label="总内存" :value="d.total || '-'"
+        sub="物理内存总量" color="#409eff" />
+      <StatCard dense icon="Coin" label="已使用" :value="d.used || '-'"
+        :sub="`占用 ${num(d.usage)}% 内存空间`" color="#e6a23c" />
+      <StatCard dense icon="Coin" label="可用内存" :value="d.available || '-'"
+        sub="可立即使用" color="#67c23a" />
+      <StatCard dense icon="TrendCharts" label="内存使用率" :value="`${num(d.usage)}%`"
+        :percent="d.usage" color="#409eff" />
+    </CardGrid>
 
-    <SectionCard title="虚拟内存（RAM）" icon="Coin">
-      <template #extra>
-        <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-        使用率 {{ num(d.ram?.usage) }}%
-      </template>
-      <el-progress :percentage="clamp(d.ram?.usage)" :stroke-width="10"
-        :color="usageColor(d.ram?.usage)" class="section-bar" />
-      <InfoTable :rows="ramRows" :columns="2" />
-    </SectionCard>
+    <CardGrid min="320px" gap="8px">
+      <SectionCard dense title="虚拟内存（RAM）" icon="Coin">
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          使用率 {{ num(d.ram?.usage) }}%
+        </template>
+        <el-progress :percentage="clamp(d.ram?.usage)" :stroke-width="8"
+          :color="usageColor(d.ram?.usage)" class="section-bar" />
+        <InfoTable :rows="ramRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense title="交换分区（Swap）" icon="Switch">
+        <template #extra>使用率 {{ num(d.swap?.usage ?? d.swapUsage) }}%</template>
+        <el-progress :percentage="clamp(d.swap?.usage ?? d.swapUsage)" :stroke-width="8"
+          :color="usageColor(d.swap?.usage ?? d.swapUsage)" class="section-bar" />
+        <InfoTable :rows="swapRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense title="内核内存与 OOM" icon="Cpu">
+        <template #extra>OOM 次数 {{ d.kernel?.oomKillCount ?? d.oomKillCount ?? 0 }}</template>
+        <InfoTable :rows="kernelRows" :columns="2" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="交换分区（Swap）" icon="Switch">
-      <template #extra>使用率 {{ num(d.swap?.usage ?? d.swapUsage) }}%</template>
-      <el-progress :percentage="clamp(d.swap?.usage ?? d.swapUsage)" :stroke-width="10"
-        :color="usageColor(d.swap?.usage ?? d.swapUsage)" class="section-bar" />
-      <InfoTable :rows="swapRows" :columns="2" />
-    </SectionCard>
-
-    <SectionCard title="内核内存与 OOM" icon="Cpu">
-      <template #extra>OOM 次数 {{ d.kernel?.oomKillCount ?? d.oomKillCount ?? 0 }}</template>
-      <InfoTable :rows="kernelRows" :columns="2" />
-    </SectionCard>
-
-    <SectionCard title="内存分布" icon="PieChart">
-      <el-row :gutter="12">
-        <el-col v-for="item in distRows" :key="item.label" :xs="12" :sm="8" :lg="4">
-          <div class="grid-metric">
-            <div class="grid-metric__label">{{ item.label }}</div>
-            <div class="grid-metric__value" :style="{ color: item.color }">{{ item.value }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <SectionCard title="实时内存详情" icon="Histogram">
-      <el-row :gutter="12">
-        <el-col v-for="item in realtimeRows" :key="item.label" :xs="12" :sm="6">
-          <div class="grid-metric">
-            <div class="grid-metric__label">{{ item.label }}</div>
-            <div class="grid-metric__value">{{ item.value }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+    <CardGrid min="320px" gap="8px">
+      <SectionCard dense title="内存分布" icon="PieChart">
+        <el-row :gutter="8">
+          <el-col v-for="item in distRows" :key="item.label" :xs="12" :sm="8">
+            <div class="grid-metric">
+              <div class="grid-metric__label">{{ item.label }}</div>
+              <div class="grid-metric__value" :style="{ color: item.color }">{{ item.value }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="实时内存详情" icon="Histogram">
+        <el-row :gutter="8">
+          <el-col v-for="item in realtimeRows" :key="item.label" :xs="12" :sm="6">
+            <div class="grid-metric">
+              <div class="grid-metric__label">{{ item.label }}</div>
+              <div class="grid-metric__value">{{ item.value }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -75,6 +68,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerMemory } from "@/api/monitor-server";
 
 const props = defineProps({
@@ -171,27 +165,26 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
 .section-bar {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .grid-metric {
   border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__value {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--cm-text-primary);
   }

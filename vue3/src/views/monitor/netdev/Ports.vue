@@ -1,24 +1,19 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Connection" label="端口总数" :value="d.total ?? 0"
-          sub="物理端口数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleCheck" label="在线端口" :value="d.up ?? 0"
-          sub="Up 端口" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="WarningFilled" label="错误端口" :value="d.errorPorts ?? 0"
-          sub="存在错误的端口" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Connection" label="端口总数" :value="d.total ?? 0"
+        sub="物理端口数" color="#409eff" dense />
+      <StatCard icon="CircleCheck" label="在线端口" :value="d.up ?? 0"
+        sub="Up 端口" color="#67c23a" dense />
+      <StatCard icon="WarningFilled" label="错误端口" :value="d.errorPorts ?? 0"
+        sub="存在错误的端口" color="#f56c6c" dense />
+    </CardGrid>
 
-    <SectionCard title="端口列表" icon="List">
+    <SectionCard title="端口列表" icon="List" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (d.ports || []).length }} 个端口</template>
       <el-empty v-if="!(d.ports || []).length" description="暂无数据" />
-      <el-table v-else :data="d.ports || []" size="small" stripe :row-class-name="rowClass">
+      <el-table v-else :data="d.ports || []" size="small" stripe :row-class-name="rowClass"
+        class="dense-table" height="100%">
         <el-table-column prop="name" label="端口" min-width="140" fixed>
           <template #default="{ row }">
             <span class="port-name">{{ row.name || "-" }}</span>
@@ -74,6 +69,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getNetDevPorts } from "@/api/monitor-netdev";
@@ -121,11 +117,13 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .port-name {
   font-family: monospace;

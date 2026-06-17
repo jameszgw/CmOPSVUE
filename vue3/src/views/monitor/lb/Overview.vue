@@ -1,45 +1,33 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="QPS" :value="num(d.qps)"
-          :sub="`总请求 ${fmt(d.totalRequests)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="WarningFilled" label="5xx 错误率" :value="`${num(d.error5xxRate)}%`"
-          :sub="`4xx ${num(d.error4xxRate)}%`" :color="rateColor(d.error5xxRate)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="活动连接" :value="d.activeConnections ?? '-'"
-          :sub="`平均延迟 ${num(d.avgLatencyMs)} ms`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Histogram" label="上游健康"
-          :value="`${d.upstreamHealthy ?? '-'} / ${d.upstreamTotal ?? '-'}`"
-          :sub="`异常 ${d.upstreamUnhealthy ?? 0}`"
-          :color="d.upstreamUnhealthy ? '#e6a23c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="TrendCharts" label="QPS" :value="num(d.qps)"
+        :sub="`总请求 ${fmt(d.totalRequests)}`" color="#409eff" dense />
+      <StatCard icon="WarningFilled" label="5xx 错误率" :value="`${num(d.error5xxRate)}%`"
+        :sub="`4xx ${num(d.error4xxRate)}%`" :color="rateColor(d.error5xxRate)" dense />
+      <StatCard icon="Connection" label="活动连接" :value="d.activeConnections ?? '-'"
+        :sub="`平均延迟 ${num(d.avgLatencyMs)} ms`" color="#67c23a" dense />
+      <StatCard icon="Histogram" label="上游健康"
+        :value="`${d.upstreamHealthy ?? '-'} / ${d.upstreamTotal ?? '-'}`"
+        :sub="`异常 ${d.upstreamUnhealthy ?? 0}`"
+        :color="d.upstreamUnhealthy ? '#e6a23c' : '#67c23a'" dense />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="InfoFilled">
-          <template #extra>
-            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="流量概况" icon="DataLine">
-          <InfoTable :rows="trafficRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="基础信息" icon="InfoFilled" dense>
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+      <SectionCard title="流量概况" icon="DataLine" dense>
+        <InfoTable :rows="trafficRows" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="上游健康" icon="Histogram">
+    <SectionCard title="上游健康" icon="Histogram" dense class="fill">
       <div class="progress-row">
         <span class="progress-row__label">健康占比</span>
         <el-progress :percentage="healthPercent" :stroke-width="14"
@@ -53,6 +41,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -140,16 +129,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .progress-row {
   display: flex;
   align-items: center;
-  margin: 4px 0 16px;
+  margin: 2px 0 10px;
   &__label {
     font-size: 13px;
     color: var(--cm-text-regular);

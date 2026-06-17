@@ -1,59 +1,61 @@
 <template>
-  <div class="page-container app-detail-page">
-    <el-card v-if="appDetail" class="block-card">
-      <template #header>
-        <div class="card-header">
-          <span>{{ appDetail.appName }} 详情页</span>
-          <div>
-            <el-button
-              :disabled="!appDetail.appEnvList || appDetail.appEnvList.length === 0"
-              @click="handleDeploy"
-            >
-              立即部署
-            </el-button>
-            <el-button @click="switchMemberDrawer">项目成员</el-button>
-          </div>
-        </div>
-      </template>
-
-      <el-descriptions title="应用基础详情" border :column="3">
-        <el-descriptions-item label="应用名称">
-          {{ appDetail.appName ?? "--" }}
-          <el-icon class="copy-icon" @click="copyText(appDetail.appName)"><CopyDocument /></el-icon>
-        </el-descriptions-item>
-        <el-descriptions-item label="仓库">
-          {{ appDetail.repo }}
-          <el-icon class="copy-icon" @click="copyText(appDetail.repo)"><CopyDocument /></el-icon>
-        </el-descriptions-item>
-        <el-descriptions-item label="语言">{{ appDetail.language }}</el-descriptions-item>
-        <el-descriptions-item label="默认分支">{{ appDetail.defaultBranch }}</el-descriptions-item>
-        <el-descriptions-item label="开发模式">{{ appDetail.developMode }}</el-descriptions-item>
-        <el-descriptions-item label="部门">{{ appDetail.department }}</el-descriptions-item>
-        <el-descriptions-item label="部门缩写">{{ appDetail.departmentAbbreviation }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ formatTime(appDetail.gmtCreate) }}</el-descriptions-item>
-        <el-descriptions-item label="更新时间">{{ formatTime(appDetail.gmtModified) }}</el-descriptions-item>
-      </el-descriptions>
-    </el-card>
-
-    <el-card class="block-card">
-      <template #header>
-        <div class="card-header">
-          <span>环境信息</span>
-          <el-button @click="switchDrawer">添加环境</el-button>
-        </div>
-      </template>
-      <el-row :gutter="16" justify="start">
-        <el-col
-          v-for="appEnv in appDetail?.appEnvList || []"
-          :key="appEnv.envId"
-          :span="8"
+  <ScreenPage :title="appDetail ? `${appDetail.appName} 详情` : '应用详情'" gap="8px">
+    <template #header-extra>
+      <div class="head-tools">
+        <el-button
+          size="small"
+          type="primary"
+          :disabled="!appDetail || !appDetail.appEnvList || appDetail.appEnvList.length === 0"
+          @click="handleDeploy"
         >
-          <el-card class="env-card" shadow="never">
+          立即部署
+        </el-button>
+        <el-button size="small" @click="switchMemberDrawer">项目成员</el-button>
+        <el-button size="small" @click="switchDrawer">添加环境</el-button>
+      </div>
+    </template>
+
+    <div class="detail-body">
+      <!-- 应用基础详情 -->
+      <SectionCard v-if="appDetail" dense title="应用基础详情" icon="Document" class="detail-base">
+        <el-descriptions border :column="3" size="small">
+          <el-descriptions-item label="应用名称">
+            {{ appDetail.appName ?? "--" }}
+            <el-icon class="copy-icon" @click="copyText(appDetail.appName)"><CopyDocument /></el-icon>
+          </el-descriptions-item>
+          <el-descriptions-item label="仓库">
+            {{ appDetail.repo }}
+            <el-icon class="copy-icon" @click="copyText(appDetail.repo)"><CopyDocument /></el-icon>
+          </el-descriptions-item>
+          <el-descriptions-item label="语言">{{ appDetail.language }}</el-descriptions-item>
+          <el-descriptions-item label="默认分支">{{ appDetail.defaultBranch }}</el-descriptions-item>
+          <el-descriptions-item label="开发模式">{{ appDetail.developMode }}</el-descriptions-item>
+          <el-descriptions-item label="部门">{{ appDetail.department }}</el-descriptions-item>
+          <el-descriptions-item label="部门缩写">{{ appDetail.departmentAbbreviation }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatTime(appDetail.gmtCreate) }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ formatTime(appDetail.gmtModified) }}</el-descriptions-item>
+        </el-descriptions>
+      </SectionCard>
+
+      <!-- 环境信息 -->
+      <SectionCard dense title="环境信息" icon="Connection" class="detail-env">
+        <el-empty
+          v-if="!(appDetail?.appEnvList || []).length"
+          description="暂无环境"
+          :image-size="60"
+        />
+        <CardGrid v-else min="280px" gap="8px">
+          <el-card
+            v-for="appEnv in appDetail?.appEnvList || []"
+            :key="appEnv.envId"
+            class="env-card"
+            shadow="never"
+          >
             <template #header>{{ appEnv.envName }}</template>
             <p>环境: {{ appEnv.env }}</p>
             <p>
               环境状态:
-              <el-tag :type="appEnv.status === '0' ? 'success' : 'danger'">
+              <el-tag :type="appEnv.status === '0' ? 'success' : 'danger'" size="small">
                 {{ appEnv.status === "0" ? "已启用" : "已停用" }}
               </el-tag>
             </p>
@@ -78,9 +80,9 @@
               </el-descriptions>
             </div>
           </el-card>
-        </el-col>
-      </el-row>
-    </el-card>
+        </CardGrid>
+      </SectionCard>
+    </div>
 
     <CreateEnvDrawer
       :open="drawerVisible"
@@ -93,7 +95,7 @@
       :app-members="appMemberPage"
       @close="switchMemberDrawer"
     />
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -104,6 +106,9 @@ import dayjs from "dayjs";
 import { copyToClipboard } from "@/utils/release-utils";
 import { getAppDetail, createAppEnv, pageAppMembers as pageAppMembersApi } from "@/api/app";
 import { listAll } from "@/api/cluster";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateEnvDrawer from "./components/CreateEnvDrawer.vue";
 import TeamMemberDrawer from "./components/TeamMemberDrawer.vue";
 
@@ -196,29 +201,47 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.app-detail-page {
-  .block-card {
-    margin-bottom: 16px;
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+}
+
+.detail-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+}
+
+.detail-base {
+  flex-shrink: 0;
+}
+
+.copy-icon {
+  margin-left: 4px;
+  cursor: pointer;
+  color: var(--el-color-primary);
+  vertical-align: middle;
+}
+
+.env-card {
+  margin-bottom: 0;
+
+  p {
+    margin: 0 0 8px;
+    font-size: 13px;
   }
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .copy-icon {
-    margin-left: 4px;
-    cursor: pointer;
-    color: var(--el-color-primary);
-    vertical-align: middle;
-  }
-  .env-card {
-    width: 300px;
-    margin-bottom: 16px;
-    .resource-block {
-      margin-top: 16px;
-      h5 {
-        margin: 0 0 8px;
-      }
+
+  .resource-block {
+    margin-top: 12px;
+
+    h5 {
+      margin: 0 0 8px;
     }
   }
 }

@@ -1,6 +1,6 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="趋势" icon="TrendCharts">
+  <div v-loading="loading" class="tab-screen">
+    <SectionCard dense title="趋势" icon="TrendCharts" class="row-mid">
       <template #extra>最近 {{ trend.times?.length || 0 }} 个数据点</template>
       <el-empty v-if="!(trend.times || []).length" description="暂无数据" />
       <div v-show="(trend.times || []).length" ref="chartRef" class="trend-chart"></div>
@@ -99,8 +99,19 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.row-mid {
+  flex-shrink: 0;
+}
 .trend-chart {
-  height: 360px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

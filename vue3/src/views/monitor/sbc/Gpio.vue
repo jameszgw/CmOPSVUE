@@ -1,9 +1,8 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="GPIO 引脚" icon="Connection">
+  <div v-loading="loading" class="tab-screen">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="row-tables fill" title="GPIO 引脚" icon="Connection">
       <template #extra>共 {{ d.pinCount ?? items.length }} 个引脚</template>
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
+      <el-table :data="items" class="dense-table" height="100%" size="small" stripe>
         <el-table-column prop="pin" label="引脚" width="80" align="center">
           <template #default="{ row }">{{ row.pin ?? "-" }}</template>
         </el-table-column>
@@ -27,6 +26,7 @@
         <el-table-column prop="func" label="功能" min-width="160">
           <template #default="{ row }">{{ row.func || "-" }}</template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
   </div>
@@ -72,4 +72,16 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
+}
 </style>
