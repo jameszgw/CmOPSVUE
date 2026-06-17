@@ -1,144 +1,142 @@
 <template>
-  <div class="page-container">
-    <el-tabs v-model="activeTab" class="aiops-tabs">
+  <screen-page title="智能运维" gap="8px" class="aiops">
+    <el-tabs v-model="activeTab" class="aiops-tabs fill">
       <!-- 异常检测 -->
       <el-tab-pane label="异常检测" name="anomaly">
-        <el-row :gutter="12" class="stat-row">
-          <el-col :xs="24" :sm="8">
-            <StatCard icon="el-icon-warning-outline" label="异常总数"
+        <div class="tab-pane">
+          <card-grid min="200px" gap="8px" class="row-stats">
+            <stat-card dense icon="el-icon-warning-outline" label="异常总数"
               :value="num(anomalies.total)" color="#409eff" />
-          </el-col>
-          <el-col :xs="24" :sm="8">
-            <StatCard icon="el-icon-circle-close" label="严重"
+            <stat-card dense icon="el-icon-circle-close" label="严重"
               :value="num(anomalies.critical)" color="#f56c6c" />
-          </el-col>
-          <el-col :xs="24" :sm="8">
-            <StatCard icon="el-icon-warning" label="警告"
+            <stat-card dense icon="el-icon-warning" label="警告"
               :value="num(anomalies.warning)" color="#e6a23c" />
-          </el-col>
-        </el-row>
+          </card-grid>
 
-        <SectionCard title="异常检测明细" icon="el-icon-data-analysis">
-          <template #extra>共 {{ anomalyList.length }} 条</template>
-          <el-empty v-if="!anomalyList.length" description="暂无异常" />
-          <el-table v-else :data="anomalyList" size="small" stripe>
-            <el-table-column label="设备" min-width="140">
-              <template slot-scope="{ row }">{{ row.deviceName || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="类型" width="110">
-              <template slot-scope="{ row }">{{ typeLabel(row.deviceType) }}</template>
-            </el-table-column>
-            <el-table-column label="指标" min-width="130">
-              <template slot-scope="{ row }">{{ row.metricLabel || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="当前值" width="120">
-              <template slot-scope="{ row }">{{ withUnit(row.currentValue, row.unit) }}</template>
-            </el-table-column>
-            <el-table-column label="基线" width="120">
-              <template slot-scope="{ row }">{{ withUnit(row.baseline, row.unit) }}</template>
-            </el-table-column>
-            <el-table-column label="偏离" width="110">
-              <template slot-scope="{ row }">
-                <span :style="{ color: deviationColor(row.deviation) }">{{ deviationText(row.deviation) }}</span>
+          <section-card dense scrollable body-class="dense-table fill" class="fill"
+            title="异常检测明细" icon="el-icon-data-analysis">
+            <template #extra>共 {{ anomalyList.length }} 条</template>
+            <el-table class="dense-table" height="100%" :data="anomalyList" size="small" stripe>
+              <el-table-column label="设备" min-width="140">
+                <template slot-scope="{ row }">{{ row.deviceName || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="类型" width="110">
+                <template slot-scope="{ row }">{{ typeLabel(row.deviceType) }}</template>
+              </el-table-column>
+              <el-table-column label="指标" min-width="130">
+                <template slot-scope="{ row }">{{ row.metricLabel || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="当前值" width="120">
+                <template slot-scope="{ row }">{{ withUnit(row.currentValue, row.unit) }}</template>
+              </el-table-column>
+              <el-table-column label="基线" width="120">
+                <template slot-scope="{ row }">{{ withUnit(row.baseline, row.unit) }}</template>
+              </el-table-column>
+              <el-table-column label="偏离" width="110">
+                <template slot-scope="{ row }">
+                  <span :style="{ color: deviationColor(row.deviation) }">{{ deviationText(row.deviation) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="级别" width="100">
+                <template slot-scope="{ row }">
+                  <el-tag size="small" :type="severityTag(row.severity)" effect="dark">
+                    {{ row.severityText || row.severity }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="检测时间" width="180">
+                <template slot-scope="{ row }">{{ row.detectedTime || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="方法" min-width="140">
+                <template slot-scope="{ row }">{{ row.method || "-" }}</template>
+              </el-table-column>
+              <template slot="empty">
+                <el-empty description="暂无异常" :image-size="60" />
               </template>
-            </el-table-column>
-            <el-table-column label="级别" width="100">
-              <template slot-scope="{ row }">
-                <el-tag size="small" :type="severityTag(row.severity)" effect="dark">
-                  {{ row.severityText || row.severity }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="检测时间" width="180">
-              <template slot-scope="{ row }">{{ row.detectedTime || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="方法" min-width="140">
-              <template slot-scope="{ row }">{{ row.method || "-" }}</template>
-            </el-table-column>
-          </el-table>
-        </SectionCard>
+            </el-table>
+          </section-card>
+        </div>
       </el-tab-pane>
 
       <!-- 成本优化 -->
       <el-tab-pane label="成本优化" name="cost">
-        <el-row :gutter="12" class="stat-row">
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-wallet" label="月度成本"
+        <div class="tab-pane">
+          <card-grid min="180px" gap="8px" class="row-stats">
+            <stat-card dense icon="el-icon-wallet" label="月度成本"
               :value="cost.totalMonthlyCost || '-'" color="#409eff" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-coin" label="可节省"
+            <stat-card dense icon="el-icon-coin" label="可节省"
               :value="cost.potentialSavings || '-'" color="#67c23a" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-pie-chart" label="节省占比"
+            <stat-card dense icon="el-icon-pie-chart" label="节省占比"
               :value="`${num(cost.savingsPct)}%`" :percent="cost.savingsPct" color="#e6a23c" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-remove-outline" label="闲置项"
+            <stat-card dense icon="el-icon-remove-outline" label="闲置项"
               :value="num(cost.idleCount)" color="#909399" />
-          </el-col>
-        </el-row>
+          </card-grid>
 
-        <SectionCard title="资源利用率" icon="el-icon-odometer">
-          <el-empty v-if="!utilizationList.length" description="暂无数据" />
-          <el-row v-else :gutter="12">
-            <el-col v-for="(u, i) in utilizationList" :key="i" :xs="24" :sm="12" :lg="8">
-              <div class="util-item">
-                <div class="util-item__head">
-                  <span class="util-item__type">{{ typeLabel(u.type) }}</span>
-                  <span class="util-item__waste">浪费 {{ u.wasteCost || "-" }}</span>
+          <card-grid min="320px" gap="8px" class="row-cost">
+            <section-card dense title="资源利用率" icon="el-icon-odometer">
+              <el-empty v-if="!utilizationList.length" description="暂无数据" :image-size="60" />
+              <div v-else class="util-grid">
+                <div v-for="(u, i) in utilizationList" :key="i" class="util-item">
+                  <div class="util-item__head">
+                    <span class="util-item__type">{{ typeLabel(u.type) }}</span>
+                    <span class="util-item__waste">浪费 {{ u.wasteCost || "-" }}</span>
+                  </div>
+                  <el-progress :percentage="clamp(u.avgUtil)" :color="utilColor(u.avgUtil)"
+                    :stroke-width="8" />
                 </div>
-                <el-progress :percentage="clamp(u.avgUtil)" :color="utilColor(u.avgUtil)"
-                  :stroke-width="10" />
               </div>
-            </el-col>
-          </el-row>
-        </SectionCard>
+            </section-card>
 
-        <SectionCard title="容量预测" icon="el-icon-data-line">
-          <template #extra>{{ forecastNote }}</template>
-          <div ref="forecastRef" class="forecast-chart"></div>
-        </SectionCard>
+            <section-card dense title="容量预测" icon="el-icon-data-line">
+              <template #extra>{{ forecastNote }}</template>
+              <div ref="forecastRef" class="forecast-chart"></div>
+            </section-card>
+          </card-grid>
 
-        <SectionCard title="闲置资源" icon="el-icon-box">
-          <template #extra>共 {{ idleList.length }} 项</template>
-          <el-empty v-if="!idleList.length" description="暂无闲置资源" />
-          <el-table v-else :data="idleList" size="small" stripe>
-            <el-table-column label="设备" min-width="140">
-              <template slot-scope="{ row }">{{ row.deviceName || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="类型" width="110">
-              <template slot-scope="{ row }">{{ typeLabel(row.type) }}</template>
-            </el-table-column>
-            <el-table-column label="原因" min-width="160">
-              <template slot-scope="{ row }">{{ row.reason || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="闲置" min-width="130">
-              <template slot-scope="{ row }">{{ row.idleMetric || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="月成本" width="110">
-              <template slot-scope="{ row }">{{ row.monthlyCost || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="可节省" width="110">
-              <template slot-scope="{ row }">
-                <span style="color: #67c23a">{{ row.potentialSaving || "-" }}</span>
+          <section-card dense scrollable body-class="dense-table fill" class="fill"
+            title="闲置资源" icon="el-icon-box">
+            <template #extra>共 {{ idleList.length }} 项</template>
+            <el-table class="dense-table" height="100%" :data="idleList" size="small" stripe>
+              <el-table-column label="设备" min-width="140">
+                <template slot-scope="{ row }">{{ row.deviceName || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="类型" width="110">
+                <template slot-scope="{ row }">{{ typeLabel(row.type) }}</template>
+              </el-table-column>
+              <el-table-column label="原因" min-width="160">
+                <template slot-scope="{ row }">{{ row.reason || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="闲置" min-width="130">
+                <template slot-scope="{ row }">{{ row.idleMetric || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="月成本" width="110">
+                <template slot-scope="{ row }">{{ row.monthlyCost || "-" }}</template>
+              </el-table-column>
+              <el-table-column label="可节省" width="110">
+                <template slot-scope="{ row }">
+                  <span style="color: #67c23a">{{ row.potentialSaving || "-" }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="建议" min-width="200">
+                <template slot-scope="{ row }">{{ row.recommendation || "-" }}</template>
+              </el-table-column>
+              <template slot="empty">
+                <el-empty description="暂无闲置资源" :image-size="60" />
               </template>
-            </el-table-column>
-            <el-table-column label="建议" min-width="200">
-              <template slot-scope="{ row }">{{ row.recommendation || "-" }}</template>
-            </el-table-column>
-          </el-table>
-        </SectionCard>
+            </el-table>
+          </section-card>
+        </div>
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </screen-page>
 </template>
 
 <script>
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -159,7 +157,7 @@ const TYPE_LABEL = {
 export default {
   name: "MonitorAiops",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { ScreenPage, CardGrid, StatCard, SectionCard, InfoTable },
   data() {
     return {
       activeTab: "anomaly",
@@ -303,34 +301,63 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
+
+// el-tabs 填满 ScreenPage 主体，tab 内容成为可用空间
 .aiops-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  /deep/ .el-tabs__header {
+    margin: 0 0 8px;
+    flex-shrink: 0;
+  }
+
   /deep/ .el-tabs__content {
-    overflow: visible;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /deep/ .el-tab-pane {
+    height: 100%;
   }
 }
-.stat-row {
-  margin-bottom: 4px;
+
+// 每个 tab 内部为纵向 flex：统计/图表行固定，表格行填满并内部滚动
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  min-height: 0;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+
+.row-stats,
+.row-cost {
+  flex-shrink: 0;
 }
+
 .forecast-chart {
-  height: 300px;
+  height: @chart-h-sm;
   width: 100%;
 }
+
+.util-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: @space-sm @space-md;
+}
+
 .util-item {
-  padding: 12px 14px;
   border: 1px solid var(--cm-border-light, @border-light);
-  border-radius: 8px;
-  margin-bottom: 12px;
+  border-radius: @radius-base;
+  padding: @space-sm @space-md;
 
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
 
   &__type {

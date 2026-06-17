@@ -43,26 +43,29 @@ export default {
 <style lang="less" scoped>
 .info-table {
   width: 100%;
-  /* 等高卡片内填满高度：多余高度按行均分，避免底部留空 */
-  height: 100%;
   border-collapse: collapse;
   font-size: 13px;
 
   td {
     border: 1px solid var(--cm-border-light);
-    padding: 9px 12px;
+    /* 紧凑行高：行按内容高度，不再为填满卡片而拉伸出空行 */
+    padding: 6px 10px;
+    line-height: 1.4;
   }
 
   &__label {
     background: var(--cm-bg-muted);
     color: var(--cm-text-regular);
-    width: 160px;
+    /* 收缩到内容宽度，把剩余空间留给值列：多面板并排时避免值被挤成逐字换行 */
+    width: 1%;
     white-space: nowrap;
   }
 
   &__value {
     color: var(--cm-text-primary);
-    word-break: break-all;
+    /* 仅在必要时换行，且按词/分隔处断行，不再逐字符堆叠 */
+    word-break: normal;
+    overflow-wrap: anywhere;
   }
 
   &__tag {

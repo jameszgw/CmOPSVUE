@@ -1,145 +1,138 @@
 <template>
-  <div class="page-container">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="节点总数" :value="nodeTotal" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-circle-check" label="健康" :value="healthy" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="警告" :value="warning" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-circle-close" label="严重" :value="critical" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <screen-page title="拓扑维护" gap="8px" class="topo-edit">
+    <template #header-extra>
+      <div class="view-toolbar">
+        <el-select
+          v-model="currentViewId"
+          placeholder="请选择视图"
+          size="small"
+          style="width: 200px"
+          @change="onViewChange"
+        >
+          <el-option
+            v-for="v in views"
+            :key="v.id"
+            :label="v.name"
+            :value="v.id"
+          />
+        </el-select>
+        <el-button size="small" icon="el-icon-plus" @click="onCreateView">新建视图</el-button>
+        <el-button size="small" icon="el-icon-edit" :disabled="!currentViewId" @click="onRenameView">
+          重命名
+        </el-button>
+        <el-button
+          size="small"
+          type="danger"
+          icon="el-icon-delete"
+          :disabled="!currentViewId"
+          @click="onDeleteView"
+        >
+          删除视图
+        </el-button>
+        <el-button size="small" icon="el-icon-refresh" :disabled="!currentViewId" @click="loadGraph">
+          刷新
+        </el-button>
+        <el-button
+          size="small"
+          icon="el-icon-download"
+          :disabled="!currentViewId"
+          @click="onExportJson"
+        >
+          导出JSON
+        </el-button>
+        <el-button size="small" icon="el-icon-upload2" @click="onImportJsonClick">
+          导入JSON
+        </el-button>
+        <input
+          ref="importInput"
+          type="file"
+          accept=".json,application/json"
+          style="display: none"
+          @change="onImportJsonChange"
+        />
+      </div>
+    </template>
 
-    <SectionCard title="拓扑维护" icon="el-icon-edit-outline">
+    <!-- 统计 -->
+    <card-grid min="160px" gap="8px" class="row-stats">
+      <stat-card dense icon="el-icon-share" label="节点总数" :value="nodeTotal" color="#409eff" />
+      <stat-card dense icon="el-icon-circle-check" label="健康" :value="healthy" color="#67c23a" />
+      <stat-card dense icon="el-icon-warning-outline" label="警告" :value="warning" color="#e6a23c" />
+      <stat-card dense icon="el-icon-circle-close" label="严重" :value="critical" color="#f56c6c" />
+    </card-grid>
+
+    <!-- 画布：填满剩余高度 -->
+    <section-card dense title="拓扑画布" icon="el-icon-edit-outline" class="canvas-card fill" body-class="canvas-body">
       <template #extra>{{ selectedTip }}</template>
 
-      <div class="toolbar">
-        <div class="toolbar__group">
-          <span class="toolbar__label">视图</span>
-          <el-select
-            v-model="currentViewId"
-            placeholder="请选择视图"
-            size="small"
-            style="width: 200px"
-            @change="onViewChange"
-          >
-            <el-option
-              v-for="v in views"
-              :key="v.id"
-              :label="v.name"
-              :value="v.id"
-            />
-          </el-select>
-          <el-button size="small" icon="el-icon-plus" @click="onCreateView">新建视图</el-button>
-          <el-button size="small" icon="el-icon-edit" :disabled="!currentViewId" @click="onRenameView">
-            重命名
-          </el-button>
-          <el-button
-            size="small"
-            type="danger"
-            icon="el-icon-delete"
-            :disabled="!currentViewId"
-            @click="onDeleteView"
-          >
-            删除视图
-          </el-button>
-          <el-button size="small" icon="el-icon-refresh" :disabled="!currentViewId" @click="loadGraph">
-            刷新
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-download"
-            :disabled="!currentViewId"
-            @click="onExportJson"
-          >
-            导出JSON
-          </el-button>
-          <el-button size="small" icon="el-icon-upload2" @click="onImportJsonClick">
-            导入JSON
-          </el-button>
-          <input
-            ref="importInput"
-            type="file"
-            accept=".json,application/json"
-            style="display: none"
-            @change="onImportJsonChange"
-          />
-        </div>
+      <div class="edit-toolbar">
+        <el-button
+          size="small"
+          type="primary"
+          icon="el-icon-cpu"
+          :disabled="!currentViewId"
+          @click="openDevicePicker"
+        >
+          从设备添加节点
+        </el-button>
+        <el-button
+          size="small"
+          icon="el-icon-circle-plus-outline"
+          :disabled="!currentViewId"
+          @click="onAddVirtualNode"
+        >
+          添加虚拟节点
+        </el-button>
+        <el-button
+          size="small"
+          icon="el-icon-connection"
+          :disabled="!currentViewId || nodeOptions.length < 2"
+          @click="openEdgeDialog"
+        >
+          添加连线
+        </el-button>
+        <el-button
+          size="small"
+          icon="el-icon-s-grid"
+          :disabled="!currentViewId || !nodeTotal"
+          @click="onAutoLayout"
+        >
+          自动布局
+        </el-button>
+        <el-button
+          size="small"
+          type="success"
+          icon="el-icon-finished"
+          :disabled="!currentViewId"
+          @click="onSaveLayout"
+        >
+          保存布局
+        </el-button>
+        <el-button
+          size="small"
+          type="success"
+          icon="el-icon-document-checked"
+          :disabled="!currentViewId"
+          @click="onSaveGraph"
+        >
+          保存整图
+        </el-button>
+        <el-button
+          size="small"
+          type="danger"
+          icon="el-icon-delete"
+          :disabled="!hasSelection"
+          @click="onDeleteSelected"
+        >
+          删除选中
+        </el-button>
       </div>
 
-      <div class="toolbar">
-        <div class="toolbar__group">
-          <el-button
-            size="small"
-            type="primary"
-            icon="el-icon-cpu"
-            :disabled="!currentViewId"
-            @click="openDevicePicker"
-          >
-            从设备添加节点
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-circle-plus-outline"
-            :disabled="!currentViewId"
-            @click="onAddVirtualNode"
-          >
-            添加虚拟节点
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-connection"
-            :disabled="!currentViewId || nodeOptions.length < 2"
-            @click="openEdgeDialog"
-          >
-            添加连线
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-s-grid"
-            :disabled="!currentViewId || !nodeTotal"
-            @click="onAutoLayout"
-          >
-            自动布局
-          </el-button>
-          <el-button
-            size="small"
-            type="success"
-            icon="el-icon-finished"
-            :disabled="!currentViewId"
-            @click="onSaveLayout"
-          >
-            保存布局
-          </el-button>
-          <el-button
-            size="small"
-            type="success"
-            icon="el-icon-document-checked"
-            :disabled="!currentViewId"
-            @click="onSaveGraph"
-          >
-            保存整图
-          </el-button>
-          <el-button
-            size="small"
-            type="danger"
-            icon="el-icon-delete"
-            :disabled="!hasSelection"
-            @click="onDeleteSelected"
-          >
-            删除选中
-          </el-button>
-        </div>
+      <div class="canvas-area">
+        <el-empty v-if="!currentViewId" description="请先选择或新建一个拓扑视图" />
+        <div v-show="currentViewId" ref="graphRef" class="graph-chart"></div>
       </div>
-
-      <el-empty v-if="!currentViewId" description="请先选择或新建一个拓扑视图" />
-      <div v-show="currentViewId" ref="graphRef" class="graph-chart"></div>
-    </SectionCard>
+    </section-card>
 
     <!-- 设备选择对话框 -->
     <el-dialog title="从设备添加节点" :visible.sync="deviceDialogVisible" width="640px" append-to-body>
@@ -250,13 +243,15 @@
         </div>
       </div>
     </el-drawer>
-  </div>
+  </screen-page>
 </template>
 
 <script>
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { listDevices } from "@/api/monitor-device";
@@ -295,7 +290,7 @@ const STATUS_INDEX = { healthy: 0, warning: 1, critical: 2 };
 export default {
   name: "MonitorTopologyEdit",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard },
+  components: { ScreenPage, CardGrid, StatCard, SectionCard },
   data() {
     return {
       views: [],
@@ -378,8 +373,16 @@ export default {
   },
   mounted() {
     this.loadViews();
+    this.__onResize = () => {
+      if (this.chart) this.chart.resize();
+    };
+    window.addEventListener("resize", this.__onResize);
   },
   beforeDestroy() {
+    if (this.__onResize) {
+      window.removeEventListener("resize", this.__onResize);
+      this.__onResize = null;
+    }
     if (this.chart) {
       this.chart.dispose();
       this.chart = null;
@@ -996,32 +999,44 @@ export default {
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-.page-container {
-  padding: @space-lg;
+.row-stats {
+  flex-shrink: 0;
 }
-.stat-row {
-  margin-bottom: @space-xs;
-}
-.stat-row .el-col {
-  margin-bottom: @space-md;
-}
-.toolbar {
-  margin-bottom: @space-md;
 
-  &__group {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: @space-sm;
-  }
+.view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: @space-sm;
+}
 
-  &__label {
-    font-size: 13px;
-    color: var(--cm-text-regular, @text-regular);
-  }
+// 画布卡片填满 ScreenPage 剩余高度，正文为纵向 flex
+.canvas-card {
+  min-height: 0;
+}
+.canvas-card /deep/ .canvas-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.edit-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: @space-sm;
+  flex-shrink: 0;
+}
+
+// 画布容器占满卡片剩余空间
+.canvas-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 .graph-chart {
-  height: 560px;
+  height: 100%;
+  min-height: @chart-h-md;
   width: 100%;
 }
 .node-detail {

@@ -1,38 +1,50 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-video-play" label="运行中"
-          :value="num0(d.running)" sub="Running Pod" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-loading" label="Pending"
-          :value="num0(d.pending)" sub="待调度 Pod" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-circle-close" label="失败"
-          :value="num0(d.failed)" sub="Failed Pod" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="CrashLoopBackOff"
-          :value="num0(d.crashLoop)" :sub="`OOMKilled ${num0(d.oomKilledTotal)}`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-video-play" label="运行中"
+        :value="num0(d.running)" sub="Running Pod" color="#67c23a" />
+      <stat-card dense icon="el-icon-loading" label="Pending"
+        :value="num0(d.pending)" sub="待调度 Pod" color="#e6a23c" />
+      <stat-card dense icon="el-icon-circle-close" label="失败"
+        :value="num0(d.failed)" sub="Failed Pod" color="#f56c6c" />
+      <stat-card dense icon="el-icon-warning-outline" label="CrashLoopBackOff"
+        :value="num0(d.crashLoop)" :sub="`OOMKilled ${num0(d.oomKilledTotal)}`" color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="工作负载类型计数" icon="el-icon-s-grid">
-      <el-row :gutter="12">
-        <el-col v-for="(w, i) in workloadCards" :key="i" :xs="12" :sm="8" :lg="4">
-          <div class="count-card">
-            <div class="count-card__value" :style="{ color: w.color }">{{ w.value }}</div>
-            <div class="count-card__label">{{ w.label }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+    <card-grid min="320px" gap="8px" class="sub-grid">
+      <section-card dense title="工作负载类型计数" icon="el-icon-s-grid">
+        <el-row :gutter="12">
+          <el-col v-for="(w, i) in workloadCards" :key="i" :xs="12" :sm="8" :lg="4">
+            <div class="count-card">
+              <div class="count-card__value" :style="{ color: w.color }">{{ w.value }}</div>
+              <div class="count-card__label">{{ w.label }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </section-card>
 
-    <SectionCard title="Pod 列表" icon="el-icon-box">
+      <section-card dense title="重启 Top" icon="el-icon-refresh">
+        <el-table :data="d.topRestart || []" size="small" stripe class="dense-table">
+          <el-table-column prop="name" label="名称" min-width="200" />
+          <el-table-column prop="namespace" label="命名空间" width="160" />
+          <el-table-column label="重启次数" width="120" align="right">
+            <template slot-scope="{ row }">
+              <span style="color:#f56c6c">{{ num0(row.restarts) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="170">
+            <template slot-scope="{ row }">
+              <el-tag size="small" effect="dark" :color="statusColor(row.status)" style="border:none">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!(d.topRestart && d.topRestart.length)" description="暂无重启数据" />
+      </section-card>
+    </card-grid>
+
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="Pod 列表" icon="el-icon-box">
       <template #extra>共 {{ (d.pods && d.pods.length) || 0 }} 个 Pod</template>
-      <el-table :data="d.pods || []" size="small" stripe>
+      <el-table :data="d.pods || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="200" fixed />
         <el-table-column prop="namespace" label="命名空间" width="150" />
         <el-table-column prop="node" label="节点" min-width="150" />
@@ -53,31 +65,14 @@
         <el-table-column prop="age" label="age" width="100" />
       </el-table>
       <el-empty v-if="!(d.pods && d.pods.length)" description="暂无 Pod 数据" />
-    </SectionCard>
-
-    <SectionCard title="重启 Top" icon="el-icon-refresh">
-      <el-table :data="d.topRestart || []" size="small" stripe>
-        <el-table-column prop="name" label="名称" min-width="200" />
-        <el-table-column prop="namespace" label="命名空间" width="160" />
-        <el-table-column label="重启次数" width="120" align="right">
-          <template slot-scope="{ row }">
-            <span style="color:#f56c6c">{{ num0(row.restarts) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="170">
-          <template slot-scope="{ row }">
-            <el-tag size="small" effect="dark" :color="statusColor(row.status)" style="border:none">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!(d.topRestart && d.topRestart.length)" description="暂无重启数据" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getK8sPods } from "@/api/monitor-k8s";
 
@@ -89,7 +84,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "K8sPods",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -147,11 +142,17 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid,
+.sub-grid {
+  flex-shrink: 0;
 }
 .count-card {
   border: 1px solid var(--cm-border-light, @border-light);

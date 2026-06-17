@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="tab-screen">
     <el-alert
       title="群控批量为模拟结果"
       type="warning"
@@ -12,14 +12,12 @@
       </template>
     </el-alert>
 
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-set-up" label="运行中任务"
-          :value="num0(d.runningTasks)" sub="进行中的群控任务" color="#409eff" />
-      </el-col>
-    </el-row>
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-set-up" label="运行中任务"
+        :value="num0(d.runningTasks)" sub="进行中的群控任务" color="#409eff" />
+    </card-grid>
 
-    <SectionCard title="下发批量任务" icon="el-icon-position" class="dispatch-card">
+    <SectionCard dense title="下发批量任务" icon="el-icon-position" class="dispatch-card">
       <el-form inline class="dispatch-form" @submit.native.prevent>
         <el-form-item label="任务类型">
           <el-select v-model="form.taskType" size="small" style="width: 150px">
@@ -47,109 +45,114 @@
       </el-form>
     </SectionCard>
 
-    <SectionCard title="群控任务" icon="el-icon-set-up">
-      <template #extra>共 {{ items.length }} 个任务</template>
-      <el-table :data="items" size="small" stripe>
-        <el-table-column prop="name" label="任务名称" min-width="160" />
-        <el-table-column prop="scope" label="范围" min-width="140">
-          <template slot-scope="{ row }">{{ val(row.scope) }}</template>
-        </el-table-column>
-        <el-table-column label="进度" min-width="180">
-          <template slot-scope="{ row }">
-            <el-progress :percentage="clamp(row.progressPct)" :stroke-width="12" :text-inside="true" color="#67c23a" />
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="110" align="center">
-          <template slot-scope="{ row }">
-            <el-tag size="mini" :type="statusTag(row.status)" effect="dark">{{ val(row.status) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="影响实例" width="100" align="center">
-          <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
-        </el-table-column>
-        <el-table-column prop="gmtCreate" label="创建时间" min-width="160">
-          <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!items.length" description="暂无群控任务" />
-    </SectionCard>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="群控任务" icon="el-icon-set-up"
+        body-class="dense-table fill" class="fill">
+        <template #extra>共 {{ items.length }} 个任务</template>
+        <el-table :data="items" class="dense-table" height="100%" size="small" stripe>
+          <el-table-column prop="name" label="任务名称" min-width="160" />
+          <el-table-column prop="scope" label="范围" min-width="140">
+            <template slot-scope="{ row }">{{ val(row.scope) }}</template>
+          </el-table-column>
+          <el-table-column label="进度" min-width="180">
+            <template slot-scope="{ row }">
+              <el-progress :percentage="clamp(row.progressPct)" :stroke-width="12" :text-inside="true" color="#67c23a" />
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="110" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="statusTag(row.status)" effect="dark">{{ val(row.status) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="影响实例" width="100" align="center">
+            <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
+          </el-table-column>
+          <el-table-column prop="gmtCreate" label="创建时间" min-width="160">
+            <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!items.length" description="暂无群控任务" />
+      </SectionCard>
 
-    <SectionCard title="下发历史" icon="el-icon-tickets">
-      <template #extra>共 {{ total }} 条</template>
-      <el-form inline class="filter-bar" @submit.native.prevent>
-        <el-form-item label="任务类型">
-          <el-select v-model="filters.taskType" size="mini" style="width: 140px">
-            <el-option label="全部" value="" />
-            <el-option label="批量安装APK" value="install" />
-            <el-option label="批量重启" value="reboot" />
-            <el-option label="Shell命令" value="shell" />
-            <el-option label="清理缓存" value="clearcache" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="来源">
-          <el-select v-model="filters.source" size="mini" style="width: 150px">
-            <el-option label="全部" value="" />
-            <el-option label="真实·agent" value="agent" />
-            <el-option label="模拟·simulated" value="simulated" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="结果">
-          <el-select v-model="filters.result" size="mini" style="width: 120px">
-            <el-option label="全部" value="" />
-            <el-option label="成功" value="success" />
-            <el-option label="已受理" value="accepted" />
-            <el-option label="失败" value="failed" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" size="mini" @click="onFilter">查询</el-button>
-          <el-button size="mini" @click="onResetFilter">重置</el-button>
-        </el-form-item>
-      </el-form>
-      <el-table :data="history" size="small" stripe>
-        <el-table-column prop="taskType" label="任务类型" min-width="120">
-          <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
-        </el-table-column>
-        <el-table-column prop="scope" label="范围" min-width="140">
-          <template slot-scope="{ row }">{{ val(row.scope) }}</template>
-        </el-table-column>
-        <el-table-column label="来源" width="130" align="center">
-          <template slot-scope="{ row }">
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(row.source) ? 'success' : 'info'">
-              {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp",winrm:"真实·winrm",redis:"真实·redis"}[row.source] || "模拟·simulated" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="result" label="结果" min-width="120">
-          <template slot-scope="{ row }">{{ val(row.result) }}</template>
-        </el-table-column>
-        <el-table-column label="影响" width="100" align="center">
-          <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
-        </el-table-column>
-        <el-table-column prop="gmtCreate" label="时间" min-width="160">
-          <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!history.length" description="暂无下发记录" />
-      <div v-if="total > 0" class="pager-wrap">
-        <el-pagination
-          :current-page.sync="pageNo"
-          :page-size.sync="pageSize"
-          :page-sizes="[10, 20, 50]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          background
-          @current-change="onPageChange"
-          @size-change="onSizeChange"
-        />
-      </div>
-    </SectionCard>
+      <SectionCard dense scrollable title="下发历史" icon="el-icon-tickets"
+        body-class="fill" class="fill">
+        <template #extra>共 {{ total }} 条</template>
+        <el-form inline class="filter-bar" @submit.native.prevent>
+          <el-form-item label="任务类型">
+            <el-select v-model="filters.taskType" size="mini" style="width: 140px">
+              <el-option label="全部" value="" />
+              <el-option label="批量安装APK" value="install" />
+              <el-option label="批量重启" value="reboot" />
+              <el-option label="Shell命令" value="shell" />
+              <el-option label="清理缓存" value="clearcache" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="来源">
+            <el-select v-model="filters.source" size="mini" style="width: 150px">
+              <el-option label="全部" value="" />
+              <el-option label="真实·agent" value="agent" />
+              <el-option label="模拟·simulated" value="simulated" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="结果">
+            <el-select v-model="filters.result" size="mini" style="width: 120px">
+              <el-option label="全部" value="" />
+              <el-option label="成功" value="success" />
+              <el-option label="已受理" value="accepted" />
+              <el-option label="失败" value="failed" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" size="mini" @click="onFilter">查询</el-button>
+            <el-button size="mini" @click="onResetFilter">重置</el-button>
+          </el-form-item>
+        </el-form>
+        <el-table :data="history" class="dense-table" size="small" stripe>
+          <el-table-column prop="taskType" label="任务类型" min-width="120">
+            <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
+          </el-table-column>
+          <el-table-column prop="scope" label="范围" min-width="140">
+            <template slot-scope="{ row }">{{ val(row.scope) }}</template>
+          </el-table-column>
+          <el-table-column label="来源" width="130" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(row.source) ? 'success' : 'info'">
+                {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp",winrm:"真实·winrm",redis:"真实·redis"}[row.source] || "模拟·simulated" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="result" label="结果" min-width="120">
+            <template slot-scope="{ row }">{{ val(row.result) }}</template>
+          </el-table-column>
+          <el-table-column label="影响" width="100" align="center">
+            <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
+          </el-table-column>
+          <el-table-column prop="gmtCreate" label="时间" min-width="160">
+            <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!history.length" description="暂无下发记录" />
+        <div v-if="total > 0" class="pager-wrap">
+          <el-pagination
+            :current-page.sync="pageNo"
+            :page-size.sync="pageSize"
+            :page-sizes="[10, 20, 50]"
+            :total="total"
+            layout="total, sizes, prev, pager, next"
+            background
+            @current-change="onPageChange"
+            @size-change="onSizeChange"
+          />
+        </div>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getAndroidGroupControl, dispatchGroupControl } from "@/api/monitor-android";
 import { getDispatchHistory } from "@/api/monitor-dispatch";
 
@@ -161,7 +164,7 @@ const STATUS_TAG = {
 
 export default {
   name: "AndroidGroupControl",
-  components: { StatCard, SectionCard },
+  components: { StatCard, SectionCard, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -297,17 +300,24 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
+}
 .sim-alert {
-  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 .dispatch-card {
-  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 .dispatch-form ::v-deep .el-form-item {
   margin-bottom: 0;
 }
 .filter-bar {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .filter-bar ::v-deep .el-form-item {
   margin-bottom: 8px;
@@ -315,12 +325,6 @@ export default {
 .pager-wrap {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
-}
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+  margin-top: 8px;
 }
 </style>

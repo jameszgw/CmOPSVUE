@@ -2,28 +2,20 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="CPU使用率" :value="`${num(d.cpuUsage)}%`"
-          :percent="d.cpuUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="内存使用率" :value="`${num(d.memoryUsage)}%`"
-          :percent="d.memoryUsage" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-files" label="磁盘 IO" :value="diskWrite"
-          :sub="`读 ${diskRead} / 写 ${diskWrite}`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="网络 IO" :value="netDown"
-          :sub="`上行 ${netUp} / 下行 ${netDown}`" color="#909399" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px" class="kpi-row">
+      <StatCard dense icon="el-icon-cpu" label="CPU使用率" :value="`${num(d.cpuUsage)}%`"
+        :percent="d.cpuUsage" color="#409eff" />
+      <StatCard dense icon="el-icon-coin" label="内存使用率" :value="`${num(d.memoryUsage)}%`"
+        :percent="d.memoryUsage" color="#67c23a" />
+      <StatCard dense icon="el-icon-files" label="磁盘 IO" :value="diskWrite"
+        :sub="`读 ${diskRead} / 写 ${diskWrite}`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-connection" label="网络 IO" :value="netDown"
+        :sub="`上行 ${netUp} / 下行 ${netDown}`" color="#909399" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基本信息" icon="el-icon-info">
+    <div class="body-grid">
+      <div class="top-grid">
+        <SectionCard dense title="基本信息" icon="el-icon-info">
           <template #extra>
             <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
               {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
@@ -31,41 +23,39 @@
           </template>
           <InfoTable :rows="basicRows" />
         </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="系统状态" icon="el-icon-set-up">
+        <SectionCard dense title="系统状态" icon="el-icon-set-up">
           <InfoTable :rows="statusRows" />
         </SectionCard>
-      </el-col>
-    </el-row>
+        <SectionCard dense title="网络使用趋势图" icon="el-icon-data-line" class="chart-card">
+          <template #extra>最近 {{ (d.netTrend && d.netTrend.times && d.netTrend.times.length) || 0 }} 个数据点</template>
+          <div ref="chartRef" class="trend-chart"></div>
+        </SectionCard>
+      </div>
 
-    <SectionCard title="网络使用趋势图" icon="el-icon-data-line">
-      <template #extra>最近 {{ (d.netTrend && d.netTrend.times && d.netTrend.times.length) || 0 }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
-
-    <SectionCard title="Top 10 进程" icon="el-icon-s-order">
-      <el-table :data="d.topProcess || []" size="small" stripe>
-        <el-table-column prop="pid" label="PID" width="100" />
-        <el-table-column prop="name" label="进程名" />
-        <el-table-column label="CPU %" width="120">
-          <template slot-scope="{ row }">
-            <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="内存 %" width="120">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ num(row.mem) }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="120">
-          <template slot-scope="{ row }">
-            <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="200" />
-      </el-table>
-    </SectionCard>
+      <SectionCard dense title="Top 10 进程" icon="el-icon-s-order"
+        class="fill proc-card" body-class="dense-table fill" scrollable>
+        <el-table class="dense-table" :data="d.topProcess || []" height="100%" size="small" stripe>
+          <el-table-column prop="pid" label="PID" width="80" />
+          <el-table-column prop="name" label="进程名" />
+          <el-table-column label="CPU %" width="90">
+            <template slot-scope="{ row }">
+              <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="内存 %" width="90">
+            <template slot-scope="{ row }">
+              <span style="color: #e6a23c">{{ num(row.mem) }}%</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="90">
+            <template slot-scope="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="170" />
+        </el-table>
+      </SectionCard>
+    </div>
     </template>
   </div>
 </template>
@@ -77,6 +67,7 @@ import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerSystem } from "@/api/monitor-server";
 
 const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" };
@@ -85,7 +76,7 @@ const MODE_LABEL = { AGENT: "含 Agent", AGENTLESS: "无 Agent" };
 export default {
   name: "ServerSystemInfo",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -197,14 +188,50 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+@import (reference) "@/styles/variables.less";
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
+}
+.top-grid {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: @dense-gap;
+  align-items: stretch;
+}
+.chart-card {
+  /deep/ .section-card__body {
+    display: flex;
+  }
+}
+.proc-card {
+  min-height: 160px;
 }
 .trend-chart {
-  height: 280px;
+  height: @chart-h-sm;
   width: 100%;
+  flex: 1;
+}
+@media (max-width: 1200px) {
+  .top-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .chart-card {
+    grid-column: 1 / -1;
+  }
 }
 </style>

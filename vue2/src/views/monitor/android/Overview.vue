@@ -1,54 +1,43 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-mobile-phone" label="实例总数"
-          :value="num0(d.instanceTotal)" :sub="`容量上限 ${num0(d.instanceCap)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-success" label="在线实例"
-          :value="num0(d.online)" :sub="`离线 ${num0(d.offline)}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="多开密度"
-          :value="`${num1(d.densityPct)}%`" :percent="d.densityPct" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-video-camera" label="平均 FPS"
-          :value="num1(d.avgFps)" :sub="`单实例 CPU ${num1(d.avgCpuPerInst)}%`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-mobile-phone" label="实例总数"
+        :value="num0(d.instanceTotal)" :sub="`容量上限 ${num0(d.instanceCap)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-success" label="在线实例"
+        :value="num0(d.online)" :sub="`离线 ${num0(d.offline)}`" color="#67c23a" />
+      <StatCard dense icon="el-icon-odometer" label="多开密度"
+        :value="`${num1(d.densityPct)}%`" :percent="d.densityPct" color="#e6a23c" />
+      <StatCard dense icon="el-icon-video-camera" label="平均 FPS"
+        :value="num1(d.avgFps)" :sub="`单实例 CPU ${num1(d.avgCpuPerInst)}%`" color="#f56c6c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-            <el-tag size="mini" :type="statusTag" effect="dark">{{ val(d.status) }}</el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="宿主资源" icon="el-icon-monitor">
-          <div v-for="it in hostItems" :key="it.key" class="host-item">
-            <div class="host-item__head">
-              <span class="host-item__label">{{ it.label }}</span>
-              <span class="host-item__val">{{ num1(it.value) }}%</span>
-            </div>
-            <el-progress :percentage="clamp(it.value)" :stroke-width="10" :color="it.color" :show-text="false" />
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info" class="fill">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          <el-tag size="mini" :type="statusTag" effect="dark">{{ val(d.status) }}</el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable title="宿主资源" icon="el-icon-monitor" class="fill">
+        <div v-for="it in hostItems" :key="it.key" class="host-item">
+          <div class="host-item__head">
+            <span class="host-item__label">{{ it.label }}</span>
+            <span class="host-item__val">{{ num1(it.value) }}%</span>
           </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+          <el-progress :percentage="clamp(it.value)" :stroke-width="10" :color="it.color" :show-text="false" />
+        </div>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getAndroidOverview } from "@/api/monitor-android";
 
@@ -60,7 +49,7 @@ const STATUS_TAG = {
 
 export default {
   name: "AndroidOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -150,11 +139,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .host-item {
   margin-bottom: 16px;

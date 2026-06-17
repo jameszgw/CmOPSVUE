@@ -1,29 +1,23 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="tab-screen">
     <UnsupportedMask :unsupported="!d.supported" :reason="d.note" title="该电源无电池">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-odometer" label="电池电量"
-            :value="`${num1(d.soc)}%`" :percent="d.soc" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-time" label="续航时间"
-            :value="`${num0(d.runtimeMin)} min`" sub="预计可支撑时间" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-first-aid-kit" label="健康度"
-            :value="`${num1(d.healthPct)}%`" :percent="d.healthPct" color="#e6a23c" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-cpu" label="电池状态"
-            :value="val(d.status)" :sub="`循环 ${num0(d.cycleCount)} 次`"
-            :color="statusColor(d.status)" />
-        </el-col>
-      </el-row>
+      <card-grid min="200px" gap="8px">
+        <StatCard dense icon="el-icon-odometer" label="电池电量"
+          :value="`${num1(d.soc)}%`" :percent="d.soc" color="#67c23a" />
+        <StatCard dense icon="el-icon-time" label="续航时间"
+          :value="`${num0(d.runtimeMin)} min`" sub="预计可支撑时间" color="#409eff" />
+        <StatCard dense icon="el-icon-first-aid-kit" label="健康度"
+          :value="`${num1(d.healthPct)}%`" :percent="d.healthPct" color="#e6a23c" />
+        <StatCard dense icon="el-icon-cpu" label="电池状态"
+          :value="val(d.status)" :sub="`循环 ${num0(d.cycleCount)} 次`"
+          :color="statusColor(d.status)" />
+      </card-grid>
 
-      <SectionCard title="电池详情" icon="el-icon-info">
-        <InfoTable :rows="detailRows" :columns="2" />
-      </SectionCard>
+      <card-grid class="fill" min="300px" gap="8px">
+        <SectionCard dense scrollable title="电池详情" icon="el-icon-info" class="fill">
+          <InfoTable :rows="detailRows" :columns="2" />
+        </SectionCard>
+      </card-grid>
     </UnsupportedMask>
   </div>
 </template>
@@ -31,6 +25,7 @@
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getPowerBattery } from "@/api/monitor-power";
@@ -44,7 +39,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "PowerBattery",
-  components: { StatCard, SectionCard, InfoTable, UnsupportedMask },
+  components: { StatCard, SectionCard, CardGrid, InfoTable, UnsupportedMask },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -109,10 +104,11 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

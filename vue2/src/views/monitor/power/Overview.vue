@@ -1,50 +1,39 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="负载率"
-          :value="`${num1(d.loadPct)}%`" :percent="d.loadPct" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lightning" label="有功功率"
-          :value="`${num1(d.activePowerKw)} kW`"
-          :sub="`视在 ${num1(d.apparentPowerKva)} kVA`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="今日电量"
-          :value="`${num1(d.energyTodayKwh)} kWh`"
-          :sub="`累计 ${num1(d.energyTotalKwh)} kWh`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="温度"
-          :value="`${num1(d.temperature)}℃`"
-          :sub="`功率因数 ${num1(d.powerFactor)}`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-odometer" label="负载率"
+        :value="`${num1(d.loadPct)}%`" :percent="d.loadPct" color="#409eff" />
+      <StatCard dense icon="el-icon-lightning" label="有功功率"
+        :value="`${num1(d.activePowerKw)} kW`"
+        :sub="`视在 ${num1(d.apparentPowerKva)} kVA`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-coin" label="今日电量"
+        :value="`${num1(d.energyTodayKwh)} kWh`"
+        :sub="`累计 ${num1(d.energyTotalKwh)} kWh`" color="#67c23a" />
+      <StatCard dense icon="el-icon-warning-outline" label="温度"
+        :value="`${num1(d.temperature)}℃`"
+        :sub="`功率因数 ${num1(d.powerFactor)}`" color="#f56c6c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard :title="isUps ? '状态与电池' : '运行状态'" icon="el-icon-cpu">
-          <InfoTable :rows="statusRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info" class="fill">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable :title="isUps ? '状态与电池' : '运行状态'" icon="el-icon-cpu" class="fill">
+        <InfoTable :rows="statusRows" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getPowerOverview } from "@/api/monitor-power";
 
@@ -57,7 +46,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "PowerOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -154,10 +143,11 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

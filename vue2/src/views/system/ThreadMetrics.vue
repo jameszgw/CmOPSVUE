@@ -1,53 +1,59 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="thread-metrics-container" v-loading="loading">
-        <div class="other-title">线程池指标</div>
-        <div class="thread-metrics-descriptions">
-          <el-descriptions :column="1">
-            <el-descriptions-item
-              v-for="metric in metrics"
-              :key="metric.type"
-              :label="formatThreadType(metric.type, 'label')"
-            >
-              <div class="thread-pool-metrics-wrapper">
-                <span class="metrics-label">活跃线程数: </span>
-                <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.activeThreadCount }}</span> 个
-                </span>
-                <span class="metrics-label">总任务数: </span>
-                <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.totalTaskCount }}</span> 个
-                </span>
-                <span class="metrics-label">已处理任务数: </span>
-                <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.completedTaskCount }}</span> 个
-                </span>
-                <span class="metrics-label">队列任务数: </span>
-                <span class="metrics-value-wrapper">
-                  <span class="metrics-value">{{ metric.queueSize }}</span> 个
-                </span>
-              </div>
-            </el-descriptions-item>
-          </el-descriptions>
+  <screen-page title="线程池指标" gap="8px" v-loading="loading">
+    <template #header-extra>
+      <el-button
+        size="small"
+        icon="el-icon-refresh"
+        :loading="loading"
+        @click="init"
+      >
+        重新加载
+      </el-button>
+    </template>
+
+    <section-card
+      dense
+      scrollable
+      class="fill"
+      title="线程池"
+      icon="el-icon-cpu"
+    >
+      <card-grid min="260px" gap="8px">
+        <div
+          v-for="metric in metrics"
+          :key="metric.type"
+          class="pool-card"
+        >
+          <div class="pool-card__title">{{ formatThreadType(metric.type, "label") }}</div>
+          <div class="pool-card__rows">
+            <div class="pool-row">
+              <span class="pool-row__label">活跃线程数</span>
+              <span class="pool-row__value">{{ metric.activeThreadCount }}</span>
+            </div>
+            <div class="pool-row">
+              <span class="pool-row__label">总任务数</span>
+              <span class="pool-row__value">{{ metric.totalTaskCount }}</span>
+            </div>
+            <div class="pool-row">
+              <span class="pool-row__label">已处理任务数</span>
+              <span class="pool-row__value">{{ metric.completedTaskCount }}</span>
+            </div>
+            <div class="pool-row">
+              <span class="pool-row__label">队列任务数</span>
+              <span class="pool-row__value">{{ metric.queueSize }}</span>
+            </div>
+          </div>
         </div>
-        <div class="thread-metrics-handler-container">
-          <el-button
-            class="reload-button"
-            icon="el-icon-refresh"
-            :loading="loading"
-            @click="init"
-          >
-            重新加载
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-  </div>
+      </card-grid>
+    </section-card>
+  </screen-page>
 </template>
 
 <script>
 import { getSystemThreadMetrics } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 
 // 线程池指标类型 (原 src/utils/index THREAD_POOL_METRICS_TYPE)
 const THREAD_POOL_METRICS_TYPE = {
@@ -79,6 +85,7 @@ function enumValueOf(e, value) {
 
 export default {
   name: "ThreadMetrics",
+  components: { ScreenPage, SectionCard, CardGrid },
   data() {
     return {
       loading: false,
@@ -106,40 +113,41 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.thread-metrics-container {
-  .other-title {
-    margin: 16px 0 16px 16px;
-    font-weight: 500;
-    font-size: 16px;
-  }
+@import (reference) "@/styles/variables.less";
 
-  .thread-metrics-descriptions {
-    margin: 18px 0 0 0;
+.pool-card {
+  border: 1px solid var(--cm-border-light, @border-light);
+  border-radius: @radius-base;
+  padding: @space-md;
+  background: var(--cm-bg-card, @bg-card);
 
-    ::v-deep .el-descriptions-item__label {
-      margin-left: 16px;
-      width: 145px;
-      text-align: end;
-    }
-  }
-
-  .thread-pool-metrics-wrapper {
-    margin-left: 8px;
+  &__title {
     font-size: 13px;
+    font-weight: 600;
+    color: var(--cm-text-primary, @text-primary);
+    margin-bottom: @space-sm;
   }
 
-  .metrics-value-wrapper {
-    margin-right: 8px;
-    width: 48px;
-    display: inline-block;
+  &__rows {
+    display: flex;
+    flex-direction: column;
+    gap: @space-xs;
+  }
+}
 
-    .metrics-value {
-      color: #1890ff;
-    }
+.pool-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+
+  &__label {
+    color: var(--cm-text-regular, @text-regular);
   }
 
-  .reload-button {
-    margin: 8px 0 24px 18px;
+  &__value {
+    color: #1890ff;
+    font-weight: 600;
   }
 }
 </style>

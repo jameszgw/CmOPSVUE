@@ -1,55 +1,44 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="GPU"
-          :value="`${num0(d.gpuActive)} / ${num0(d.gpuTotal)}`"
-          :sub="`激活 ${num0(d.gpuActive)} / 总数 ${num0(d.gpuTotal)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="平均利用率"
-          :value="`${num1(d.avgUtilization)}%`" :percent="d.avgUtilization" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="显存使用率"
-          :value="`${num1(d.avgMemUsage)}%`" :percent="d.avgMemUsage" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="最高温度"
-          :value="`${num0(d.maxTemperature)}℃`" :sub="`总功耗 ${num0(d.totalPower)} W`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-cpu" label="GPU"
+        :value="`${num0(d.gpuActive)} / ${num0(d.gpuTotal)}`"
+        :sub="`激活 ${num0(d.gpuActive)} / 总数 ${num0(d.gpuTotal)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-odometer" label="平均利用率"
+        :value="`${num1(d.avgUtilization)}%`" :percent="d.avgUtilization" color="#e6a23c" />
+      <StatCard dense icon="el-icon-coin" label="显存使用率"
+        :value="`${num1(d.avgMemUsage)}%`" :percent="d.avgMemUsage" color="#67c23a" />
+      <StatCard dense icon="el-icon-warning-outline" label="最高温度"
+        :value="`${num0(d.maxTemperature)}℃`" :sub="`总功耗 ${num0(d.totalPower)} W`" color="#f56c6c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="任务" icon="el-icon-s-operation">
-          <el-row :gutter="12">
-            <el-col v-for="(j, i) in jobCards" :key="i" :xs="12">
-              <div class="count-card">
-                <div class="count-card__value" :style="{ color: j.color }">{{ j.value }}</div>
-                <div class="count-card__label">{{ j.label }}</div>
-              </div>
-            </el-col>
-          </el-row>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense title="任务" icon="el-icon-s-operation">
+        <el-row :gutter="12">
+          <el-col v-for="(j, i) in jobCards" :key="i" :xs="12">
+            <div class="count-card">
+              <div class="count-card__value" :style="{ color: j.color }">{{ j.value }}</div>
+              <div class="count-card__label">{{ j.label }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getGpuOverview } from "@/api/monitor-gpu";
 
@@ -61,7 +50,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "GpuOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -136,11 +125,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .count-card {
   border: 1px solid var(--cm-border-light, @border-light);

@@ -1,29 +1,22 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="磁盘总数"
-          :value="d.total == null ? '-' : d.total" :sub="d.type || '存储磁盘'" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-circle-check" label="健康磁盘"
-          :value="d.healthy == null ? '-' : d.healthy" sub="状态正常" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-circle-close" label="故障磁盘"
-          :value="d.failed == null ? '-' : d.failed" sub="需要更换"
-          :color="d.failed ? '#f56c6c' : '#67c23a'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="慢盘"
-          :value="d.slowCount == null ? '-' : d.slowCount" sub="时延偏高"
-          :color="d.slowCount ? '#e6a23c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-cpu" label="磁盘总数"
+        :value="d.total == null ? '-' : d.total" :sub="d.type || '存储磁盘'" color="#409eff" />
+      <StatCard dense icon="el-icon-circle-check" label="健康磁盘"
+        :value="d.healthy == null ? '-' : d.healthy" sub="状态正常" color="#67c23a" />
+      <StatCard dense icon="el-icon-circle-close" label="故障磁盘"
+        :value="d.failed == null ? '-' : d.failed" sub="需要更换"
+        :color="d.failed ? '#f56c6c' : '#67c23a'" />
+      <StatCard dense icon="el-icon-warning-outline" label="慢盘"
+        :value="d.slowCount == null ? '-' : d.slowCount" sub="时延偏高"
+        :color="d.slowCount ? '#e6a23c' : '#67c23a'" />
+    </card-grid>
 
-    <SectionCard title="磁盘列表" icon="el-icon-cpu">
-      <template #extra>共 {{ (d.disks && d.disks.length) || 0 }} 块磁盘</template>
-      <el-table :data="d.disks || []" size="small" stripe>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable body-class="dense-table fill" title="磁盘列表" icon="el-icon-cpu">
+        <template #extra>共 {{ (d.disks && d.disks.length) || 0 }} 块磁盘</template>
+        <el-table class="dense-table" height="100%" :data="d.disks || []" size="small" stripe>
         <el-table-column prop="id" label="磁盘 ID" width="120" />
         <el-table-column prop="host" label="主机" min-width="140" />
         <el-table-column label="状态" width="110">
@@ -61,19 +54,21 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!(d.disks && d.disks.length)" description="暂无磁盘数据" />
-    </SectionCard>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getStorageDisks } from "@/api/monitor-storage";
 
 export default {
   name: "StorageDisks",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -127,10 +122,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

@@ -1,52 +1,33 @@
 <template>
-  <div v-loading="loading" class="page-container">
+  <screen-page v-loading="loading" title="AI 推理监控" gap="8px">
     <!-- ① 统计磁贴 -->
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-cpu" label="服务数" :value="num(ov.serviceCount)"
-          :sub="`在线 ${num(ov.onlineServices)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-magic-stick" label="模型数" :value="num(ov.modelCount)" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-data-analysis" label="GPU卡数" :value="num(ov.gpuCards)"
-          :sub="`利用率 ${num(ov.gpuUtilAvg)}%`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-chat-dot-round" label="活跃会话" :value="num(ov.activeSessions)" color="#9b59b6" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-data-line" label="Token吞吐" :value="num(ov.tokensPerSec)" sub="/s" color="#13c2c2" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-data-board" label="QPS" :value="num(ov.qps)" color="#2f54eb" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-time" label="P99延迟" :value="num(ov.p99LatencyMs)" sub="ms" color="#fa8c16" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="el-icon-bell" label="24h事件" :value="num(ov.events24h)" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-cpu" label="服务数" :value="num(ov.serviceCount)"
+        :sub="`在线 ${num(ov.onlineServices)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-magic-stick" label="模型数" :value="num(ov.modelCount)" color="#67c23a" />
+      <StatCard dense icon="el-icon-data-analysis" label="GPU卡数" :value="num(ov.gpuCards)"
+        :sub="`利用率 ${num(ov.gpuUtilAvg)}%`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-chat-dot-round" label="活跃会话" :value="num(ov.activeSessions)" color="#9b59b6" />
+      <StatCard dense icon="el-icon-data-line" label="Token吞吐" :value="num(ov.tokensPerSec)" sub="/s" color="#13c2c2" />
+      <StatCard dense icon="el-icon-data-board" label="QPS" :value="num(ov.qps)" color="#2f54eb" />
+      <StatCard dense icon="el-icon-time" label="P99延迟" :value="num(ov.p99LatencyMs)" sub="ms" color="#fa8c16" />
+      <StatCard dense icon="el-icon-bell" label="24h事件" :value="num(ov.events24h)" color="#f56c6c" />
+    </card-grid>
 
     <!-- ② 趋势图 -->
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Token 吞吐趋势" icon="el-icon-data-line">
-          <div ref="tokenRef" class="ai-chart"></div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="QPS 趋势" icon="el-icon-data-board">
-          <div ref="qpsRef" class="ai-chart"></div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid min="320px" gap="8px">
+      <SectionCard dense title="Token 吞吐趋势" icon="el-icon-data-line">
+        <div ref="tokenRef" class="ai-chart"></div>
+      </SectionCard>
+      <SectionCard dense title="QPS 趋势" icon="el-icon-data-board">
+        <div ref="qpsRef" class="ai-chart"></div>
+      </SectionCard>
+    </card-grid>
 
     <!-- ③ AI 推理服务 -->
-    <SectionCard title="AI 推理服务" icon="el-icon-cpu">
-      <el-table :data="services" size="small" stripe>
+    <card-grid class="fill" min="420px" gap="8px">
+    <SectionCard dense scrollable title="AI 推理服务" icon="el-icon-cpu" body-class="dense-table fill" class="fill">
+      <el-table :data="services" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="engine" label="引擎" width="110" />
         <el-table-column prop="model" label="模型" min-width="150" show-overflow-tooltip />
@@ -80,10 +61,12 @@
       </el-table>
       <el-empty v-if="!services.length" description="暂无服务" :image-size="80" />
     </SectionCard>
+    </card-grid>
 
+    <card-grid class="fill" min="360px" gap="8px">
     <!-- ④ AI 事件 -->
-    <SectionCard title="AI 事件" icon="el-icon-bell">
-      <el-table :data="events" size="small" stripe>
+    <SectionCard dense scrollable title="AI 事件" icon="el-icon-bell" body-class="dense-table fill" class="fill">
+      <el-table :data="events" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="type" label="类型" width="130" />
         <el-table-column label="级别" width="90" align="center">
           <template slot-scope="{ row }">
@@ -98,8 +81,8 @@
     </SectionCard>
 
     <!-- ⑤ AI 会话 -->
-    <SectionCard title="AI 会话" icon="el-icon-chat-dot-round">
-      <el-table :data="sessions" size="small" stripe>
+    <SectionCard dense scrollable title="AI 会话" icon="el-icon-chat-dot-round" body-class="dense-table fill" class="fill">
+      <el-table :data="sessions" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="id" label="会话ID" width="130" show-overflow-tooltip />
         <el-table-column prop="client" label="来源" min-width="120" show-overflow-tooltip />
         <el-table-column prop="scene" label="场景" min-width="120" show-overflow-tooltip />
@@ -128,7 +111,8 @@
       </el-table>
       <el-empty v-if="!sessions.length" description="暂无会话" :image-size="80" />
     </SectionCard>
-  </div>
+    </card-grid>
+  </screen-page>
 </template>
 
 <script>
@@ -137,6 +121,8 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import {
   getAiOverview,
   getAiServices,
@@ -147,7 +133,7 @@ import {
 export default {
   name: "MonitorAi",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard },
+  components: { StatCard, SectionCard, CardGrid, ScreenPage },
   data() {
     return {
       loading: false,
@@ -317,17 +303,8 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
 .ai-chart {
-  height: 280px;
+  height: @chart-h-sm;
   width: 100%;
 }
 </style>

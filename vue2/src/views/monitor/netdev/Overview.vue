@@ -1,38 +1,27 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="端口" :value="`${num0(d.portUp)} / ${num0(d.portTotal)}`"
-          :sub="`Up ${num0(d.portUp)} / Down ${num0(d.portDown)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="CPU 使用率" :value="`${num1(d.cpuPct)}%`"
-          :percent="d.cpuPct" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="丢包率" :value="`${num1(d.totalPacketLoss)}%`"
-          :sub="`内存使用率 ${num1(d.memPct)}%`" :color="pctColor(d.totalPacketLoss)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-data-line" label="会话使用率" :value="`${num1(d.sessionUsagePct)}%`"
-          :percent="d.sessionUsagePct" color="#9254de" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-connection" label="端口" :value="`${num0(d.portUp)} / ${num0(d.portTotal)}`"
+        :sub="`Up ${num0(d.portUp)} / Down ${num0(d.portDown)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-odometer" label="CPU 使用率" :value="`${num1(d.cpuPct)}%`"
+        :percent="d.cpuPct" color="#e6a23c" />
+      <StatCard dense icon="el-icon-warning-outline" label="丢包率" :value="`${num1(d.totalPacketLoss)}%`"
+        :sub="`内存使用率 ${num1(d.memPct)}%`" :color="pctColor(d.totalPacketLoss)" />
+      <StatCard dense icon="el-icon-data-line" label="会话使用率" :value="`${num1(d.sessionUsagePct)}%`"
+        :percent="d.sessionUsagePct" color="#9254de" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="设备状态" icon="el-icon-set-up">
-          <div class="status-grid">
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+      <SectionCard dense scrollable title="设备状态" icon="el-icon-set-up">
+        <div class="status-grid">
             <div v-for="s in statusItems" :key="s.label" class="status-item">
               <span class="status-item__label">{{ s.label }}</span>
               <el-tag size="small" :color="statusColor(s.value)" effect="dark" class="plain-tag">
@@ -61,20 +50,20 @@
             </div>
           </div>
         </SectionCard>
-      </el-col>
-    </el-row>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getNetDevOverview } from "@/api/monitor-netdev";
 
 export default {
   name: "NetDevOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -164,11 +153,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .status-grid {
   display: grid;

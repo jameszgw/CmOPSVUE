@@ -1,20 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12">
-        <StatCard icon="el-icon-files" label="存储池数量"
-          :value="d.poolCount == null ? '-' : d.poolCount" sub="存储池总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12">
-        <StatCard icon="el-icon-warning-outline" label="接近满载"
-          :value="d.nearFullCount == null ? '-' : d.nearFullCount" sub="使用率偏高的池"
-          :color="d.nearFullCount ? '#e6a23c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-files" label="存储池数量"
+        :value="d.poolCount == null ? '-' : d.poolCount" sub="存储池总数" color="#409eff" />
+      <StatCard dense icon="el-icon-warning-outline" label="接近满载"
+        :value="d.nearFullCount == null ? '-' : d.nearFullCount" sub="使用率偏高的池"
+        :color="d.nearFullCount ? '#e6a23c' : '#67c23a'" />
+    </card-grid>
 
-    <SectionCard title="存储池列表" icon="el-icon-files">
-      <template #extra>共 {{ (d.pools && d.pools.length) || 0 }} 个池</template>
-      <el-table :data="d.pools || []" size="small" stripe>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable body-class="dense-table fill" title="存储池列表" icon="el-icon-files">
+        <template #extra>共 {{ (d.pools && d.pools.length) || 0 }} 个池</template>
+        <el-table class="dense-table" height="100%" :data="d.pools || []" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="140" />
         <el-table-column prop="capacity" label="容量" width="120" />
         <el-table-column prop="used" label="已用" width="120" />
@@ -42,19 +39,21 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!(d.pools && d.pools.length)" description="暂无存储池数据" />
-    </SectionCard>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getStoragePools } from "@/api/monitor-storage";
 
 export default {
   name: "StoragePools",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -112,10 +111,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

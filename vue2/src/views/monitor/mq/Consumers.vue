@@ -1,28 +1,20 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-user" label="消费组数"
-          :value="num0(d.groupCount)" sub="Consumer Group" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="总积压"
-          :value="num0(d.totalLag)" sub="Total Lag" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-top" label="最大积压"
-          :value="num0(d.maxLag)" sub="Max Lag" :color="d.highLagCount > 0 ? '#f56c6c' : '#67c23a'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-refresh" label="再平衡中"
-          :value="num0(d.rebalancingCount)" :sub="`高积压组 ${num0(d.highLagCount)}`"
-          :color="d.rebalancingCount > 0 ? '#e6a23c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-user" label="消费组数"
+        :value="num0(d.groupCount)" sub="Consumer Group" color="#409eff" />
+      <stat-card dense icon="el-icon-warning-outline" label="总积压"
+        :value="num0(d.totalLag)" sub="Total Lag" color="#e6a23c" />
+      <stat-card dense icon="el-icon-top" label="最大积压"
+        :value="num0(d.maxLag)" sub="Max Lag" :color="d.highLagCount > 0 ? '#f56c6c' : '#67c23a'" />
+      <stat-card dense icon="el-icon-refresh" label="再平衡中"
+        :value="num0(d.rebalancingCount)" :sub="`高积压组 ${num0(d.highLagCount)}`"
+        :color="d.rebalancingCount > 0 ? '#e6a23c' : '#67c23a'" />
+    </card-grid>
 
-    <SectionCard title="消费组列表" icon="el-icon-s-grid">
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="消费组列表" icon="el-icon-s-grid">
       <template #extra>共 {{ groups.length }} 个消费组</template>
-      <el-table :data="groups" size="small" stripe>
+      <el-table :data="groups" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="groupId" label="消费组" min-width="180" fixed />
         <el-table-column label="状态" width="130">
           <template slot-scope="{ row }">
@@ -44,13 +36,14 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!groups.length" description="暂无消费组数据" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getMqConsumers } from "@/api/monitor-mq";
 
@@ -62,7 +55,7 @@ const STATE_COLORS = {
 
 export default {
   name: "MqConsumers",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -109,10 +102,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 </style>

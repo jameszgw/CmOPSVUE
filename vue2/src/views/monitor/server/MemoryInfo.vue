@@ -2,68 +2,60 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="总内存" :value="d.total || '-'"
-          sub="物理内存总量" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-pie-chart" label="已使用" :value="d.used || '-'"
-          :sub="`占总内存 ${num(d.usage)}%`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-files" label="可用内存" :value="d.available || '-'"
-          sub="可立即使用" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="内存使用率" :value="`${num(d.usage)}%`"
-          :percent="d.usage" color="#409eff" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px" class="kpi-row">
+      <StatCard dense icon="el-icon-coin" label="总内存" :value="d.total || '-'"
+        sub="物理内存总量" color="#409eff" />
+      <StatCard dense icon="el-icon-pie-chart" label="已使用" :value="d.used || '-'"
+        :sub="`占总内存 ${num(d.usage)}%`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-files" label="可用内存" :value="d.available || '-'"
+        sub="可立即使用" color="#67c23a" />
+      <StatCard dense icon="el-icon-odometer" label="内存使用率" :value="`${num(d.usage)}%`"
+        :percent="d.usage" color="#409eff" />
+    </CardGrid>
 
-    <SectionCard title="虚拟内存 (RAM)" icon="el-icon-coin">
-      <template #extra>
-        <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-        内存使用进度 {{ num(ramUsage) }}%
-      </template>
-      <el-progress :percentage="clamp(ramUsage)" :stroke-width="12"
-        :color="usageColor(ramUsage)" class="block-progress" />
-      <InfoTable :rows="ramRows" :columns="2" />
-    </SectionCard>
+    <CardGrid min="320px" gap="8px" class="section-grid">
+      <SectionCard dense title="虚拟内存 (RAM)" icon="el-icon-coin">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          {{ num(ramUsage) }}%
+        </template>
+        <el-progress :percentage="clamp(ramUsage)" :stroke-width="10"
+          :color="usageColor(ramUsage)" class="block-progress" />
+        <InfoTable :rows="ramRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="交换分区 (Swap)" icon="el-icon-set-up">
-      <template #extra>交换分区使用进度 {{ num(swapUsage) }}%</template>
-      <el-progress :percentage="clamp(swapUsage)" :stroke-width="12"
-        :color="usageColor(swapUsage)" class="block-progress" />
-      <InfoTable :rows="swapRows" :columns="2" />
-    </SectionCard>
+      <SectionCard dense title="交换分区 (Swap)" icon="el-icon-set-up">
+        <template #extra>{{ num(swapUsage) }}%</template>
+        <el-progress :percentage="clamp(swapUsage)" :stroke-width="10"
+          :color="usageColor(swapUsage)" class="block-progress" />
+        <InfoTable :rows="swapRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="内存分布" icon="el-icon-data-analysis">
-      <el-row :gutter="12">
-        <el-col v-for="item in distribution" :key="item.key" :xs="24" :sm="12" :lg="8">
-          <div class="dist-item">
+      <SectionCard dense title="内存分布" icon="el-icon-data-analysis">
+        <div class="dist-grid">
+          <div v-for="item in distribution" :key="item.key" class="dist-item">
             <div class="dist-item__head">
               <span class="dist-item__label">{{ item.label }}</span>
               <span class="dist-item__pct">{{ num(item.pct) }}%</span>
             </div>
             <div class="dist-item__value">{{ item.value }}</div>
-            <el-progress :percentage="clamp(item.pct)" :stroke-width="8"
+            <el-progress :percentage="clamp(item.pct)" :stroke-width="6"
               :color="item.color" :show-text="false" />
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        </div>
+      </SectionCard>
 
-    <SectionCard title="实时内存详情" icon="el-icon-time">
-      <InfoTable :rows="realtimeRows" :columns="4" />
-    </SectionCard>
+      <SectionCard dense title="实时内存详情" icon="el-icon-time">
+        <InfoTable :rows="realtimeRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="内核内存与 OOM" icon="el-icon-cpu">
-      <template #extra>OOM 次数 {{ oomKillCount }}</template>
-      <InfoTable :rows="kernelRows" :columns="2" />
-    </SectionCard>
+      <SectionCard dense title="内核内存与 OOM" icon="el-icon-cpu">
+        <template #extra>OOM 次数 {{ oomKillCount }}</template>
+        <InfoTable :rows="kernelRows" :columns="2" />
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -72,11 +64,12 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerMemory } from "@/api/monitor-server";
 
 export default {
   name: "ServerMemoryInfo",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -210,25 +203,39 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
+}
+.section-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
 }
 .block-progress {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+}
+.dist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: @space-sm;
 }
 .dist-item {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
 
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__label {
     font-size: 12px;
@@ -240,10 +247,10 @@ export default {
     color: var(--cm-text-secondary, @text-secondary);
   }
   &__value {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--cm-text-primary, @text-primary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 }
 </style>

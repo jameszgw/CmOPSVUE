@@ -1,5 +1,5 @@
 <template>
-  <div class="section-card">
+  <div class="section-card" :class="{ 'section-card--dense': dense }">
     <div class="section-card__head">
       <i :class="['section-card__icon', icon || 'el-icon-document']"></i>
       <span class="section-card__title">{{ title }}</span>
@@ -7,7 +7,10 @@
         <slot name="extra" />
       </div>
     </div>
-    <div class="section-card__body">
+    <div
+      class="section-card__body"
+      :class="[bodyClass, { 'section-card__body--scroll': scrollable }]"
+    >
       <slot />
     </div>
   </div>
@@ -19,6 +22,12 @@ export default {
   props: {
     title: { type: String, default: "" },
     icon: { type: String, default: "el-icon-document" },
+    // 紧凑模式：更小的头部/正文内边距与标题字号。不传时外观不变。
+    dense: { type: Boolean, default: false },
+    // 附加到正文容器的 class（如 "fill" 或 "dense-table"）。
+    bodyClass: { type: [String, Array, Object], default: "" },
+    // 正文 overflow:auto，承载内部独立滚动的表格/列表。
+    scrollable: { type: Boolean, default: false },
   },
 };
 </script>
@@ -31,11 +40,14 @@ export default {
   border: 1px solid var(--cm-border-light, @border-light);
   border-radius: @radius-lg;
   margin-bottom: @space-lg;
-  /* 同行卡片等高：在 el-row(flex) 中拉伸；单列堆叠时父高 auto，height:100% 无副作用 */
-  height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  /* 默认按内容高度，避免作为 flex 子项时 height:100% 抢占整列高度、把"填充"卡片挤成 0；
+     仅显式标记 .fill 的卡片才填满（其正文 flex:1 给内部表格/图表定高） */
+  &.fill {
+    height: 100%;
+  }
 
   &__head {
     display: flex;
@@ -67,6 +79,27 @@ export default {
     padding: @space-lg;
     flex: 1;
     min-height: 0;
+
+    &--scroll {
+      overflow: auto;
+    }
+  }
+
+  // ---- 紧凑模式 ----
+  &--dense {
+    margin-bottom: 0;
+
+    .section-card__head {
+      padding: @dense-card-head-pad @dense-card-pad;
+    }
+
+    .section-card__title {
+      font-size: 13px;
+    }
+
+    .section-card__body {
+      padding: @dense-card-pad;
+    }
   }
 }
 

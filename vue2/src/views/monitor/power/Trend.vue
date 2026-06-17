@@ -1,25 +1,21 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-odometer" label="当前负载率"
-          :value="`${num1(latest.loadPct)}%`" :percent="latest.loadPct" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-lightning" label="当前有功功率"
-          :value="`${num1(latest.activePowerKw)} kW`" sub="最新采样值" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-coin" label="当前电量"
-          :value="`${num1(latest.energyKwh)} kWh`" sub="最新采样值" color="#67c23a" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-odometer" label="当前负载率"
+        :value="`${num1(latest.loadPct)}%`" :percent="latest.loadPct" color="#409eff" />
+      <StatCard dense icon="el-icon-lightning" label="当前有功功率"
+        :value="`${num1(latest.activePowerKw)} kW`" sub="最新采样值" color="#e6a23c" />
+      <StatCard dense icon="el-icon-coin" label="当前电量"
+        :value="`${num1(latest.energyKwh)} kWh`" sub="最新采样值" color="#67c23a" />
+    </card-grid>
 
-    <SectionCard title="电能趋势" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendPoints }} 个数据点</template>
-      <el-empty v-if="!trendPoints" description="暂无趋势数据" />
-      <div v-show="trendPoints" ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense title="电能趋势" icon="el-icon-data-line" class="fill">
+        <template #extra>最近 {{ trendPoints }} 个数据点</template>
+        <el-empty v-if="!trendPoints" description="暂无趋势数据" />
+        <div v-show="trendPoints" ref="chartRef" class="trend-chart"></div>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
@@ -29,12 +25,13 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getPowerTrend } from "@/api/monitor-power";
 
 export default {
   name: "PowerTrend",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard },
+  components: { StatCard, SectionCard, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -151,14 +148,15 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .trend-chart {
-  height: 320px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

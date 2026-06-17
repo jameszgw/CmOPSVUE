@@ -1,87 +1,77 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="ip-config-container">
-        <div class="other-title">IP配置信息</div>
+  <screen-page title="IP配置" gap="8px">
+    <card-grid min="360px" gap="8px" class="grid fill">
+      <section-card dense title="当前IP信息" icon="el-icon-position">
+        <el-descriptions :column="1" :colon="false" size="small">
+          <el-descriptions-item label="当前访问IP">
+            <span class="ip-value">{{ (ipConfig && ipConfig.currentIp) || "未知" }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="IP位置">
+            <span class="ip-value">{{ (ipConfig && ipConfig.ipLocation) || "未知" }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </section-card>
 
-        <!-- 当前IP信息 -->
-        <div class="ip-info-section">
-          <el-descriptions :column="1">
-            <el-descriptions-item label="当前访问IP">
-              <span class="ip-value">{{ (ipConfig && ipConfig.currentIp) || "未知" }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="IP位置">
-              <span class="ip-value">{{ (ipConfig && ipConfig.ipLocation) || "未知" }}</span>
-            </el-descriptions-item>
-          </el-descriptions>
-        </div>
+      <section-card dense scrollable title="访问控制" icon="el-icon-key">
+        <el-form ref="form" :model="form" label-width="100px" class="ip-form">
+          <el-form-item label="IP黑名单">
+            <el-input
+              v-model="form.blackIpList"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入IP黑名单"
+            />
+            <div class="extra">请输入IP黑名单规则，多个则使用换行 仅支持IPv4地址.</div>
+          </el-form-item>
 
-        <!-- IP配置表单 -->
-        <div class="ip-config-form">
-          <el-form ref="form" :model="form" label-width="120px">
-            <el-form-item label="IP黑名单">
-              <el-input
-                v-model="form.blackIpList"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入IP黑名单"
-              />
-              <div class="extra">
-                请输入IP黑名单规则，多个则使用换行 仅支持IPv4地址.
-              </div>
-            </el-form-item>
+          <el-form-item label="IP白名单">
+            <el-input
+              v-model="form.whiteIpList"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入IP白名单"
+            />
+            <div class="extra">请输入IP白名单规则，多个则使用换行 仅支持IPv4地址.</div>
+          </el-form-item>
 
-            <el-form-item label="IP白名单">
-              <el-input
-                v-model="form.whiteIpList"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入IP白名单"
-              />
-              <div class="extra">
-                请输入IP白名单规则，多个则使用换行 仅支持IPv4地址.
-              </div>
-            </el-form-item>
+          <el-form-item label="是否启用">
+            <el-switch
+              v-model="form.enableIpFilter"
+              active-text="启用"
+              inactive-text="停用"
+            />
+            <div class="extra">启用后将根据配置的IP白名单和黑名单进行访问控制</div>
+          </el-form-item>
 
-            <el-form-item label="是否启用">
-              <el-switch
-                v-model="form.enableIpFilter"
-                active-text="启用"
-                inactive-text="停用"
-              />
-              <div class="extra">
-                启用后将根据配置的IP白名单和黑名单进行访问控制
-              </div>
-            </el-form-item>
+          <el-form-item label="规则类型">
+            <el-switch
+              v-model="form.enableWhiteIpList"
+              active-text="白名单"
+              inactive-text="黑名单"
+            />
+            <div class="extra">
+              启用后只有白名单中的IP可以访问，否则只有黑名单中的IP不能访问
+            </div>
+          </el-form-item>
 
-            <el-form-item label="规则类型">
-              <el-switch
-                v-model="form.enableWhiteIpList"
-                active-text="白名单"
-                inactive-text="黑名单"
-              />
-              <div class="extra">
-                启用后只有白名单中的IP可以访问，否则只有黑名单中的IP不能访问
-              </div>
-            </el-form-item>
-
-            <el-form-item>
-              <el-button type="primary" :loading="loading" @click="handleSubmit">
-                保 存
-              </el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-      </div>
-    </el-card>
-  </div>
+          <el-form-item>
+            <el-button type="primary" :loading="loading" @click="handleSubmit">保 存</el-button>
+          </el-form-item>
+        </el-form>
+      </section-card>
+    </card-grid>
+  </screen-page>
 </template>
 
 <script>
 import { getIpConfig, updateIpConfig } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 
 export default {
   name: "IpConfig",
+  components: { ScreenPage, SectionCard, CardGrid },
   data() {
     return {
       loading: false,
@@ -125,42 +115,20 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.ip-config-container {
-  .other-title {
-    margin: 16px 0;
-    font-weight: 500;
-    font-size: 16px;
-  }
-
-  .ip-info-section {
-    margin: 18px 0 24px 0;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    padding: 16px;
-
-    ::v-deep .el-descriptions-item__label {
-      width: 124px;
-      text-align: end;
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.85);
-    }
-  }
-
-  .ip-config-form {
-    margin: 24px 0 0 0;
-    max-width: 720px;
-  }
-
-  .ip-value {
-    color: #1890ff;
-    font-weight: 500;
-  }
-
-  .extra {
-    color: rgba(0, 0, 0, 0.45);
-    font-size: 13px;
-    line-height: 1.5;
-    margin-top: 4px;
-  }
+.grid {
+  align-content: start;
+}
+.ip-form /deep/ .el-form-item {
+  margin-bottom: 10px;
+}
+.ip-value {
+  color: #1890ff;
+  font-weight: 500;
+}
+.extra {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 4px;
 }
 </style>

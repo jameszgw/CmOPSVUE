@@ -1,61 +1,50 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="CPU 使用率"
-          :value="`${num1(d.cpuUsage)}%`" :percent="d.cpuUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-sunny" label="SoC 温度"
-          :value="`${num0(d.socTemp)}℃`" :sub="`功耗 ${num1(d.powerWatt)} W`" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="内存使用率"
-          :value="`${num1(d.memUsage)}%`" :percent="d.memUsage"
-          :sub="`总内存 ${num0(d.memTotalMb)} MB`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lightning" label="供电电压"
-          :value="`${num2(d.supplyVoltage)} V`" :sub="`电流 ${num2(d.supplyCurrent)} A`" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-cpu" label="CPU 使用率"
+        :value="`${num1(d.cpuUsage)}%`" :percent="d.cpuUsage" color="#409eff" />
+      <StatCard dense icon="el-icon-sunny" label="SoC 温度"
+        :value="`${num0(d.socTemp)}℃`" :sub="`功耗 ${num1(d.powerWatt)} W`" color="#f56c6c" />
+      <StatCard dense icon="el-icon-coin" label="内存使用率"
+        :value="`${num1(d.memUsage)}%`" :percent="d.memUsage"
+        :sub="`总内存 ${num0(d.memTotalMb)} MB`" color="#67c23a" />
+      <StatCard dense icon="el-icon-lightning" label="供电电压"
+        :value="`${num2(d.supplyVoltage)} V`" :sub="`电流 ${num2(d.supplyCurrent)} A`" color="#e6a23c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-            <el-tag size="mini" :type="statusTag" effect="dark">{{ val(d.status) }}</el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="电源与状态" icon="el-icon-warning-outline">
-          <div class="flag-row">
-            <span class="flag-row__label">欠压</span>
-            <el-tag size="small" :type="d.underVoltage ? 'danger' : 'success'">
-              {{ Number(d.underVoltage) ? "是" : "否" }}
-            </el-tag>
-          </div>
-          <div class="flag-row">
-            <span class="flag-row__label">降频</span>
-            <el-tag size="small" :type="d.throttled ? 'warning' : 'success'">
-              {{ Number(d.throttled) ? "是" : "否" }}
-            </el-tag>
-          </div>
-          <InfoTable :rows="powerRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info" class="fill">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          <el-tag size="mini" :type="statusTag" effect="dark">{{ val(d.status) }}</el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable title="电源与状态" icon="el-icon-warning-outline" class="fill">
+        <div class="flag-row">
+          <span class="flag-row__label">欠压</span>
+          <el-tag size="small" :type="d.underVoltage ? 'danger' : 'success'">
+            {{ Number(d.underVoltage) ? "是" : "否" }}
+          </el-tag>
+        </div>
+        <div class="flag-row">
+          <span class="flag-row__label">降频</span>
+          <el-tag size="small" :type="d.throttled ? 'warning' : 'success'">
+            {{ Number(d.throttled) ? "是" : "否" }}
+          </el-tag>
+        </div>
+        <InfoTable :rows="powerRows" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getSbcOverview } from "@/api/monitor-sbc";
 
@@ -67,7 +56,7 @@ const STATUS_TAG = {
 
 export default {
   name: "SbcOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -155,11 +144,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .flag-row {
   display: flex;

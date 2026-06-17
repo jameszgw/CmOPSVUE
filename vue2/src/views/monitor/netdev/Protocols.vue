@@ -1,28 +1,21 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="BGP 邻居" :value="num0(bgp.total)"
-          :sub="`Established ${num0(bgp.established)} / Down ${num0(bgp.down)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="OSPF 邻居" :value="num0(ospf.neighbors)"
-          :sub="`区域 ${num0(ospf.areas)}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-c-scale-to-original" label="链路聚合" :value="num0(lag.total)"
-          :sub="`降级 ${num0(lag.degraded)}`" :color="lag.degraded > 0 ? '#e6a23c' : '#9254de'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-discover" label="LLDP 邻居" :value="num0(lldp.neighbors)"
-          :sub="`发现设备 ${num0(lldp.discoveredDevices)}`" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-share" label="BGP 邻居" :value="num0(bgp.total)"
+        :sub="`Established ${num0(bgp.established)} / Down ${num0(bgp.down)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-connection" label="OSPF 邻居" :value="num0(ospf.neighbors)"
+        :sub="`区域 ${num0(ospf.areas)}`" color="#67c23a" />
+      <StatCard dense icon="el-icon-c-scale-to-original" label="链路聚合" :value="num0(lag.total)"
+        :sub="`降级 ${num0(lag.degraded)}`" :color="lag.degraded > 0 ? '#e6a23c' : '#9254de'" />
+      <StatCard dense icon="el-icon-discover" label="LLDP 邻居" :value="num0(lldp.neighbors)"
+        :sub="`发现设备 ${num0(lldp.discoveredDevices)}`" color="#e6a23c" />
+    </card-grid>
 
-    <SectionCard title="BGP 邻居" icon="el-icon-share">
-      <template #extra>共 {{ bgpNeighbors.length }} 个邻居</template>
-      <el-empty v-if="!bgpNeighbors.length" description="暂无 BGP 邻居" />
-      <el-table v-else :data="bgpNeighbors" size="small" stripe>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable body-class="dense-table fill" title="BGP 邻居" icon="el-icon-share">
+        <template #extra>共 {{ bgpNeighbors.length }} 个邻居</template>
+        <el-empty v-if="!bgpNeighbors.length" description="暂无 BGP 邻居" />
+        <el-table v-else :data="bgpNeighbors" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="neighbor" label="邻居地址" min-width="160">
           <template slot-scope="{ row }">
             <span class="mono">{{ row.neighbor || "-" }}</span>
@@ -45,25 +38,19 @@
           <template slot-scope="{ row }">{{ num0(row.prefixReceived) }}</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="OSPF" icon="el-icon-connection">
-          <InfoTable :rows="ospfRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="LLDP" icon="el-icon-discover">
-          <InfoTable :rows="lldpRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <SectionCard dense scrollable title="OSPF" icon="el-icon-connection">
+        <InfoTable :rows="ospfRows" />
+      </SectionCard>
+      <SectionCard dense scrollable title="LLDP" icon="el-icon-discover">
+        <InfoTable :rows="lldpRows" />
+      </SectionCard>
 
-    <SectionCard title="链路聚合 (LAG)" icon="el-icon-c-scale-to-original">
-      <template #extra>共 {{ lagChannels.length }} 个聚合组</template>
-      <el-empty v-if="!lagChannels.length" description="暂无链路聚合" />
-      <el-table v-else :data="lagChannels" size="small" stripe>
+      <SectionCard dense scrollable body-class="dense-table fill" title="链路聚合 (LAG)" icon="el-icon-c-scale-to-original">
+        <template #extra>共 {{ lagChannels.length }} 个聚合组</template>
+        <el-empty v-if="!lagChannels.length" description="暂无链路聚合" />
+        <el-table v-else :data="lagChannels" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="聚合组" min-width="140">
           <template slot-scope="{ row }">
             <span class="mono">{{ row.name || "-" }}</span>
@@ -88,19 +75,21 @@
           <template slot-scope="{ row }">{{ val(row.totalSpeed) }}</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getNetDevProtocols } from "@/api/monitor-netdev";
 
 export default {
   name: "NetDevProtocols",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -197,11 +186,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .mono {
   font-family: monospace;

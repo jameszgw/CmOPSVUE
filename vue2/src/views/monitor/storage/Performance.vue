@@ -1,42 +1,29 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-odometer" label="总 IOPS"
-          :value="totalIops" sub="读写 IOPS 合计" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-pie-chart" label="缓存命中率" :value="`${num(d.cacheHitRate)}%`"
-          :percent="d.cacheHitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-files" label="队列深度"
-          :value="d.queueDepth == null ? '-' : d.queueDepth" sub="平均 I/O 队列深度" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-odometer" label="总 IOPS"
+        :value="totalIops" sub="读写 IOPS 合计" color="#409eff" />
+      <StatCard dense icon="el-icon-pie-chart" label="缓存命中率" :value="`${num(d.cacheHitRate)}%`"
+        :percent="d.cacheHitRate" color="#67c23a" />
+      <StatCard dense icon="el-icon-files" label="队列深度"
+        :value="d.queueDepth == null ? '-' : d.queueDepth" sub="平均 I/O 队列深度" color="#e6a23c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="IOPS" icon="el-icon-odometer">
-          <InfoTable :rows="iopsRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="吞吐" icon="el-icon-data-line">
-          <InfoTable :rows="throughputRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="延迟" icon="el-icon-timer">
-          <InfoTable :rows="latencyRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="IOPS 趋势图" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendCount }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="IOPS" icon="el-icon-odometer">
+        <InfoTable :rows="iopsRows" />
+      </SectionCard>
+      <SectionCard dense scrollable title="吞吐" icon="el-icon-data-line">
+        <InfoTable :rows="throughputRows" />
+      </SectionCard>
+      <SectionCard dense scrollable title="延迟" icon="el-icon-timer">
+        <InfoTable :rows="latencyRows" />
+      </SectionCard>
+      <SectionCard dense title="IOPS 趋势图" icon="el-icon-data-line">
+        <template #extra>最近 {{ trendCount }} 个数据点</template>
+        <div ref="chartRef" class="trend-chart"></div>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
@@ -46,13 +33,14 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getStoragePerformance } from "@/api/monitor-storage";
 
 export default {
   name: "StoragePerformance",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -160,14 +148,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .trend-chart {
-  height: 280px;
+  height: @chart-h-sm;
   width: 100%;
 }
 </style>

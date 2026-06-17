@@ -1,43 +1,42 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="tab-screen">
     <UnsupportedMask :unsupported="d.supported === false" :reason="d.reason" title="无频谱扫描能力">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="频段" :value="val(d.band)"
+      <card-grid min="200px" gap="8px">
+        <StatCard dense icon="el-icon-connection" label="频段" :value="val(d.band)"
           sub="工作频段" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-mic" label="噪声底" :value="`${num0(d.noiseFloor)} dBm`"
+        <StatCard dense icon="el-icon-mic" label="噪声底" :value="`${num0(d.noiseFloor)} dBm`"
           sub="Noise Floor" color="#e6a23c" />
-      </el-col>
-    </el-row>
+      </card-grid>
 
-    <SectionCard title="信号趋势" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendPoints }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+      <card-grid class="fill" min="300px" gap="8px">
+        <SectionCard dense title="信号趋势" icon="el-icon-data-line" class="fill">
+          <template #extra>最近 {{ trendPoints }} 个数据点</template>
+          <div ref="chartRef" class="trend-chart"></div>
+        </SectionCard>
 
-    <SectionCard title="信道占用" icon="el-icon-menu">
-      <template #extra>共 {{ channels.length }} 个信道</template>
-      <el-empty v-if="!channels.length" description="暂无数据" />
-      <el-table v-else :data="channels" size="small" stripe>
-        <el-table-column label="信道" width="120">
-          <template slot-scope="{ row }">{{ val(row.channel) }}</template>
-        </el-table-column>
-        <el-table-column label="频率" width="140">
-          <template slot-scope="{ row }">{{ val(row.freq) }}</template>
-        </el-table-column>
-        <el-table-column label="占用率" min-width="200">
-          <template slot-scope="{ row }">
-            <el-progress :percentage="clamp(row.occupancyPct)" :stroke-width="10"
-              :color="pctColor(row.occupancyPct)" />
-          </template>
-        </el-table-column>
-        <el-table-column label="设备数" width="110" align="center">
-          <template slot-scope="{ row }">{{ num0(row.devices) }}</template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+        <SectionCard dense scrollable title="信道占用" icon="el-icon-menu"
+          body-class="dense-table fill" class="fill">
+          <template #extra>共 {{ channels.length }} 个信道</template>
+          <el-empty v-if="!channels.length" description="暂无数据" />
+          <el-table v-else :data="channels" class="dense-table" height="100%" size="small" stripe>
+            <el-table-column label="信道" width="120">
+              <template slot-scope="{ row }">{{ val(row.channel) }}</template>
+            </el-table-column>
+            <el-table-column label="频率" width="140">
+              <template slot-scope="{ row }">{{ val(row.freq) }}</template>
+            </el-table-column>
+            <el-table-column label="占用率" min-width="200">
+              <template slot-scope="{ row }">
+                <el-progress :percentage="clamp(row.occupancyPct)" :stroke-width="10"
+                  :color="pctColor(row.occupancyPct)" />
+              </template>
+            </el-table-column>
+            <el-table-column label="设备数" width="110" align="center">
+              <template slot-scope="{ row }">{{ num0(row.devices) }}</template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+      </card-grid>
     </UnsupportedMask>
   </div>
 </template>
@@ -48,6 +47,7 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getIotSignal } from "@/api/monitor-iot";
@@ -55,7 +55,7 @@ import { getIotSignal } from "@/api/monitor-iot";
 export default {
   name: "IotSignal",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable, UnsupportedMask },
+  components: { StatCard, SectionCard, CardGrid, InfoTable, UnsupportedMask },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -166,14 +166,15 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .trend-chart {
-  height: 300px;
+  height: @chart-h-sm;
   width: 100%;
 }
 </style>

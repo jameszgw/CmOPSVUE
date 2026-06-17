@@ -1,21 +1,22 @@
 <template>
-  <div class="page-container">
-    <h2 class="title">主机监控</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.native.prevent>
+  <screen-page title="主机监控" gap="8px">
+    <template #header-extra>
+      <el-form inline size="mini" :model="searchForm" class="filter-form" @submit.native.prevent>
         <el-form-item label="实例名称">
-          <el-input v-model="searchForm.name" placeholder="请输入实例名称" />
+          <el-input v-model="searchForm.name" placeholder="请输入实例名称" clearable style="width: 150px" />
         </el-form-item>
         <el-form-item label="主机名称">
-          <el-input v-model="searchForm.hostName" placeholder="请输入主机名称" />
+          <el-input v-model="searchForm.hostName" placeholder="请输入主机名称" clearable style="width: 150px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="margin-right: 8px" @click="onSearch">查询</el-button>
+          <el-button type="primary" @click="onSearch">查询</el-button>
           <el-button @click="onReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <el-table :data="hosts.items" row-key="hostId" style="width: 100%">
+    <section-card dense scrollable body-class="dense-table fill" class="fill" title="监控主机列表" icon="el-icon-monitor">
+      <el-table class="dense-table" height="100%" :data="hosts.items" row-key="hostId" size="small" stripe style="width: 100%">
         <el-table-column label="实例名称">
           <template #default="{ row }">
             <span>{{ row.host && row.host.name }}</span>
@@ -68,17 +69,17 @@
           </template>
         </el-table-column>
       </el-table>
+    </section-card>
 
-      <el-pagination
-        style="margin-top: 12px; text-align: right"
-        layout="total, prev, pager, next, sizes"
-        :total="hosts.total"
-        :current-page="pagination.pageNo"
-        :page-size="pagination.pageSize"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-    </el-card>
+    <el-pagination
+      class="page-pagination"
+      layout="total, prev, pager, next, sizes"
+      :total="hosts.total"
+      :current-page="pagination.pageNo"
+      :page-size="pagination.pageSize"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
 
     <!-- 编辑插件的抽屉 -->
     <el-drawer
@@ -131,10 +132,12 @@
         :basic-metric-v-o="basicMetricVO"
       />
     </el-drawer>
-  </div>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import HostMonitorConfigForm from "./components/HostMonitorConfigForm.vue";
 import AlarmConfigureForm from "./components/AlarmConfigureForm.vue";
 import TopProgressTable from "./components/TopProgressTable.vue";
@@ -154,6 +157,8 @@ import { fetchAlarmGroup } from "@/api/alarm-group";
 export default {
   name: "ServerMonitor",
   components: {
+    ScreenPage,
+    SectionCard,
     HostMonitorConfigForm,
     AlarmConfigureForm,
     TopProgressTable,
@@ -318,7 +323,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(242, 219, 121);
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
+.page-pagination {
+  flex-shrink: 0;
+  text-align: right;
 }
 </style>

@@ -1,22 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="推理" icon="el-icon-cpu">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="el-icon-s-grid" label="模型数"
-            :value="num0(inference.modelCount)" sub="部署模型" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="el-icon-odometer" label="总 QPS"
-            :value="num0(inference.totalQps)" sub="每秒查询" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="8">
-          <StatCard icon="el-icon-timer" label="P99 延迟"
-            :value="`${num1(inference.avgLatencyP99)} ms`" :sub="`队列深度 ${num0(inference.queueDepth)}`" color="#e6a23c" />
-        </el-col>
-      </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid class="fill" min="320px" gap="8px">
+    <SectionCard dense scrollable title="推理" icon="el-icon-cpu" body-class="fill">
+      <card-grid min="180px" gap="8px">
+        <StatCard dense icon="el-icon-s-grid" label="模型数"
+          :value="num0(inference.modelCount)" sub="部署模型" color="#409eff" />
+        <StatCard dense icon="el-icon-odometer" label="总 QPS"
+          :value="num0(inference.totalQps)" sub="每秒查询" color="#67c23a" />
+        <StatCard dense icon="el-icon-timer" label="P99 延迟"
+          :value="`${num1(inference.avgLatencyP99)} ms`" :sub="`队列深度 ${num0(inference.queueDepth)}`" color="#e6a23c" />
+      </card-grid>
 
-      <el-table :data="models" size="small" stripe>
+      <el-table :data="models" size="small" stripe class="dense-table">
         <el-table-column prop="name" label="模型名称" min-width="180" />
         <el-table-column prop="replicas" label="副本数" width="90" align="center" />
         <el-table-column label="QPS" width="100" align="right">
@@ -37,19 +32,15 @@
       <el-empty v-if="!models.length" description="暂无推理模型数据" />
     </SectionCard>
 
-    <SectionCard v-if="showEdge" title="边缘" icon="el-icon-connection">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12">
-          <StatCard icon="el-icon-success" label="在线节点"
-            :value="num0(edge.online)" sub="Online" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <StatCard icon="el-icon-circle-close" label="离线节点"
-            :value="num0(edge.offline)" sub="Offline" color="#f56c6c" />
-        </el-col>
-      </el-row>
+    <SectionCard v-if="showEdge" dense scrollable title="边缘" icon="el-icon-connection" body-class="fill">
+      <card-grid min="180px" gap="8px">
+        <StatCard dense icon="el-icon-success" label="在线节点"
+          :value="num0(edge.online)" sub="Online" color="#67c23a" />
+        <StatCard dense icon="el-icon-circle-close" label="离线节点"
+          :value="num0(edge.offline)" sub="Offline" color="#f56c6c" />
+      </card-grid>
 
-      <el-table :data="nodes" size="small" stripe>
+      <el-table :data="nodes" size="small" stripe class="dense-table">
         <el-table-column prop="name" label="节点名称" min-width="160" />
         <el-table-column prop="location" label="位置" min-width="140" />
         <el-table-column label="状态" width="120">
@@ -69,12 +60,14 @@
       </el-table>
       <el-empty v-if="!nodes.length" description="暂无边缘节点数据" />
     </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getGpuWorkloads } from "@/api/monitor-gpu";
 
@@ -86,7 +79,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "GpuWorkloads",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -151,10 +144,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

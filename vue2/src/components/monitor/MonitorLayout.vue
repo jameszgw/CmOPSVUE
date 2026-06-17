@@ -487,11 +487,12 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: @space-md @space-lg;
+    padding: @space-sm @space-md;
     background: var(--cm-bg-card, @bg-card);
     border: 1px solid var(--cm-border-light, @border-light);
     border-radius: @radius-lg;
-    margin-bottom: @space-md;
+    margin-bottom: @space-sm;
+    flex-shrink: 0;
   }
 
   &__title {

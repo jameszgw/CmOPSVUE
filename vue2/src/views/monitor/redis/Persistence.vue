@@ -1,74 +1,71 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-folder-checked" label="RDB 状态"
-          :value="d.rdbOk ? '正常' : '异常'" :tag="rdbStatusText"
-          :color="d.rdbOk ? '#67c23a' : '#f56c6c'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-document-copy" label="AOF 状态"
-          :value="aofValue" :sub="aofSub"
-          :color="aofColor" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="从节点数"
-          :value="d.connectedSlaves == null ? '-' : d.connectedSlaves" sub="connected_slaves"
-          color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-sort" label="最大主从偏移"
-          :value="d.maxSlaveLagHuman || '-'" sub="max slave lag" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-folder-checked" label="RDB 状态"
+        :value="d.rdbOk ? '正常' : '异常'" :tag="rdbStatusText"
+        :color="d.rdbOk ? '#67c23a' : '#f56c6c'" />
+      <stat-card dense icon="el-icon-document-copy" label="AOF 状态"
+        :value="aofValue" :sub="aofSub"
+        :color="aofColor" />
+      <stat-card dense icon="el-icon-share" label="从节点数"
+        :value="d.connectedSlaves == null ? '-' : d.connectedSlaves" sub="connected_slaves"
+        color="#409eff" />
+      <stat-card dense icon="el-icon-sort" label="最大主从偏移"
+        :value="d.maxSlaveLagHuman || '-'" sub="max slave lag" color="#e6a23c" />
+    </card-grid>
 
-    <SectionCard title="RDB 持久化" icon="el-icon-folder">
-      <InfoTable :rows="rdbRows" :columns="2" />
-    </SectionCard>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense title="RDB 持久化" icon="el-icon-folder">
+        <InfoTable :rows="rdbRows" :columns="2" />
+      </section-card>
 
-    <SectionCard title="AOF 持久化" icon="el-icon-document">
-      <InfoTable :rows="aofRows" :columns="2" />
-    </SectionCard>
+      <section-card dense title="AOF 持久化" icon="el-icon-document">
+        <InfoTable :rows="aofRows" :columns="2" />
+      </section-card>
 
-    <SectionCard title="复制状态" icon="el-icon-connection">
-      <InfoTable :rows="replicationRows" :columns="2" />
-      <el-table v-if="slaves.length" :data="slaves" size="small" stripe class="slaves-table">
-        <el-table-column prop="id" label="ID" width="120" />
-        <el-table-column prop="addr" label="地址" min-width="180" />
-        <el-table-column label="状态" width="120">
-          <template slot-scope="{ row }">
-            <el-tag size="small" :type="row.state === 'online' ? 'success' : 'info'" effect="plain">{{ row.state }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="offset" label="偏移量" width="140" align="right" />
-        <el-table-column prop="lagBytes" label="偏移字节" width="140" align="right" />
-        <el-table-column label="偏移(可读)" width="140" align="right">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ row.lagHuman }}</span>
-          </template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+      <section-card dense scrollable class="fill" body-class="dense-table fill"
+        title="复制状态" icon="el-icon-connection">
+        <InfoTable :rows="replicationRows" :columns="2" />
+        <el-table v-if="slaves.length" :data="slaves" size="small" stripe class="slaves-table dense-table">
+          <el-table-column prop="id" label="ID" width="120" />
+          <el-table-column prop="addr" label="地址" min-width="180" />
+          <el-table-column label="状态" width="120">
+            <template slot-scope="{ row }">
+              <el-tag size="small" :type="row.state === 'online' ? 'success' : 'info'" effect="plain">{{ row.state }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="offset" label="偏移量" width="140" align="right" />
+          <el-table-column prop="lagBytes" label="偏移字节" width="140" align="right" />
+          <el-table-column label="偏移(可读)" width="140" align="right">
+            <template slot-scope="{ row }">
+              <span style="color: #e6a23c">{{ row.lagHuman }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section-card>
 
-    <SectionCard title="哨兵切换事件" icon="el-icon-bell">
-      <template #extra>共 {{ sentinelEvents.length }} 条</template>
-      <el-table v-if="sentinelEvents.length" :data="sentinelEvents" size="small" stripe>
-        <el-table-column prop="time" label="时间" width="200" />
-        <el-table-column label="类型" width="160">
-          <template slot-scope="{ row }">
-            <el-tag size="small" type="warning" effect="plain">{{ row.type }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="detail" label="详情" min-width="240" />
-      </el-table>
-      <el-empty v-else description="暂无哨兵切换事件" />
-    </SectionCard>
+      <section-card dense scrollable class="fill" body-class="dense-table fill"
+        title="哨兵切换事件" icon="el-icon-bell">
+        <template #extra>共 {{ sentinelEvents.length }} 条</template>
+        <el-table v-if="sentinelEvents.length" :data="sentinelEvents" size="small" stripe class="dense-table">
+          <el-table-column prop="time" label="时间" width="200" />
+          <el-table-column label="类型" width="160">
+            <template slot-scope="{ row }">
+              <el-tag size="small" type="warning" effect="plain">{{ row.type }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="detail" label="详情" min-width="240" />
+        </el-table>
+        <el-empty v-else description="暂无哨兵切换事件" />
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisPersistence } from "@/api/monitor-redis";
 
@@ -77,7 +74,7 @@ const ERR_COLOR = "#f56c6c";
 
 export default {
   name: "RedisPersistence",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -187,11 +184,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
 }
 .slaves-table {
   margin-top: 16px;

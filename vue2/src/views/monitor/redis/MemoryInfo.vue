@@ -1,41 +1,37 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-coin" label="内存使用率" :value="`${num(d.usage)}%`"
-          :percent="d.usage" :sub="usageSub" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-odometer" label="内存峰值" :value="d.peak || '-'"
-          sub="历史最高使用量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-files" label="内存碎片率" :value="d.fragRatio == null ? '-' : d.fragRatio"
-          :tag="fragTag" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-coin" label="内存使用率" :value="`${num(d.usage)}%`"
+        :percent="d.usage" :sub="usageSub" color="#409eff" />
+      <stat-card dense icon="el-icon-odometer" label="内存峰值" :value="d.peak || '-'"
+        sub="历史最高使用量" color="#e6a23c" />
+      <stat-card dense icon="el-icon-files" label="内存碎片率" :value="d.fragRatio == null ? '-' : d.fragRatio"
+        :tag="fragTag" color="#909399" />
+    </card-grid>
 
-    <SectionCard title="内存使用详情" icon="el-icon-coin">
-      <InfoTable :rows="detailRows" :columns="2" />
-    </SectionCard>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense title="内存使用详情" icon="el-icon-coin">
+        <InfoTable :rows="detailRows" :columns="2" />
+      </section-card>
 
-    <SectionCard title="内存策略配置" icon="el-icon-set-up">
-      <InfoTable :rows="policyRows" :columns="2" />
-      <div class="policy-desc">
-        <div class="policy-desc__title"><i class="el-icon-info"></i> 内存淘汰策略说明</div>
-        <div class="policy-desc__item"><b>noeviction:</b> 不淘汰，内存满时返回错误</div>
-        <div class="policy-desc__item"><b>allkeys-lru:</b> 从所有键中淘汰最近最少使用的键</div>
-        <div class="policy-desc__item"><b>volatile-lru:</b> 从设置了过期时间的键中淘汰最近最少使用的键</div>
-        <div class="policy-desc__item"><b>allkeys-random:</b> 从所有键中随机淘汰</div>
-        <div class="policy-desc__item"><b>volatile-random:</b> 从设置了过期时间的键中随机淘汰</div>
-        <div class="policy-desc__item"><b>volatile-ttl:</b> 淘汰即将过期的键（TTL最小）</div>
-      </div>
-    </SectionCard>
+      <section-card dense title="内存策略配置" icon="el-icon-set-up">
+        <InfoTable :rows="policyRows" :columns="2" />
+        <div class="policy-desc">
+          <div class="policy-desc__title"><i class="el-icon-info"></i> 内存淘汰策略说明</div>
+          <div class="policy-desc__item"><b>noeviction:</b> 不淘汰，内存满时返回错误</div>
+          <div class="policy-desc__item"><b>allkeys-lru:</b> 从所有键中淘汰最近最少使用的键</div>
+          <div class="policy-desc__item"><b>volatile-lru:</b> 从设置了过期时间的键中淘汰最近最少使用的键</div>
+          <div class="policy-desc__item"><b>allkeys-random:</b> 从所有键中随机淘汰</div>
+          <div class="policy-desc__item"><b>volatile-random:</b> 从设置了过期时间的键中随机淘汰</div>
+          <div class="policy-desc__item"><b>volatile-ttl:</b> 淘汰即将过期的键（TTL最小）</div>
+        </div>
+      </section-card>
 
-    <SectionCard title="内存使用趋势" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendCount }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+      <section-card dense title="内存使用趋势" icon="el-icon-data-line">
+        <template #extra>最近 {{ trendCount }} 个数据点</template>
+        <div ref="chartRef" class="trend-chart"></div>
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
@@ -45,13 +41,14 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisMemory } from "@/api/monitor-redis";
 
 export default {
   name: "RedisMemoryInfo",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -167,11 +164,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
 }
 .policy-desc {
   margin-top: 16px;
@@ -198,7 +206,7 @@ export default {
   }
 }
 .trend-chart {
-  height: 320px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

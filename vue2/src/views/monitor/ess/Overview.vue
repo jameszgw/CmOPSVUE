@@ -1,51 +1,40 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="SOC"
-          :value="`${num1(d.soc)}%`" :percent="d.soc" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-first-aid-kit" label="SOH"
-          :value="`${num1(d.soh)}%`" :percent="d.soh" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lightning" label="功率"
-          :value="`${num1(d.powerKw)} kW`" :sub="`电压 ${num1(d.voltage)} V`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="可用容量"
-          :value="`${num1(d.availableKwh)} kWh`"
-          :sub="`总容量 ${num1(d.capacityKwh)} kWh`" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-odometer" label="SOC"
+        :value="`${num1(d.soc)}%`" :percent="d.soc" color="#409eff" />
+      <StatCard dense icon="el-icon-first-aid-kit" label="SOH"
+        :value="`${num1(d.soh)}%`" :percent="d.soh" color="#67c23a" />
+      <StatCard dense icon="el-icon-lightning" label="功率"
+        :value="`${num1(d.powerKw)} kW`" :sub="`电压 ${num1(d.voltage)} V`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-coin" label="可用容量"
+        :value="`${num1(d.availableKwh)} kWh`"
+        :sub="`总容量 ${num1(d.capacityKwh)} kWh`" color="#909399" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-            <el-tag size="small" :color="statusColor(d.status)" effect="dark" class="plain-tag">
-              {{ d.status || "-" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="温度" icon="el-icon-warning-outline">
-          <InfoTable :rows="tempRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info" class="fill">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          <el-tag size="small" :color="statusColor(d.status)" effect="dark" class="plain-tag">
+            {{ d.status || "-" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable title="温度" icon="el-icon-warning-outline" class="fill">
+        <InfoTable :rows="tempRows" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getEssOverview } from "@/api/monitor-ess";
 
@@ -58,7 +47,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "EssOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -142,11 +131,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .plain-tag {
   border: none;

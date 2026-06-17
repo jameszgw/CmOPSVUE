@@ -1,5 +1,5 @@
 <template>
-  <div class="stat-card">
+  <div class="stat-card" :class="{ 'stat-card--dense': dense }">
     <div class="stat-card__head">
       <div class="stat-card__icon" :style="{ background: tint, color: color }">
         <i :class="icon || 'el-icon-data-line'"></i>
@@ -32,6 +32,8 @@ export default {
     tag: { type: String, default: "" },
     percent: { type: [Number, String], default: null },
     color: { type: String, default: "#409eff" },
+    // 紧凑模式：更小的内边距/图标/字号，目标高度约 @stat-h-dense=84px。不传时外观不变。
+    dense: { type: Boolean, default: false },
   },
   computed: {
     tint() {
@@ -110,6 +112,39 @@ export default {
     margin-top: @space-sm;
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
+  }
+
+  // ---- 紧凑模式（目标高度约 @stat-h-dense=84px）----
+  &--dense {
+    padding: @dense-card-pad @space-md;
+
+    .stat-card__head {
+      margin-bottom: @space-sm;
+    }
+
+    .stat-card__icon {
+      width: 26px;
+      height: 26px;
+      border-radius: @radius-base;
+      margin-right: @space-sm;
+      font-size: 15px;
+    }
+
+    .stat-card__label {
+      font-size: 12px;
+    }
+
+    .stat-card__value {
+      font-size: 20px;
+    }
+
+    .stat-card__progress {
+      margin-top: @space-sm;
+    }
+
+    .stat-card__sub {
+      margin-top: @space-xs;
+    }
   }
 }
 </style>

@@ -1,88 +1,73 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="内存使用率" :value="`${num(d.memoryUsage)}%`"
-          :percent="d.memoryUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-user" label="连接客户端" :value="d.connectedClients == null ? '-' : d.connectedClients"
-          sub="当前连接数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="阻塞客户端" :value="d.blockedClients == null ? '-' : d.blockedClients"
-          sub="阻塞中" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-aim" label="命中率" :value="`${num(d.hitRate)}%`"
-          :percent="d.hitRate" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-coin" label="内存使用率" :value="`${num(d.memoryUsage)}%`"
+        :percent="d.memoryUsage" color="#409eff" />
+      <stat-card dense icon="el-icon-user" label="连接客户端" :value="d.connectedClients == null ? '-' : d.connectedClients"
+        sub="当前连接数" color="#67c23a" />
+      <stat-card dense icon="el-icon-warning-outline" label="阻塞客户端" :value="d.blockedClients == null ? '-' : d.blockedClients"
+        sub="阻塞中" color="#e6a23c" />
+      <stat-card dense icon="el-icon-aim" label="命中率" :value="`${num(d.hitRate)}%`"
+        :percent="d.hitRate" color="#909399" />
+    </card-grid>
 
-    <SectionCard title="Redis 基础信息" icon="el-icon-info">
-      <template #extra>
-        <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-      </template>
-      <InfoTable :rows="basicRows" :columns="3" />
-    </SectionCard>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense title="Redis 基础信息" icon="el-icon-info">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="3" />
+      </section-card>
 
-    <SectionCard title="内存信息" icon="el-icon-coin">
-      <InfoTable :rows="memoryRows" :columns="2" />
-    </SectionCard>
+      <section-card dense title="内存信息" icon="el-icon-coin">
+        <InfoTable :rows="memoryRows" :columns="2" />
+      </section-card>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接统计" icon="el-icon-connection">
-          <InfoTable :rows="connRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="命令统计" icon="el-icon-data-line">
-          <InfoTable :rows="cmdRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <section-card dense title="连接统计" icon="el-icon-connection">
+        <InfoTable :rows="connRows" />
+      </section-card>
 
-    <SectionCard title="键空间信息" icon="el-icon-key">
-      <el-row :gutter="12">
-        <el-col v-for="ks in d.keyspace || []" :key="ks.name" :xs="24" :sm="12" :lg="8">
-          <div class="keyspace-item">
-            <div class="keyspace-item__head">
-              <span class="keyspace-item__name">{{ ks.name }}</span>
-              <span class="keyspace-item__index">DB {{ ks.index }}</span>
+      <section-card dense title="命令统计" icon="el-icon-data-line">
+        <InfoTable :rows="cmdRows" />
+      </section-card>
+
+      <section-card dense title="键空间信息" icon="el-icon-key">
+        <el-row :gutter="12">
+          <el-col v-for="ks in d.keyspace || []" :key="ks.name" :xs="24" :sm="12" :lg="8">
+            <div class="keyspace-item">
+              <div class="keyspace-item__head">
+                <span class="keyspace-item__name">{{ ks.name }}</span>
+                <span class="keyspace-item__index">DB {{ ks.index }}</span>
+              </div>
+              <InfoTable :rows="keyspaceRows(ks)" />
             </div>
-            <InfoTable :rows="keyspaceRows(ks)" />
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+          </el-col>
+        </el-row>
+      </section-card>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="网络输入" icon="el-icon-download">
-          <InfoTable :rows="netInRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="网络输出" icon="el-icon-upload2">
-          <InfoTable :rows="netOutRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <section-card dense title="网络输入" icon="el-icon-download">
+        <InfoTable :rows="netInRows" />
+      </section-card>
+
+      <section-card dense title="网络输出" icon="el-icon-upload2">
+        <InfoTable :rows="netOutRows" />
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisOverview } from "@/api/monitor-redis";
 
 export default {
   name: "RedisOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -193,11 +178,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
 }
 .keyspace-item {
   margin-bottom: 12px;

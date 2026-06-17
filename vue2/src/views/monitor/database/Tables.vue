@@ -1,80 +1,79 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-s-grid" label="表数量"
-          :value="d.tableCount == null ? '-' : d.tableCount" sub="数据库表总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-tickets" label="总行数"
-          :value="d.totalRows == null ? '-' : d.totalRows" sub="所有表行数合计" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-coin" label="总大小"
-          :value="d.totalSize == null ? '-' : d.totalSize" sub="所有表占用空间" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-s-grid" label="表数量"
+        :value="d.tableCount == null ? '-' : d.tableCount" sub="数据库表总数" color="#409eff" />
+      <stat-card dense icon="el-icon-tickets" label="总行数"
+        :value="d.totalRows == null ? '-' : d.totalRows" sub="所有表行数合计" color="#67c23a" />
+      <stat-card dense icon="el-icon-coin" label="总大小"
+        :value="d.totalSize == null ? '-' : d.totalSize" sub="所有表占用空间" color="#e6a23c" />
+    </card-grid>
 
-    <SectionCard title="Top 10 最大的表" icon="el-icon-data-analysis">
-      <el-table :data="d.topTables || []" size="small" stripe>
-        <el-table-column label="排名" width="80">
-          <template slot-scope="{ row }">
-            <span class="rank-badge" :class="rankClass(row.rank)">{{ row.rank }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="模式" width="160">
-          <template slot-scope="{ row }">
-            <el-tag size="small" type="info" effect="plain">{{ row.schema }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="name" label="表名" />
-        <el-table-column label="行数" width="160" align="right">
-          <template slot-scope="{ row }">
-            <span style="color: #67c23a">{{ row.rows == null ? '-' : row.rows }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="大小" width="160" align="right">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ row.size == null ? '-' : row.size }}</span>
-          </template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense scrollable class="fill" body-class="dense-table fill" title="Top 10 最大的表" icon="el-icon-data-analysis">
+          <el-table class="dense-table" height="100%" :data="d.topTables || []" size="small" stripe>
+            <el-table-column label="排名" width="80">
+              <template slot-scope="{ row }">
+                <span class="rank-badge" :class="rankClass(row.rank)">{{ row.rank }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="模式" width="160">
+              <template slot-scope="{ row }">
+                <el-tag size="small" type="info" effect="plain">{{ row.schema }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="表名" />
+            <el-table-column label="行数" width="160" align="right">
+              <template slot-scope="{ row }">
+                <span style="color: #67c23a">{{ row.rows == null ? '-' : row.rows }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="大小" width="160" align="right">
+              <template slot-scope="{ row }">
+                <span style="color: #e6a23c">{{ row.size == null ? '-' : row.size }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section-card>
 
-    <SectionCard title="所有表详情" icon="el-icon-s-grid">
-      <template #extra>共 {{ (d.allTables && d.allTables.length) || 0 }} 张表</template>
-      <el-row :gutter="12">
-        <el-col v-for="(t, i) in d.allTables || []" :key="i" :xs="24" :sm="12" :lg="8" :xl="6">
-          <div class="table-card">
-            <div class="table-card__head">
-              <el-tag size="mini" type="info" effect="plain">{{ t.schema }}</el-tag>
-              <span class="table-card__name">{{ t.name }}</span>
-            </div>
-            <div class="table-card__grid">
-              <div class="metric"><span class="metric__label">行数</span><span class="metric__value">{{ fmt(t.rows) }}</span></div>
-              <div class="metric"><span class="metric__label">大小</span><span class="metric__value">{{ t.size == null ? '-' : t.size }}</span></div>
-              <div class="metric"><span class="metric__label">插入</span><span class="metric__value" style="color:#67c23a">{{ fmt(t.inserts) }}</span></div>
-              <div class="metric"><span class="metric__label">更新</span><span class="metric__value" style="color:#409eff">{{ fmt(t.updates) }}</span></div>
-              <div class="metric"><span class="metric__label">删除</span><span class="metric__value" style="color:#f56c6c">{{ fmt(t.deletes) }}</span></div>
-              <div class="metric"><span class="metric__label">死元组</span><span class="metric__value" style="color:#e6a23c">{{ fmt(t.deadTuples) }}</span></div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-      <el-empty v-if="!(d.allTables && d.allTables.length)" description="暂无表数据" />
-    </SectionCard>
+        <section-card dense scrollable class="fill" title="所有表详情" icon="el-icon-s-grid">
+          <template #extra>共 {{ (d.allTables && d.allTables.length) || 0 }} 张表</template>
+          <el-row :gutter="12">
+            <el-col v-for="(t, i) in d.allTables || []" :key="i" :xs="24" :sm="12" :lg="8" :xl="6">
+              <div class="table-card">
+                <div class="table-card__head">
+                  <el-tag size="mini" type="info" effect="plain">{{ t.schema }}</el-tag>
+                  <span class="table-card__name">{{ t.name }}</span>
+                </div>
+                <div class="table-card__grid">
+                  <div class="metric"><span class="metric__label">行数</span><span class="metric__value">{{ fmt(t.rows) }}</span></div>
+                  <div class="metric"><span class="metric__label">大小</span><span class="metric__value">{{ t.size == null ? '-' : t.size }}</span></div>
+                  <div class="metric"><span class="metric__label">插入</span><span class="metric__value" style="color:#67c23a">{{ fmt(t.inserts) }}</span></div>
+                  <div class="metric"><span class="metric__label">更新</span><span class="metric__value" style="color:#409eff">{{ fmt(t.updates) }}</span></div>
+                  <div class="metric"><span class="metric__label">删除</span><span class="metric__value" style="color:#f56c6c">{{ fmt(t.deletes) }}</span></div>
+                  <div class="metric"><span class="metric__label">死元组</span><span class="metric__value" style="color:#e6a23c">{{ fmt(t.deadTuples) }}</span></div>
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-empty v-if="!(d.allTables && d.allTables.length)" description="暂无表数据" />
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getDatabaseTables } from "@/api/monitor-database";
 
 export default {
   name: "DatabaseTables",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -119,11 +118,21 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.screen-tab__main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .rank-badge {
   display: inline-flex;

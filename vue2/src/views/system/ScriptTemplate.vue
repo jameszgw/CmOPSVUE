@@ -1,22 +1,45 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">脚本列表</h2>
-    <el-card>
-      <el-form :inline="true" :model="searchForm" @submit.native.prevent="handleSearch">
-        <el-form-item label="脚本名称">
-          <el-input v-model="searchForm.name" placeholder="请输入脚本名称" clearable />
+  <screen-page title="脚本列表" gap="8px">
+    <template #header-extra>
+      <el-form
+        :inline="true"
+        :model="searchForm"
+        class="filter-form"
+        @submit.native.prevent="handleSearch"
+      >
+        <el-form-item>
+          <el-input
+            v-model="searchForm.name"
+            placeholder="脚本名称"
+            style="width: 150px"
+            size="small"
+            clearable
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" size="small" native-type="submit">查询</el-button>
+          <el-button size="small" @click="handleReset">重置</el-button>
+          <el-button type="primary" size="small" @click="handleAddScript">新增脚本</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <div class="table-toolbar">
-        <el-button type="primary" @click="handleAddScript">新增脚本</el-button>
-      </div>
-
-      <el-table :data="scripts" row-key="id" v-loading="loading">
+    <section-card
+      dense
+      scrollable
+      body-class="dense-table fill"
+      class="fill"
+      title="脚本"
+      icon="el-icon-document"
+    >
+      <el-table
+        class="dense-table"
+        height="100%"
+        :data="scripts"
+        row-key="id"
+        size="small"
+        v-loading="loading"
+      >
         <el-table-column prop="templateName" label="脚本名称" />
         <el-table-column
           prop="templateValue"
@@ -24,13 +47,13 @@
           width="300"
           show-overflow-tooltip
         />
-        <el-table-column prop="description" label="脚本描述" />
-        <el-table-column label="创建时间" width="170">
+        <el-table-column prop="description" label="脚本描述" show-overflow-tooltip />
+        <el-table-column label="创建时间" width="160">
           <template slot-scope="{ row }">
             {{ formatTime(row.gmtCreate) }}
           </template>
         </el-table-column>
-        <el-table-column label="更新时间" width="170">
+        <el-table-column label="更新时间" width="160">
           <template slot-scope="{ row }">
             {{ formatTime(row.gmtModified) }}
           </template>
@@ -42,17 +65,17 @@
           </template>
         </el-table-column>
       </el-table>
+    </section-card>
 
-      <el-pagination
-        class="pagination"
-        layout="total, prev, pager, next, sizes"
-        :total="total"
-        :current-page="pagination.pageNo"
-        :page-size="pagination.pageSize"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-    </el-card>
+    <el-pagination
+      class="pagination"
+      layout="total, prev, pager, next, sizes"
+      :total="total"
+      :current-page="pagination.pageNo"
+      :page-size="pagination.pageSize"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
 
     <el-drawer
       :title="editingScript ? '编辑脚本' : '新增脚本'"
@@ -70,7 +93,7 @@
         />
       </div>
     </el-drawer>
-  </div>
+  </screen-page>
 </template>
 
 <script>
@@ -81,11 +104,13 @@ import {
   updateScript,
   deleteScript,
 } from "@/api/script-template";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateScriptForm from "./components/CreateScriptForm.vue";
 
 export default {
   name: "ScriptTemplate",
-  components: { CreateScriptForm },
+  components: { ScreenPage, SectionCard, CreateScriptForm },
   data() {
     return {
       loading: false,
@@ -175,27 +200,18 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  margin: 0 0 16px;
-  font-size: 20px;
-  font-weight: 500;
+.filter-form {
+  display: flex;
+  align-items: center;
 }
-
-.table-toolbar {
-  margin-bottom: 16px;
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
 }
-
 .pagination {
-  margin-top: 16px;
+  flex-shrink: 0;
   text-align: right;
 }
-
 .drawer-body {
   padding: 0 20px;
-}
-
-// 原 script-template.less
-.title {
-  background: rgb(125, 242, 121);
 }
 </style>

@@ -1,23 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-cpu" label="Broker 总数"
-          :value="num0(d.total)" sub="集群 Broker 数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-circle-check" label="在线"
-          :value="num0(d.online)" sub="Online" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-circle-close" label="离线"
-          :value="num0(d.offline)" sub="Offline" :color="d.offline > 0 ? '#f56c6c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-cpu" label="Broker 总数"
+        :value="num0(d.total)" sub="集群 Broker 数" color="#409eff" />
+      <stat-card dense icon="el-icon-circle-check" label="在线"
+        :value="num0(d.online)" sub="Online" color="#67c23a" />
+      <stat-card dense icon="el-icon-circle-close" label="离线"
+        :value="num0(d.offline)" sub="Offline" :color="d.offline > 0 ? '#f56c6c' : '#67c23a'" />
+    </card-grid>
 
-    <SectionCard title="Broker 列表" icon="el-icon-s-grid">
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="Broker 列表" icon="el-icon-s-grid">
       <template #extra>共 {{ brokers.length }} 个 Broker</template>
-      <el-table :data="brokers" size="small" stripe>
+      <el-table :data="brokers" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="id" label="ID" width="80" align="center" fixed />
         <el-table-column prop="host" label="主机" min-width="150" />
         <el-table-column prop="ip" label="IP" min-width="140" />
@@ -59,13 +53,14 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!brokers.length" description="暂无 Broker 数据" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getMqBrokers } from "@/api/monitor-mq";
 
@@ -78,7 +73,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "MqBrokers",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -137,10 +132,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 </style>
