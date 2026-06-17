@@ -55,3 +55,17 @@
 
 // 图表调色板（与 src/styles/chart-theme.js 的 CHART_PALETTE 保持一致）
 @chart-palette: #409eff, #67c23a, #e6a23c, #f56c6c, #9254de, #1890ff, #13c2c2, #fa8c16;
+
+// =============================================================
+// 紧凑（"一屏看完"）密度令牌
+// 供后续页面重写使用，名称稳定，请勿重命名。
+// 仅在 dense 模式 / .screen-page 下生效，默认外观不受影响。
+// =============================================================
+@dense-gap: 8px;            // 紧凑栅格 / 区块间距
+@dense-card-pad: 10px;      // 紧凑卡片正文 padding
+@dense-card-head-pad: 6px;  // 紧凑卡片头部 padding
+@stat-h-dense: 84px;        // 紧凑 StatCard 目标高度
+@chart-h-sm: 200px;         // 小号图表高度
+@chart-h-md: 260px;         // 中号图表高度
+@table-row-dense: 30px;     // 紧凑表格行高
+@screen-page-pad: 10px;     // ScreenPage 页面外边距
