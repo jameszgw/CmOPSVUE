@@ -43,14 +43,14 @@ const groupedRows = computed(() => {
 <style lang="less" scoped>
 .info-table {
   width: 100%;
-  /* 等高卡片内填满高度：多余高度按行均分，避免底部留空 */
-  height: 100%;
   border-collapse: collapse;
   font-size: 13px;
 
   td {
     border: 1px solid var(--cm-border-light);
-    padding: 9px 12px;
+    /* 紧凑行高：行按内容高度，不再为填满卡片而拉伸出空行 */
+    padding: 6px 10px;
+    line-height: 1.4;
   }
 
   &__label {

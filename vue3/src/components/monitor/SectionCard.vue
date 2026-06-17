@@ -44,11 +44,14 @@ defineProps({
   border: 1px solid var(--cm-border-light);
   border-radius: @radius-lg;
   margin-bottom: @space-lg;
-  /* 同行卡片等高：在 el-row(flex) 中拉伸；单列堆叠时父高 auto，height:100% 无副作用 */
-  height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  /* 默认按内容高度，避免作为 flex 子项时 height:100% 抢占整列高度、把"填充"卡片挤成 0；
+     仅显式标记 .fill 的卡片才填满（其正文 flex:1 给内部表格/图表定高） */
+  &.fill {
+    height: 100%;
+  }
 
   &__head {
     display: flex;

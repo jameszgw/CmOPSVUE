@@ -34,5 +34,11 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr));
   gap: var(--gap);
+  /* 卡片按内容高度、顶端对齐——不再被同行最高卡片拉伸出大片空白 */
+  align-items: start;
+}
+/* 显式要求填满高度的卡片（如主表格）仍可铺满整格 */
+.card-grid > .fill {
+  align-self: stretch;
 }
 </style>
