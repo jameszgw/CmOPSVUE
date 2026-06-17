@@ -32,7 +32,9 @@ export default {
 <style lang="less" scoped>
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr));
+  /* auto-fit（非 auto-fill）：空轨道塌缩，现有卡片拉伸铺满整行宽度，
+     避免右侧出现成片空白；列数随屏宽自适应（流式/响应式） */
+  grid-template-columns: repeat(auto-fit, minmax(var(--min), 1fr));
   gap: var(--gap);
   /* 卡片按内容高度、顶端对齐——不再被同行最高卡片拉伸出大片空白 */
   align-items: start;
