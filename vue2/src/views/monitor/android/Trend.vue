@@ -1,10 +1,12 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="趋势" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendPoints }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-      <el-empty v-if="!trendPoints" description="暂无趋势数据" />
-    </SectionCard>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense title="趋势" icon="el-icon-data-line" class="fill">
+        <template #extra>最近 {{ trendPoints }} 个数据点</template>
+        <div ref="chartRef" class="trend-chart"></div>
+        <el-empty v-if="!trendPoints" description="暂无趋势数据" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
@@ -13,12 +15,13 @@ import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getAndroidTrend } from "@/api/monitor-android";
 
 export default {
   name: "AndroidTrend",
   mixins: [chartSkin],
-  components: { SectionCard },
+  components: { SectionCard, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -129,8 +132,15 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
+}
 .trend-chart {
-  height: 320px;
+  height: @chart-h-md;
   width: 100%;
 }
 </style>

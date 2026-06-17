@@ -1,24 +1,19 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-connection" label="端口总数" :value="num0(d.total)"
-          sub="物理端口数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-circle-check" label="在线端口" :value="num0(d.up)"
-          sub="Up 端口" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-warning" label="错误端口" :value="num0(d.errorPorts)"
-          sub="存在错误的端口" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-connection" label="端口总数" :value="num0(d.total)"
+        sub="物理端口数" color="#409eff" />
+      <StatCard dense icon="el-icon-circle-check" label="在线端口" :value="num0(d.up)"
+        sub="Up 端口" color="#67c23a" />
+      <StatCard dense icon="el-icon-warning" label="错误端口" :value="num0(d.errorPorts)"
+        sub="存在错误的端口" color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="端口列表" icon="el-icon-menu">
-      <template #extra>共 {{ ports.length }} 个端口</template>
-      <el-empty v-if="!ports.length" description="暂无数据" />
-      <el-table v-else :data="ports" size="small" stripe :row-class-name="rowClass">
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable body-class="dense-table fill" title="端口列表" icon="el-icon-menu">
+        <template #extra>共 {{ ports.length }} 个端口</template>
+        <el-empty v-if="!ports.length" description="暂无数据" />
+        <el-table v-else :data="ports" size="small" stripe :row-class-name="rowClass" class="dense-table" height="100%">
         <el-table-column prop="name" label="端口" min-width="140" fixed>
           <template slot-scope="{ row }">
             <span class="mono">{{ row.name || "-" }}</span>
@@ -68,19 +63,21 @@
           <template slot-scope="{ row }">{{ num1(row.dropsPct) }}%</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getNetDevPorts } from "@/api/monitor-netdev";
 
 export default {
   name: "NetDevPorts",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -146,11 +143,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .mono {
   font-family: monospace;

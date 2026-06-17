@@ -1,20 +1,19 @@
 <template>
-  <div class="page-container">
-    <div class="monitor-config">
-      <div class="monitor-config__head">
-        <h1>监控开关</h1>
-        <div class="monitor-config__note">
-          这些开关运行时生效（个别项 remark 标注“重启生效”），优先级高于配置文件。
-        </div>
-      </div>
+  <screen-page v-loading="loading" title="监控开关" gap="8px" class="monitor-config">
+    <template #header-extra>
+      <span class="monitor-config__note">
+        这些开关运行时生效（个别项 remark 标注“重启生效”），优先级高于配置文件。
+      </span>
+    </template>
 
-      <div v-loading="loading">
+    <div class="monitor-config__scroll">
+      <card-grid min="300px" gap="8px">
         <section-card
           v-for="g in groups"
           :key="g.name"
+          dense
           :title="g.name"
           icon="el-icon-setting"
-          class="monitor-config__group"
         >
           <div
             v-for="item in g.items"
@@ -36,26 +35,29 @@
                 :disabled="saving[item.key]"
                 size="small"
                 controls-position="right"
+                style="width: 120px"
                 @change="(val) => handleChange(item, val)"
               />
             </div>
             <div v-if="item.remark" class="config-item__remark">{{ item.remark }}</div>
           </div>
         </section-card>
+      </card-grid>
 
-        <el-empty v-if="!loading && !groups.length" description="暂无配置项" />
-      </div>
+      <el-empty v-if="!loading && !groups.length" description="暂无配置项" />
     </div>
-  </div>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { listMonitorConfig, updateMonitorConfig } from "@/api/monitor-config";
 
 export default {
   name: "MonitorConfig",
-  components: { SectionCard },
+  components: { ScreenPage, CardGrid, SectionCard },
   data() {
     return {
       loading: false,
@@ -106,34 +108,26 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .monitor-config {
-  padding: 16px;
-
-  &__head {
-    margin-bottom: 16px;
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--cm-text-primary, rgba(0, 0, 0, 0.85));
-    }
-  }
-
   &__note {
-    color: var(--cm-text-secondary, rgba(0, 0, 0, 0.45));
-    font-size: 13px;
-    line-height: 1.5;
+    color: var(--cm-text-secondary, @text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
   }
 
-  &__group {
-    height: auto;
+  // 卡片不强行拉满，置顶紧凑排布；分组多时整体内部滚动而非整页滚动
+  &__scroll {
+    overflow: auto;
+    flex-shrink: 0;
+    max-height: 100%;
   }
 }
 
 .config-item {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--cm-border-light, #f0f2f5);
+  padding: @space-xs 0;
+  border-bottom: 1px dashed var(--cm-border-light, @border-light);
 
   &:last-child {
     border-bottom: none;
@@ -143,19 +137,20 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: @space-md;
   }
 
   &__label {
-    font-size: 14px;
-    color: var(--cm-text-primary, rgba(0, 0, 0, 0.85));
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cm-text-primary, @text-primary);
   }
 
   &__remark {
-    margin-top: 4px;
-    color: var(--cm-text-secondary, rgba(0, 0, 0, 0.45));
+    margin-top: 2px;
+    color: var(--cm-text-secondary, @text-secondary);
     font-size: 12px;
-    line-height: 1.5;
+    line-height: 1.3;
   }
 }
 </style>

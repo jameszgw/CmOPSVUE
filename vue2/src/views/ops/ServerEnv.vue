@@ -1,45 +1,45 @@
 <template>
-  <div class="page-container">
-    <h2 class="title">主机环境变量</h2>
-    <el-row :gutter="16">
-      <el-col :span="6">
+  <screen-page title="主机环境变量" gap="8px">
+    <template #header-extra>
+      <el-form inline size="mini" :model="searchForm" class="filter-form" @submit.native.prevent>
+        <el-form-item label="变量名称">
+          <el-input v-model="searchForm.name" placeholder="变量名称" clearable style="width: 160px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSearch">查询</el-button>
+          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="handleAddNew">新增环境变量</el-button>
+        </el-form-item>
+      </el-form>
+    </template>
+
+    <div class="two-pane fill">
+      <section-card dense scrollable body-class="fill" class="pane-side" title="主机列表" icon="el-icon-cpu">
         <left-host-list @item-click="handleHostItemClick" />
-      </el-col>
-      <el-col :span="18">
-        <el-form inline :model="searchForm" @submit.native.prevent>
-          <el-form-item label="变量名称">
-            <el-input v-model="searchForm.name" placeholder="变量名称" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" style="margin-right: 8px" @click="onSearch">查询</el-button>
-            <el-button @click="onReset">重置</el-button>
-          </el-form-item>
-        </el-form>
+      </section-card>
 
-        <el-button type="primary" style="margin-bottom: 16px" @click="handleAddNew">
-          新增环境变量
-        </el-button>
-
-        <el-table :data="hostEnvs.items" row-key="id" style="width: 100%">
-          <el-table-column prop="attrKey" label="Key" />
-          <el-table-column prop="attrValue" label="Value" />
-          <el-table-column prop="description" label="描述" />
-          <el-table-column label="创建时间">
-            <template #default="{ row }">{{ formatTime(row.gmtCreate) }}</template>
-          </el-table-column>
-          <el-table-column label="修改时间">
-            <template #default="{ row }">{{ formatTime(row.gmtModified) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="140">
-            <template #default="{ row }">
-              <el-button type="text" @click="handleEdit(row)">编辑</el-button>
-              <el-button type="text" @click="handleDelete(row.id)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
+      <section-card dense body-class="pane-main-body" class="pane-main" title="环境变量" icon="el-icon-set-up">
+        <div class="table-wrap dense-table fill">
+          <el-table class="dense-table" height="100%" :data="hostEnvs.items" row-key="id" size="small" stripe style="width: 100%">
+            <el-table-column prop="attrKey" label="Key" />
+            <el-table-column prop="attrValue" label="Value" />
+            <el-table-column prop="description" label="描述" />
+            <el-table-column label="创建时间">
+              <template #default="{ row }">{{ formatTime(row.gmtCreate) }}</template>
+            </el-table-column>
+            <el-table-column label="修改时间">
+              <template #default="{ row }">{{ formatTime(row.gmtModified) }}</template>
+            </el-table-column>
+            <el-table-column label="操作" width="140">
+              <template #default="{ row }">
+                <el-button type="text" @click="handleEdit(row)">编辑</el-button>
+                <el-button type="text" @click="handleDelete(row.id)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
         <el-pagination
-          style="margin-top: 12px; text-align: right"
+          class="pane-pagination"
           layout="total, prev, pager, next, sizes"
           :total="hostEnvs.total"
           :current-page="pagination.pageNo"
@@ -47,30 +47,32 @@
           @current-change="handlePageChange"
           @size-change="handleSizeChange"
         />
+      </section-card>
+    </div>
 
-        <el-drawer
-          :title="selectedEnv ? '编辑环境变量' : '新增环境变量'"
-          :visible.sync="drawerVisible"
-          size="360px"
-          destroy-on-close
-        >
-          <div style="padding: 0 20px">
-            <create-host-env-form
-              v-if="drawerVisible"
-              :initial-values="selectedEnv"
-              @save="handleSaveHostEnv"
-              @update="handleUpdateHostEnv"
-              @cancel="onCloseDrawer"
-            />
-          </div>
-        </el-drawer>
-      </el-col>
-    </el-row>
-  </div>
+    <el-drawer
+      :title="selectedEnv ? '编辑环境变量' : '新增环境变量'"
+      :visible.sync="drawerVisible"
+      size="360px"
+      destroy-on-close
+    >
+      <div style="padding: 0 20px">
+        <create-host-env-form
+          v-if="drawerVisible"
+          :initial-values="selectedEnv"
+          @save="handleSaveHostEnv"
+          @update="handleUpdateHostEnv"
+          @cancel="onCloseDrawer"
+        />
+      </div>
+    </el-drawer>
+  </screen-page>
 </template>
 
 <script>
 import dayjs from "dayjs";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import LeftHostList from "./components/LeftHostList.vue";
 import CreateHostEnvForm from "./components/CreateHostEnvForm.vue";
 import {
@@ -83,6 +85,8 @@ import {
 export default {
   name: "ServerEnv",
   components: {
+    ScreenPage,
+    SectionCard,
     LeftHostList,
     CreateHostEnvForm,
   },
@@ -165,7 +169,40 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(242, 171, 121);
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
+
+.two-pane {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+.pane-side {
+  width: 260px;
+  flex-shrink: 0;
+}
+.pane-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pane-main /deep/ .pane-main-body {
+  display: flex;
+  flex-direction: column;
+}
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+.pane-pagination {
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 8px;
 }
 </style>

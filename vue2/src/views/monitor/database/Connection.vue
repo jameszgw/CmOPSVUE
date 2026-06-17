@@ -1,27 +1,19 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="总连接数"
-          :value="d.total == null ? '-' : d.total" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="最大连接数"
-          :value="d.max == null ? '-' : d.max" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="活动连接"
-          :value="d.active == null ? '-' : d.active" sub="实时活动连接数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-user" label="空闲连接"
-          :value="d.idle == null ? '-' : d.idle" sub="当前空闲连接数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-share" label="总连接数"
+        :value="d.total == null ? '-' : d.total" color="#409eff" />
+      <stat-card dense icon="el-icon-share" label="最大连接数"
+        :value="d.max == null ? '-' : d.max" color="#909399" />
+      <stat-card dense icon="el-icon-odometer" label="活动连接"
+        :value="d.active == null ? '-' : d.active" sub="实时活动连接数" color="#67c23a" />
+      <stat-card dense icon="el-icon-user" label="空闲连接"
+        :value="d.idle == null ? '-' : d.idle" sub="当前空闲连接数" color="#e6a23c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接 pool 状态" icon="el-icon-data-analysis">
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense title="连接 pool 状态" icon="el-icon-data-analysis">
           <div class="pool-block">
             <div class="pool-block__head">
               <span class="pool-block__title">连接使用率</span>
@@ -63,40 +55,39 @@
               {{ pool.capacityMax == null ? '-' : pool.capacityMax }}
             </div>
           </div>
-        </SectionCard>
-      </el-col>
+        </section-card>
 
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接详细信息" icon="el-icon-data-line">
+        <section-card dense title="连接详细信息" icon="el-icon-data-line">
           <InfoTable :rows="detailRows" />
           <el-progress :percentage="clamp(detail.usage)" :stroke-width="10"
             :color="usageColor(detail.usage)" class="usage-bar" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </section-card>
 
-    <SectionCard title="连接说明" icon="el-icon-info">
-      <el-row :gutter="12">
-        <el-col v-for="(it, i) in notes" :key="i" :xs="24" :sm="12" :lg="8">
-          <div class="note-item">
-            <div class="note-item__title">{{ it.title }}</div>
-            <div class="note-item__desc">{{ it.desc }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        <section-card dense title="连接说明" icon="el-icon-info">
+          <el-row :gutter="12">
+            <el-col v-for="(it, i) in notes" :key="i" :xs="24" :sm="12" :lg="8">
+              <div class="note-item">
+                <div class="note-item__title">{{ it.title }}</div>
+                <div class="note-item__desc">{{ it.desc }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getDatabaseConnection } from "@/api/monitor-database";
 
 export default {
   name: "DatabaseConnection",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -179,11 +170,21 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.screen-tab__main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .pool-block {
   margin-bottom: 18px;

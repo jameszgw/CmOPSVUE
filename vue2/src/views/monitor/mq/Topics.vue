@@ -1,23 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-collection" label="主题数"
-          :value="num0(d.topicCount)" sub="Topic 总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-s-grid" label="分区数"
-          :value="num0(d.partitionCount)" sub="Partition 总数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-warning-outline" label="倾斜主题"
-          :value="num0(d.skewedCount)" sub="分区倾斜" :color="d.skewedCount > 0 ? '#f56c6c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-collection" label="主题数"
+        :value="num0(d.topicCount)" sub="Topic 总数" color="#409eff" />
+      <stat-card dense icon="el-icon-s-grid" label="分区数"
+        :value="num0(d.partitionCount)" sub="Partition 总数" color="#67c23a" />
+      <stat-card dense icon="el-icon-warning-outline" label="倾斜主题"
+        :value="num0(d.skewedCount)" sub="分区倾斜" :color="d.skewedCount > 0 ? '#f56c6c' : '#67c23a'" />
+    </card-grid>
 
-    <SectionCard title="主题列表" icon="el-icon-s-grid">
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="主题列表" icon="el-icon-s-grid">
       <template #extra>共 {{ topics.length }} 个主题</template>
-      <el-table :data="topics" size="small" stripe>
+      <el-table :data="topics" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="180" fixed />
         <el-table-column prop="partitions" label="分区" width="90" align="center" />
         <el-table-column prop="replicas" label="副本" width="90" align="center" />
@@ -40,19 +34,20 @@
         </el-table-column>
       </el-table>
       <el-empty v-if="!topics.length" description="暂无主题数据" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getMqTopics } from "@/api/monitor-mq";
 
 export default {
   name: "MqTopics",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -99,10 +94,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 </style>

@@ -1,23 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-cpu" label="节点总数"
-          :value="num0(d.total)" sub="集群节点数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-circle-check" label="就绪"
-          :value="num0(d.ready)" sub="Ready 节点" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-circle-close" label="未就绪"
-          :value="num0(d.notReady)" sub="NotReady 节点" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-cpu" label="节点总数"
+        :value="num0(d.total)" sub="集群节点数" color="#409eff" />
+      <stat-card dense icon="el-icon-circle-check" label="就绪"
+        :value="num0(d.ready)" sub="Ready 节点" color="#67c23a" />
+      <stat-card dense icon="el-icon-circle-close" label="未就绪"
+        :value="num0(d.notReady)" sub="NotReady 节点" color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="节点列表" icon="el-icon-s-grid">
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="节点列表" icon="el-icon-s-grid">
       <template #extra>共 {{ (d.nodes && d.nodes.length) || 0 }} 个节点</template>
-      <el-table :data="d.nodes || []" size="small" stripe>
+      <el-table :data="d.nodes || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="160" fixed />
         <el-table-column label="角色" width="130">
           <template slot-scope="{ row }">
@@ -62,13 +56,14 @@
         <el-table-column prop="age" label="age" width="100" />
       </el-table>
       <el-empty v-if="!(d.nodes && d.nodes.length)" description="暂无节点数据" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getK8sNodes } from "@/api/monitor-k8s";
 
@@ -80,7 +75,7 @@ const STATUS_COLORS = {
 
 export default {
   name: "K8sNodes",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -128,11 +123,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 .pressure-tag {
   margin: 2px 4px 2px 0;

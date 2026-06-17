@@ -2,81 +2,59 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-top" label="上传速度" :value="upSpeed"
-          sub="当前上行速率" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-bottom" label="下载速度" :value="downSpeed"
-          sub="当前下行速率" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-upload2" label="总发送" :value="d.totalSent || '-'"
-          sub="累计发送数据" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-download" label="总接收" :value="d.totalRecv || '-'"
-          sub="累计接收数据" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-refresh" label="TCP重传率" :value="`${num(d.maxRetransRate)}%`"
-          sub="接口最大重传率" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="丢包率" :value="`${num(d.maxLossRate)}%`"
-          sub="接口最大丢包率" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="180px" gap="8px" class="kpi-row">
+      <StatCard dense icon="el-icon-top" label="上传速度" :value="upSpeed"
+        sub="当前上行速率" color="#409eff" />
+      <StatCard dense icon="el-icon-bottom" label="下载速度" :value="downSpeed"
+        sub="当前下行速率" color="#67c23a" />
+      <StatCard dense icon="el-icon-upload2" label="总发送" :value="d.totalSent || '-'"
+        sub="累计发送数据" color="#e6a23c" />
+      <StatCard dense icon="el-icon-download" label="总接收" :value="d.totalRecv || '-'"
+        sub="累计接收数据" color="#909399" />
+      <StatCard dense icon="el-icon-refresh" label="TCP重传率" :value="`${num(d.maxRetransRate)}%`"
+        sub="接口最大重传率" color="#e6a23c" />
+      <StatCard dense icon="el-icon-warning-outline" label="丢包率" :value="`${num(d.maxLossRate)}%`"
+        sub="接口最大丢包率" color="#f56c6c" />
+    </CardGrid>
 
-    <SectionCard v-for="(itf, i) in interfaces" :key="i"
-      :title="itf.name || '网卡'" icon="el-icon-connection">
-      <template #extra>{{ itf.status || '-' }} · {{ itf.speed || '-' }}</template>
-      <InfoTable :rows="interfaceRows(itf)" :columns="2" />
-    </SectionCard>
+    <CardGrid min="320px" gap="8px" class="section-grid">
+      <SectionCard v-for="(itf, i) in interfaces" :key="i" dense
+        :title="itf.name || '网卡'" icon="el-icon-connection">
+        <template #extra>{{ itf.status || '-' }} · {{ itf.speed || '-' }}</template>
+        <InfoTable :rows="interfaceRows(itf)" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="TCP 连接状态" icon="el-icon-share">
-      <el-row :gutter="12">
-        <el-col v-for="item in connStateItems" :key="item.key" :xs="12" :sm="8" :lg="4">
-          <div class="conn-item">
+      <SectionCard dense title="TCP 连接状态" icon="el-icon-share">
+        <div class="conn-grid">
+          <div v-for="item in connStateItems" :key="item.key" class="conn-item">
             <div class="conn-item__label">{{ item.label }}</div>
             <div class="conn-item__value" :style="{ color: item.color }">{{ item.value }}</div>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        </div>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="发送统计" icon="el-icon-upload2">
-          <InfoTable :rows="sentRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="接收统计" icon="el-icon-download">
-          <InfoTable :rows="recvRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <SectionCard dense title="发送统计" icon="el-icon-upload2">
+        <InfoTable :rows="sentRows" />
+      </SectionCard>
+      <SectionCard dense title="接收统计" icon="el-icon-download">
+        <InfoTable :rows="recvRows" />
+      </SectionCard>
 
-    <SectionCard title="实时网络IO" icon="el-icon-time">
-      <el-row :gutter="12">
-        <el-col :xs="24" :sm="12">
+      <SectionCard dense title="实时网络IO" icon="el-icon-time">
+        <div class="rt-grid">
           <div class="rt-item">
             <div class="rt-item__label">上传速度</div>
             <div class="rt-item__value" style="color: #409eff">{{ realtimeUp }}</div>
             <div class="rt-item__sub">当前上行速率</div>
           </div>
-        </el-col>
-        <el-col :xs="24" :sm="12">
           <div class="rt-item">
             <div class="rt-item__label">下载速度</div>
             <div class="rt-item__value" style="color: #67c23a">{{ realtimeDown }}</div>
             <div class="rt-item__sub">当前下行速率</div>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        </div>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -85,11 +63,12 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerNetwork } from "@/api/monitor-server";
 
 export default {
   name: "ServerNetworkInfo",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -195,47 +174,65 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
+}
+.section-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+}
+.rt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: @space-sm;
 }
 .rt-item {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 10px 12px;
 
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   &__value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
   }
   &__sub {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
   }
 }
+.conn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: @space-sm;
+}
 .conn-item {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px;
   text-align: center;
 
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   &__value {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
   }
 }

@@ -1,16 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-mobile-phone" label="实例总数"
-          :value="num0(d.total)" :sub="`展示 ${num0(d.shown)}`" color="#409eff" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-mobile-phone" label="实例总数"
+        :value="num0(d.total)" :sub="`展示 ${num0(d.shown)}`" color="#409eff" />
+    </card-grid>
 
-    <SectionCard title="实例列表" icon="el-icon-mobile-phone">
-      <template #extra>共 {{ items.length }} 个实例</template>
-      <el-table :data="items" size="small" stripe>
-        <el-table-column prop="name" label="实例" min-width="140" />
+    <card-grid class="fill" min="420px" gap="8px">
+      <SectionCard dense scrollable title="实例列表" icon="el-icon-mobile-phone"
+        body-class="dense-table fill" class="fill">
+        <template #extra>共 {{ items.length }} 个实例</template>
+        <el-table :data="items" class="dense-table" height="100%" size="small" stripe>
+          <el-table-column prop="name" label="实例" min-width="140" />
         <el-table-column label="状态" width="90" align="center">
           <template slot-scope="{ row }">
             <el-tag size="mini" :type="statusTag(row.status)" effect="dark">{{ val(row.status) }}</el-tag>
@@ -52,18 +52,20 @@
             <el-tag size="mini" :type="row.adb ? 'success' : 'info'">{{ row.adb ? "已连接" : "未连接" }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="uptime" label="运行时间" min-width="120">
-          <template slot-scope="{ row }">{{ val(row.uptime) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!items.length" description="暂无实例数据" />
-    </SectionCard>
+          <el-table-column prop="uptime" label="运行时间" min-width="120">
+            <template slot-scope="{ row }">{{ val(row.uptime) }}</template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!items.length" description="暂无实例数据" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getAndroidInstances } from "@/api/monitor-android";
 
 const STATUS_TAG = {
@@ -74,7 +76,7 @@ const STATUS_TAG = {
 
 export default {
   name: "AndroidInstances",
-  components: { StatCard, SectionCard },
+  components: { StatCard, SectionCard, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -133,10 +135,11 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

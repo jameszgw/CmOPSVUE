@@ -1,68 +1,50 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-pie-chart" label="容量使用率" :value="`${num(d.usagePct)}%`"
-          :percent="d.usagePct" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="IOPS"
-          :value="d.iops == null ? '-' : d.iops" sub="每秒读写操作" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-data-line" label="吞吐"
-          :value="d.throughput == null ? '-' : d.throughput" sub="读写吞吐量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-timer" label="平均延迟"
-          :value="`${num(d.avgLatencyMs)} ms`" sub="平均响应时延" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-pie-chart" label="容量使用率" :value="`${num(d.usagePct)}%`"
+        :percent="d.usagePct" color="#409eff" />
+      <StatCard dense icon="el-icon-odometer" label="IOPS"
+        :value="d.iops == null ? '-' : d.iops" sub="每秒读写操作" color="#67c23a" />
+      <StatCard dense icon="el-icon-data-line" label="吞吐"
+        :value="d.throughput == null ? '-' : d.throughput" sub="读写吞吐量" color="#e6a23c" />
+      <StatCard dense icon="el-icon-timer" label="平均延迟"
+        :value="`${num(d.avgLatencyMs)} ms`" sub="平均响应时延" color="#909399" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
-          <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="基础信息" icon="el-icon-info">
+        <template #extra>
+          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+      <SectionCard dense scrollable title="容量概况" icon="el-icon-coin">
+        <InfoTable :rows="capacityRows" />
+      </SectionCard>
+      <template v-if="isCeph">
+        <SectionCard dense scrollable title="OSD 状态" icon="el-icon-cpu">
+          <InfoTable :rows="osdRows" />
         </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="容量概况" icon="el-icon-coin">
-          <InfoTable :rows="capacityRows" />
+        <SectionCard dense scrollable title="PG 状态" icon="el-icon-s-grid">
+          <InfoTable :rows="pgRows" />
         </SectionCard>
-      </el-col>
-    </el-row>
-
-    <template v-if="isCeph">
-      <el-row :gutter="12">
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="OSD 状态" icon="el-icon-cpu">
-            <InfoTable :rows="osdRows" />
-          </SectionCard>
-        </el-col>
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="PG 状态" icon="el-icon-s-grid">
-            <InfoTable :rows="pgRows" />
-          </SectionCard>
-        </el-col>
-      </el-row>
-    </template>
+      </template>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getStorageOverview } from "@/api/monitor-storage";
 
 export default {
   name: "StorageOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -150,10 +132,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

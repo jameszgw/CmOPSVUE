@@ -1,265 +1,298 @@
 <template>
-  <div class="page-container discovery-page">
-    <el-row :gutter="12">
-      <!-- 左侧：扫描发起 + 最近任务 -->
-      <el-col :xs="24" :lg="7">
-        <SectionCard title="网络扫描" icon="el-icon-search">
-          <el-form label-width="78px" @submit.native.prevent>
-            <el-form-item label="网段 CIDR">
-              <el-input v-model="cidr" placeholder="如 10.20.30.0/24" clearable />
-            </el-form-item>
-            <el-form-item label="名称">
-              <el-input v-model="name" placeholder="可选，扫描任务名称" clearable />
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                type="primary"
-                icon="el-icon-position"
-                :loading="scanning"
-                @click="startScan"
-              >
-                开始扫描
-              </el-button>
-              <el-button
-                type="success"
-                icon="el-icon-magic-stick"
-                :loading="autoLoading"
-                @click="autoDiscover"
-              >
-                一键自动发现本机网段
-              </el-button>
-            </el-form-item>
-          </el-form>
+  <screen-page title="网络发现" gap="8px">
+    <!-- 扫描表单：作为顶部工具栏 -->
+    <template #header-extra>
+      <div class="scan-form">
+        <el-input
+          v-model="cidr"
+          size="small"
+          placeholder="如 10.20.30.0/24"
+          clearable
+          class="scan-form__cidr"
+        />
+        <el-input
+          v-model="name"
+          size="small"
+          placeholder="任务名称(可选)"
+          clearable
+          class="scan-form__name"
+        />
+        <el-button
+          size="small"
+          type="primary"
+          icon="el-icon-position"
+          :loading="scanning"
+          :disabled="!cidr"
+          @click="startScan"
+        >
+          开始扫描
+        </el-button>
+        <el-button
+          size="small"
+          type="success"
+          icon="el-icon-magic-stick"
+          :loading="autoLoading"
+          @click="autoDiscover"
+        >
+          一键自动发现本机网段
+        </el-button>
+      </div>
+    </template>
 
-          <div v-if="localSubnets.length" class="local-subnets">
-            本机网段：
+    <!-- 本机网段 + 进度（紧凑，按需显示）-->
+    <card-grid
+      v-if="localSubnets.length || autoJob.status || task"
+      min="320px"
+      gap="8px"
+      class="row-meta"
+    >
+      <section-card
+        v-if="localSubnets.length"
+        dense
+        title="本机网段"
+        icon="el-icon-connection"
+      >
+        <el-tag
+          v-for="(s, i) in localSubnets"
+          :key="i"
+          size="mini"
+          effect="plain"
+          type="info"
+          class="subnet-tag"
+        >
+          {{ subnetText(s) }}
+        </el-tag>
+      </section-card>
+
+      <section-card
+        v-if="autoJob.status"
+        dense
+        title="自动发现进度"
+        icon="el-icon-magic-stick"
+      >
+        <template #extra>
+          <el-tag
+            size="mini"
+            effect="light"
+            :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
+          >
+            {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
+          </el-tag>
+        </template>
+        <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
+        <el-progress
+          :percentage="autoJob.progress || 0"
+          :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : undefined"
+          :stroke-width="12"
+        />
+        <div
+          v-if="autoJob.found != null || autoJob.currentTarget"
+          class="auto-job__live"
+        >
+          <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
+          <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
+        </div>
+        <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
+          网段：
+          <el-tag
+            v-for="(s, i) in autoJob.subnets"
+            :key="i"
+            size="mini"
+            effect="plain"
+            class="subnet-tag"
+          >
+            {{ subnetText(s) }}
+          </el-tag>
+        </div>
+      </section-card>
+
+      <section-card v-if="task" dense title="扫描进度" icon="el-icon-loading">
+        <template #extra>
+          <el-tag size="mini" :type="statusTagType(task.status)" effect="light">
+            {{ statusLabel(task.status) }}
+          </el-tag>
+        </template>
+        <div class="scan-progress__head">
+          <span class="mono">{{ task.cidr }}</span>
+        </div>
+        <el-progress
+          :percentage="progressPct"
+          :status="task.status === 'done' ? 'success' : undefined"
+          :stroke-width="12"
+        />
+        <div class="scan-progress__meta">
+          已探测 {{ num0(task.progress) }} / {{ num0(task.total) }}
+          · 发现 {{ num0(task.found) }}
+          <span v-if="task.gatewayIp"> · 网关 {{ task.gatewayIp }}</span>
+        </div>
+        <div class="scan-progress__current">
+          正在扫描: {{ task.currentTarget || "—" }}
+        </div>
+        <div
+          v-if="task.subnets && task.subnets.length"
+          class="scan-progress__subnets"
+        >
+          子网：
+          <el-tag
+            v-for="s in task.subnets"
+            :key="s"
+            size="mini"
+            effect="plain"
+            class="subnet-tag"
+          >
+            {{ s }}
+          </el-tag>
+        </div>
+      </section-card>
+    </card-grid>
+
+    <!-- 扫描结果（当前任务，内部滚动）-->
+    <section-card
+      v-if="task"
+      dense
+      scrollable
+      body-class="dense-table fill"
+      class="row-result fill"
+      title="扫描结果"
+      icon="el-icon-data-board"
+    >
+      <template #extra>
+        <div class="result-toolbar">
+          <span v-if="unconfirmedCount > 0 && !showUnconfirmed" class="result-hint">
+            共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
+          </span>
+          <span v-else-if="visibleNodes.length" class="result-hint">共 {{ visibleNodes.length }} 个节点</span>
+          <el-switch
+            v-model="showUnconfirmed"
+            size="small"
+            :active-text="`显示未确认IP (${unconfirmedCount})`"
+            :disabled="unconfirmedCount === 0"
+          />
+          <el-switch v-model="buildTopology" size="small" active-text="构建拓扑" />
+          <el-button
+            size="small"
+            icon="el-icon-download"
+            :disabled="!selected.length || importing"
+            :loading="importing && importMode === 'selected'"
+            @click="doImport(false)"
+          >
+            导入选中 ({{ selected.length }})
+          </el-button>
+          <el-button
+            size="small"
+            type="primary"
+            icon="el-icon-folder-add"
+            :disabled="!visibleNodes.length || importing"
+            :loading="importing && importMode === 'all'"
+            @click="doImport(true)"
+          >
+            导入全部
+          </el-button>
+        </div>
+      </template>
+
+      <el-empty v-if="!visibleNodes.length" description="暂无扫描结果" :image-size="60" />
+      <el-table
+        v-else
+        ref="resultTable"
+        class="dense-table"
+        height="100%"
+        :data="visibleNodes"
+        size="small"
+        stripe
+        @selection-change="onSelectionChange"
+      >
+        <el-table-column type="selection" width="44" :selectable="isSelectable" />
+        <el-table-column prop="ip" label="IP" min-width="130" fixed>
+          <template slot-scope="{ row }">
+            <span class="mono">{{ row.ip || "-" }}</span>
+            <el-tag v-if="row.gateway" size="mini" effect="plain" class="gw-tag">网关</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="确认" width="120">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" effect="light" :type="row.exists ? 'success' : 'info'">
+              {{ row.exists ? "设备" : "未确认" }}
+            </el-tag>
             <el-tag
-              v-for="(s, i) in localSubnets"
-              :key="i"
+              v-if="row.imported"
               size="mini"
-              effect="plain"
-              class="subnet-tag"
+              effect="light"
+              type="primary"
+              class="imported-tag"
             >
-              {{ subnetText(s) }}
+              已导入
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hostname" label="主机名" min-width="150">
+          <template slot-scope="{ row }">{{ row.hostname || row.snmpSysName || "-" }}</template>
+        </el-table-column>
+        <el-table-column prop="mac" label="MAC" min-width="140">
+          <template slot-scope="{ row }">
+            <span class="mono">{{ row.mac || "-" }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="设备类型" width="120">
+          <template slot-scope="{ row }">
+            <el-tag size="small" :type="classTagType(row.deviceClass)" effect="light">
+              {{ row.deviceClass || "未知" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="os" label="操作系统" min-width="130">
+          <template slot-scope="{ row }">{{ row.os || "-" }}</template>
+        </el-table-column>
+        <el-table-column prop="vendor" label="厂商" min-width="110">
+          <template slot-scope="{ row }">{{ row.vendor || "-" }}</template>
+        </el-table-column>
+        <el-table-column label="开放端口" min-width="150">
+          <template slot-scope="{ row }">
+            <span class="mono ports">{{ fmtPorts(row.openPorts) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="RTT" width="90" align="center">
+          <template slot-scope="{ row }">{{ row.rttMs == null ? "-" : num1(row.rttMs) + " ms" }}</template>
+        </el-table-column>
+      </el-table>
+    </section-card>
+
+    <!-- 最近任务（内部滚动）-->
+    <section-card
+      dense
+      scrollable
+      :class="['row-recent', { fill: !task }]"
+      title="最近任务"
+      icon="el-icon-time"
+    >
+      <template #extra>共 {{ tasks.length }} 个</template>
+      <el-empty v-if="!tasks.length" description="暂无任务" :image-size="60" />
+      <ul v-else class="task-list">
+        <li
+          v-for="t in tasks"
+          :key="t.taskId"
+          class="task-list__item"
+          @click="loadTask(t.taskId)"
+        >
+          <div class="task-list__top">
+            <span class="mono">{{ t.cidr }}</span>
+            <el-tag size="mini" :type="statusTagType(t.status)" effect="light">
+              {{ statusLabel(t.status) }}
             </el-tag>
           </div>
-
-          <div v-if="autoJob.status" class="auto-job">
-            <div class="auto-job__head">
-              <span class="auto-job__title">自动发现进度</span>
-              <el-tag
-                size="mini"
-                effect="light"
-                :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
-              >
-                {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
-              </el-tag>
-            </div>
-            <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
-            <el-progress
-              :percentage="autoJob.progress || 0"
-              :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : undefined"
-              :stroke-width="14"
-            />
-            <div
-              v-if="autoJob.found != null || autoJob.currentTarget"
-              class="auto-job__live"
-            >
-              <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
-              <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
-            </div>
-            <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
-              网段：
-              <el-tag
-                v-for="(s, i) in autoJob.subnets"
-                :key="i"
-                size="mini"
-                effect="plain"
-                class="subnet-tag"
-              >
-                {{ subnetText(s) }}
-              </el-tag>
-            </div>
+          <div class="task-list__sub">
+            {{ t.name || "未命名" }} · 发现 {{ num0(t.found) }} ·
+            {{ fmtTime(t.gmtCreate) }}
           </div>
-
-          <div v-if="task" class="scan-progress">
-            <div class="scan-progress__head">
-              <span class="mono">{{ task.cidr }}</span>
-              <el-tag size="mini" :type="statusTagType(task.status)" effect="light">
-                {{ statusLabel(task.status) }}
-              </el-tag>
-            </div>
-            <el-progress
-              :percentage="progressPct"
-              :status="task.status === 'done' ? 'success' : undefined"
-              :stroke-width="14"
-            />
-            <div class="scan-progress__meta">
-              已探测 {{ num0(task.progress) }} / {{ num0(task.total) }}
-              · 发现 {{ num0(task.found) }}
-              <span v-if="task.gatewayIp"> · 网关 {{ task.gatewayIp }}</span>
-            </div>
-            <div class="scan-progress__current">
-              正在扫描: {{ task.currentTarget || "—" }}
-            </div>
-            <div
-              v-if="task.subnets && task.subnets.length"
-              class="scan-progress__subnets"
-            >
-              子网：
-              <el-tag
-                v-for="s in task.subnets"
-                :key="s"
-                size="mini"
-                effect="plain"
-                class="subnet-tag"
-              >
-                {{ s }}
-              </el-tag>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="最近任务" icon="el-icon-time">
-          <template #extra>共 {{ tasks.length }} 个</template>
-          <el-empty v-if="!tasks.length" description="暂无任务" :image-size="60" />
-          <ul v-else class="task-list">
-            <li
-              v-for="t in tasks"
-              :key="t.taskId"
-              class="task-list__item"
-              @click="loadTask(t.taskId)"
-            >
-              <div class="task-list__top">
-                <span class="mono">{{ t.cidr }}</span>
-                <el-tag size="mini" :type="statusTagType(t.status)" effect="light">
-                  {{ statusLabel(t.status) }}
-                </el-tag>
-              </div>
-              <div class="task-list__sub">
-                {{ t.name || "未命名" }} · 发现 {{ num0(t.found) }} ·
-                {{ fmtTime(t.gmtCreate) }}
-              </div>
-            </li>
-          </ul>
-        </SectionCard>
-      </el-col>
-
-      <!-- 右侧：扫描结果 -->
-      <el-col :xs="24" :lg="17">
-        <SectionCard title="扫描结果" icon="el-icon-data-board">
-          <template #extra>
-            <span v-if="unconfirmedCount > 0 && !showUnconfirmed" class="result-hint">
-              共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
-            </span>
-            <span v-else-if="visibleNodes.length">共 {{ visibleNodes.length }} 个节点</span>
-          </template>
-
-          <div class="result-bar">
-            <div class="result-bar__left">
-              <el-switch
-                v-model="showUnconfirmed"
-                :active-text="`显示未确认IP (${unconfirmedCount})`"
-                :disabled="unconfirmedCount === 0"
-              />
-              <el-switch
-                v-model="buildTopology"
-                active-text="构建拓扑"
-              />
-            </div>
-            <div class="result-bar__right">
-              <el-button
-                size="small"
-                icon="el-icon-download"
-                :disabled="!selected.length || importing"
-                :loading="importing && importMode === 'selected'"
-                @click="doImport(false)"
-              >
-                导入选中 ({{ selected.length }})
-              </el-button>
-              <el-button
-                size="small"
-                type="primary"
-                icon="el-icon-folder-add"
-                :disabled="!visibleNodes.length || importing"
-                :loading="importing && importMode === 'all'"
-                @click="doImport(true)"
-              >
-                导入全部
-              </el-button>
-            </div>
-          </div>
-
-          <el-empty v-if="!visibleNodes.length" description="暂无扫描结果" />
-          <el-table
-            v-else
-            ref="resultTable"
-            :data="visibleNodes"
-            size="small"
-            stripe
-            height="100%"
-            @selection-change="onSelectionChange"
-          >
-            <el-table-column type="selection" width="44" :selectable="isSelectable" />
-            <el-table-column prop="ip" label="IP" min-width="130" fixed>
-              <template slot-scope="{ row }">
-                <span class="mono">{{ row.ip || "-" }}</span>
-                <el-tag v-if="row.gateway" size="mini" effect="plain" class="gw-tag">网关</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="确认" width="120">
-              <template slot-scope="{ row }">
-                <el-tag size="mini" effect="light" :type="row.exists ? 'success' : 'info'">
-                  {{ row.exists ? "设备" : "未确认" }}
-                </el-tag>
-                <el-tag
-                  v-if="row.imported"
-                  size="mini"
-                  effect="light"
-                  type="primary"
-                  class="imported-tag"
-                >
-                  已导入
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="hostname" label="主机名" min-width="150">
-              <template slot-scope="{ row }">{{ row.hostname || row.snmpSysName || "-" }}</template>
-            </el-table-column>
-            <el-table-column prop="mac" label="MAC" min-width="140">
-              <template slot-scope="{ row }">
-                <span class="mono">{{ row.mac || "-" }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="设备类型" width="120">
-              <template slot-scope="{ row }">
-                <el-tag size="small" :type="classTagType(row.deviceClass)" effect="light">
-                  {{ row.deviceClass || "未知" }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="os" label="操作系统" min-width="130">
-              <template slot-scope="{ row }">{{ row.os || "-" }}</template>
-            </el-table-column>
-            <el-table-column prop="vendor" label="厂商" min-width="110">
-              <template slot-scope="{ row }">{{ row.vendor || "-" }}</template>
-            </el-table-column>
-            <el-table-column label="开放端口" min-width="150">
-              <template slot-scope="{ row }">
-                <span class="mono ports">{{ fmtPorts(row.openPorts) }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="RTT" width="90" align="center">
-              <template slot-scope="{ row }">{{ row.rttMs == null ? "-" : num1(row.rttMs) + " ms" }}</template>
-            </el-table-column>
-          </el-table>
-        </SectionCard>
-      </el-col>
-    </el-row>
-  </div>
+        </li>
+      </ul>
+    </section-card>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
   startDiscoveryScan,
@@ -292,7 +325,7 @@ const CLASS_TAG = {
 
 export default {
   name: "MonitorDiscovery",
-  components: { SectionCard },
+  components: { ScreenPage, CardGrid, SectionCard },
   data() {
     return {
       cidr: "",
@@ -579,20 +612,50 @@ export default {
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-/* 独立页：自然高度，由 layout-main 滚动，避免堆叠 SectionCard(height:100%) 被拉伸留白 */
-.discovery-page {
+.scan-form {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+  flex-wrap: wrap;
+
+  &__cidr {
+    width: 200px;
+  }
+
+  &__name {
+    width: 160px;
+  }
+}
+
+.row-meta {
+  flex-shrink: 0;
+}
+
+// 有当前任务时：结果表占据剩余空间内部滚动；最近任务给一个有上限的紧凑高度
+.row-result {
+  flex: 1;
   min-height: 0;
 }
+.row-recent {
+  flex-shrink: 0;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+// 无当前任务时，最近任务占满剩余空间（由模板 :class fill 控制）
+.row-recent.fill {
+  flex: 1;
+  max-height: none;
+}
+
 .mono {
   font-family: monospace;
   color: var(--cm-text-primary, @text-primary);
 }
 .scan-progress {
-  margin-top: 8px;
   &__head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 8px;
   }
   &__meta {
@@ -614,23 +677,7 @@ export default {
 .subnet-tag {
   margin: 2px 4px 2px 0;
 }
-.local-subnets {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--cm-text-secondary, @text-secondary);
-}
 .auto-job {
-  margin-top: 12px;
-  &__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  &__title {
-    font-size: 13px;
-    color: var(--cm-text-primary, @text-primary);
-  }
   &__phase {
     margin-bottom: 8px;
     font-size: 13px;
@@ -653,10 +700,10 @@ export default {
   margin: 0;
   padding: 0;
   &__item {
-    padding: 10px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--cm-border-light, @border-light);
     border-radius: @radius-base;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     cursor: pointer;
     &:hover {
       background: var(--cm-bg-soft, @bg-soft);
@@ -673,20 +720,11 @@ export default {
     color: var(--cm-text-secondary, @text-secondary);
   }
 }
-.result-bar {
+.result-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  &__left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  &__right {
-    display: flex;
-    gap: 8px;
-  }
+  gap: @space-sm;
+  flex-wrap: wrap;
 }
 .result-hint {
   font-size: 12px;

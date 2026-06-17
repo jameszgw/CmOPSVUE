@@ -1,84 +1,83 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-timer" label="慢日志总数" :value="d.total == null ? '-' : d.total"
-          sub="条记录" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-time" label="平均耗时" :value="d.avgTime || '-'"
-          :sub="avgSub" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-warning-outline" label="最大耗时" :value="d.maxTime || '-'"
-          :sub="maxSub" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-timer" label="慢日志总数" :value="d.total == null ? '-' : d.total"
+        sub="条记录" color="#409eff" />
+      <stat-card dense icon="el-icon-time" label="平均耗时" :value="d.avgTime || '-'"
+        :sub="avgSub" color="#e6a23c" />
+      <stat-card dense icon="el-icon-warning-outline" label="最大耗时" :value="d.maxTime || '-'"
+        :sub="maxSub" color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="慢日志列表" icon="el-icon-timer">
-      <template #extra>最近 {{ logCount }} 条记录</template>
-      <el-empty v-if="d.total === 0" description="暂无慢日志记录" />
-      <div v-for="(log, i) in d.logs || []" :key="log.id" class="log-card">
-        <div class="log-card__head">
-          <span class="log-card__seq">#{{ i + 1 }}</span>
-          <span class="log-card__id">ID: <b>{{ log.id }}</b></span>
-          <span class="log-card__time"><i class="el-icon-time"></i> {{ log.time }}</span>
-          <el-tag size="small" type="warning" effect="plain" class="log-card__cost">
-            {{ log.costMs }}
-          </el-tag>
-        </div>
-        <div class="log-card__cmd">
-          <div class="log-card__cmd-label">命令:</div>
-          <div class="log-card__cmd-text">{{ log.command }}</div>
-        </div>
-        <el-row :gutter="16" class="log-card__body">
-          <el-col :xs="24" :sm="12">
-            <div class="log-meta">
-              <div class="log-meta__title"><i class="el-icon-user"></i> 客户端信息</div>
-              <div class="log-meta__row">
-                <span class="log-meta__label">IP:</span>
-                <span class="log-meta__value">{{ log.clientIp || "-" }}</span>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense scrollable class="fill" body-class="fill"
+        title="慢日志列表" icon="el-icon-timer">
+        <template #extra>最近 {{ logCount }} 条记录</template>
+        <el-empty v-if="d.total === 0" description="暂无慢日志记录" />
+        <div v-for="(log, i) in d.logs || []" :key="log.id" class="log-card">
+          <div class="log-card__head">
+            <span class="log-card__seq">#{{ i + 1 }}</span>
+            <span class="log-card__id">ID: <b>{{ log.id }}</b></span>
+            <span class="log-card__time"><i class="el-icon-time"></i> {{ log.time }}</span>
+            <el-tag size="small" type="warning" effect="plain" class="log-card__cost">
+              {{ log.costMs }}
+            </el-tag>
+          </div>
+          <div class="log-card__cmd">
+            <div class="log-card__cmd-label">命令:</div>
+            <div class="log-card__cmd-text">{{ log.command }}</div>
+          </div>
+          <el-row :gutter="16" class="log-card__body">
+            <el-col :xs="24" :sm="12">
+              <div class="log-meta">
+                <div class="log-meta__title"><i class="el-icon-user"></i> 客户端信息</div>
+                <div class="log-meta__row">
+                  <span class="log-meta__label">IP:</span>
+                  <span class="log-meta__value">{{ log.clientIp || "-" }}</span>
+                </div>
+                <div class="log-meta__row">
+                  <span class="log-meta__label">名称:</span>
+                  <span class="log-meta__value">{{ log.clientName || "未命名" }}</span>
+                </div>
               </div>
-              <div class="log-meta__row">
-                <span class="log-meta__label">名称:</span>
-                <span class="log-meta__value">{{ log.clientName || "未命名" }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12">
+              <div class="log-meta">
+                <div class="log-meta__title"><i class="el-icon-data-line"></i> 耗时占比</div>
+                <div class="log-meta__ratio-label">相对最大值:</div>
+                <el-progress :percentage="clamp(log.ratio)" :stroke-width="8"
+                  :color="ratioColor(log.ratio)" />
               </div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="12">
-            <div class="log-meta">
-              <div class="log-meta__title"><i class="el-icon-data-line"></i> 耗时占比</div>
-              <div class="log-meta__ratio-label">相对最大值:</div>
-              <el-progress :percentage="clamp(log.ratio)" :stroke-width="8"
-                :color="ratioColor(log.ratio)" />
+            </el-col>
+          </el-row>
+        </div>
+      </section-card>
+
+      <section-card dense scrollable class="fill" body-class="fill"
+        title="慢日志说明" icon="el-icon-data-line">
+        <el-row :gutter="16">
+          <el-col v-for="f in logDesc" :key="f.label" :xs="24" :sm="12">
+            <div class="log-desc">
+              <div class="log-desc__label">{{ f.label }}</div>
+              <div class="log-desc__text">{{ f.text }}</div>
             </div>
           </el-col>
         </el-row>
-      </div>
-    </SectionCard>
-
-    <SectionCard title="慢日志说明" icon="el-icon-data-line">
-      <el-row :gutter="16">
-        <el-col v-for="f in logDesc" :key="f.label" :xs="24" :sm="12" :lg="8">
-          <div class="log-desc">
-            <div class="log-desc__label">{{ f.label }}</div>
-            <div class="log-desc__text">{{ f.text }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisSlowlog } from "@/api/monitor-redis";
 
 export default {
   name: "RedisSlowLog",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -143,11 +142,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-content: stretch;
 }
 .log-card {
   border: 1px solid var(--cm-border-light, @border-light);

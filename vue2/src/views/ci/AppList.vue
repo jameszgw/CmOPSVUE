@@ -1,21 +1,27 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">应用中心</h2>
-    <el-card>
-      <el-form :inline="true" :model="queryForm" class="filter-form" @submit.native.prevent="handleSearch">
-        <el-form-item label="应用名称">
+  <screen-page title="应用中心" gap="8px">
+    <template #header-extra>
+      <el-form
+        :inline="true"
+        :model="queryForm"
+        class="filter-form"
+        @submit.native.prevent="handleSearch"
+      >
+        <el-form-item>
           <el-input
             v-model="queryForm.appName"
-            placeholder="请输入应用名称"
-            style="width: 140px"
+            placeholder="应用名称"
+            style="width: 130px"
+            size="small"
             clearable
           />
         </el-form-item>
-        <el-form-item label="部门">
+        <el-form-item>
           <el-select
             v-model="queryForm.department"
-            placeholder="请选择部门"
-            style="width: 140px"
+            placeholder="部门"
+            style="width: 120px"
+            size="small"
             clearable
           >
             <el-option
@@ -26,11 +32,12 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="开发语言">
+        <el-form-item>
           <el-select
             v-model="queryForm.language"
-            placeholder="请选择开发语言"
-            style="width: 140px"
+            placeholder="开发语言"
+            style="width: 120px"
+            size="small"
             clearable
           >
             <el-option label="Java" value="java" />
@@ -38,16 +45,31 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" size="small" native-type="submit">查询</el-button>
+          <el-button size="small" @click="handleReset">重置</el-button>
+          <el-button type="primary" size="small" @click="createAppDrawerVisible = true">
+            创建应用
+          </el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <div class="toolbar">
-        <el-button type="primary" @click="createAppDrawerVisible = true">创建应用</el-button>
-      </div>
-
-      <el-table :data="appPage.items" row-key="appId" border>
+    <section-card
+      dense
+      scrollable
+      body-class="dense-table fill"
+      class="fill"
+      title="应用列表"
+      icon="el-icon-menu"
+    >
+      <el-table
+        class="dense-table"
+        height="100%"
+        :data="appPage.items"
+        row-key="appId"
+        size="small"
+        border
+      >
         <el-table-column label="应用名称" prop="appName" min-width="140">
           <template slot-scope="{ row }">
             <a class="link" @click="handleView(row)">{{ row.appName }}</a>
@@ -61,7 +83,7 @@
         <el-table-column label="开发模式" prop="developMode" min-width="90" />
         <el-table-column label="状态" width="90">
           <template slot-scope="{ row }">
-            <el-tag :type="row.status === '0' ? 'success' : 'danger'">
+            <el-tag :type="row.status === '0' ? 'success' : 'danger'" size="small">
               {{ row.status === "0" ? "正常" : "停用" }}
             </el-tag>
           </template>
@@ -72,34 +94,36 @@
           </template>
         </el-table-column>
       </el-table>
+    </section-card>
 
-      <el-pagination
-        class="pagination"
-        layout="total, sizes, prev, pager, next"
-        :total="appPage.total"
-        :current-page="pagination.pageNo"
-        :page-size="pagination.pageSize"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
+    <el-pagination
+      class="pagination"
+      layout="total, sizes, prev, pager, next"
+      :total="appPage.total"
+      :current-page="pagination.pageNo"
+      :page-size="pagination.pageSize"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
 
-      <CreateAppDrawer
-        :visible="createAppDrawerVisible"
-        :departments="departments"
-        @close="createAppDrawerVisible = false"
-        @created="getAppList"
-      />
-    </el-card>
-  </div>
+    <CreateAppDrawer
+      :visible="createAppDrawerVisible"
+      :departments="departments"
+      @close="createAppDrawerVisible = false"
+      @created="getAppList"
+    />
+  </screen-page>
 </template>
 
 <script>
 import { pageAppList, getDepartments } from "@/api/app";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateAppDrawer from "./components/CreateAppDrawer.vue";
 
 export default {
   name: "AppList",
-  components: { CreateAppDrawer },
+  components: { ScreenPage, SectionCard, CreateAppDrawer },
   data() {
     return {
       pagination: { pageNo: 1, pageSize: 10 },
@@ -150,23 +174,19 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 600;
-}
 .filter-form {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
 }
-.toolbar {
-  margin-bottom: 16px;
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
 }
 .link {
   color: #409eff;
   cursor: pointer;
 }
 .pagination {
-  margin-top: 16px;
+  flex-shrink: 0;
   text-align: right;
 }
 </style>

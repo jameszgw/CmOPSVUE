@@ -1,47 +1,34 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="CNI 丢包率"
-          :value="`${num(network.packetLossPct)}%`"
-          :color="rateColor(network.packetLossPct)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-picture-outline" label="镜像拉取失败率"
-          :value="`${num(imagePull.failureRatePct)}%`"
-          :color="rateColor(imagePull.failureRatePct)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-files" label="PV"
-          :value="`${val(storage.pvBound)} / ${val(storage.pvTotal)}`"
-          sub="已绑定 / 总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-folder-opened" label="PVC"
-          :value="`${val(storage.pvcBound)} / ${val(storage.pvcTotal)}`"
-          sub="已绑定 / 总数" color="#67c23a" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-connection" label="CNI 丢包率"
+        :value="`${num(network.packetLossPct)}%`"
+        :color="rateColor(network.packetLossPct)" />
+      <stat-card dense icon="el-icon-picture-outline" label="镜像拉取失败率"
+        :value="`${num(imagePull.failureRatePct)}%`"
+        :color="rateColor(imagePull.failureRatePct)" />
+      <stat-card dense icon="el-icon-files" label="PV"
+        :value="`${val(storage.pvBound)} / ${val(storage.pvTotal)}`"
+        sub="已绑定 / 总数" color="#409eff" />
+      <stat-card dense icon="el-icon-folder-opened" label="PVC"
+        :value="`${val(storage.pvcBound)} / ${val(storage.pvcTotal)}`"
+        sub="已绑定 / 总数" color="#67c23a" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="网络" icon="el-icon-connection">
-          <InfoTable :rows="networkRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="镜像拉取" icon="el-icon-picture-outline">
-          <InfoTable :rows="imagePullRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid min="320px" gap="8px" class="sub-grid">
+      <section-card dense title="网络" icon="el-icon-connection">
+        <InfoTable :rows="networkRows" />
+      </section-card>
+      <section-card dense title="镜像拉取" icon="el-icon-picture-outline">
+        <InfoTable :rows="imagePullRows" />
+      </section-card>
+      <section-card dense title="存储概况" icon="el-icon-files">
+        <InfoTable :rows="storageRows" :columns="2" />
+      </section-card>
+    </card-grid>
 
-    <SectionCard title="存储概况" icon="el-icon-files">
-      <InfoTable :rows="storageRows" :columns="2" />
-    </SectionCard>
-
-    <SectionCard title="卷列表" icon="el-icon-folder">
-      <el-table :data="storage.volumes || []" size="small" stripe>
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="卷列表" icon="el-icon-folder">
+      <el-table :data="storage.volumes || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="180" />
         <el-table-column prop="namespace" label="命名空间" width="140" />
         <el-table-column label="状态" width="110">
@@ -56,19 +43,20 @@
           <template slot-scope="{ row }">{{ num(row.latencyMs) }} ms</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getK8sNetStorage } from "@/api/monitor-k8s";
 
 export default {
   name: "K8sNetStorage",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -166,16 +154,20 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
-.tab-pane {
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
   /deep/ .status-tag {
     border: none;
     color: var(--cm-bg-card, @bg-card);
   }
+}
+.kpi-grid,
+.sub-grid {
+  flex-shrink: 0;
 }
 </style>

@@ -1,21 +1,15 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-bell" label="事件总数"
-          :value="val(d.total)" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-warning-outline" label="警告"
-          :value="val(d.warningCount)" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-success" label="正常"
-          :value="val(d.normalCount)" color="#67c23a" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-bell" label="事件总数"
+        :value="val(d.total)" color="#409eff" />
+      <stat-card dense icon="el-icon-warning-outline" label="警告"
+        :value="val(d.warningCount)" color="#e6a23c" />
+      <stat-card dense icon="el-icon-success" label="正常"
+        :value="val(d.normalCount)" color="#67c23a" />
+    </card-grid>
 
-    <SectionCard title="事件列表" icon="el-icon-tickets">
+    <section-card dense scrollable class="fill" body-class="dense-table fill" title="事件列表" icon="el-icon-tickets">
       <template #extra>
         <el-select v-model="eventFilter" size="mini" placeholder="全部" style="width: 120px">
           <el-option label="全部" value="" />
@@ -24,7 +18,7 @@
         </el-select>
       </template>
 
-      <el-table v-if="filteredEvents.length" :data="filteredEvents" size="small" stripe>
+      <el-table v-if="filteredEvents.length" :data="filteredEvents" size="small" stripe class="dense-table" height="100%">
         <el-table-column label="类型" width="110">
           <template slot-scope="{ row }">
             <el-tag size="small" :type="row.type === 'Warning' ? 'warning' : 'info'"
@@ -39,19 +33,20 @@
         <el-table-column prop="lastTime" label="最近时间" width="180" />
       </el-table>
       <el-empty v-else description="暂无事件" />
-    </SectionCard>
+    </section-card>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getK8sEvents } from "@/api/monitor-k8s";
 
 export default {
   name: "K8sEvents",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -97,10 +92,15 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 </style>

@@ -1,32 +1,29 @@
 <template>
-  <div class="page-container">
-    <h2 class="title">主机管理</h2>
-    <el-row :gutter="16">
-      <el-col :span="4">
+  <screen-page title="主机管理" gap="8px">
+    <template #header-extra>
+      <el-form inline size="mini" :model="searchForm" class="filter-form" @submit.native.prevent>
+        <el-form-item label="实例名称">
+          <el-input v-model="searchForm.name" placeholder="请输入实例名称" clearable style="width: 150px" />
+        </el-form-item>
+        <el-form-item label="主机名称">
+          <el-input v-model="searchForm.hostName" placeholder="请输入主机名称" clearable style="width: 150px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSearch">查询</el-button>
+          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="handleCreateHostDrawer">新增主机</el-button>
+        </el-form-item>
+      </el-form>
+    </template>
+
+    <div class="two-pane fill">
+      <section-card dense scrollable body-class="fill" class="pane-side" title="主机分组" icon="el-icon-files">
         <host-group-tree :data="hostGroups" @group-select="handleGroupSelect" />
-      </el-col>
-      <el-col :span="20">
-        <el-card shadow="never">
-          <el-form inline :model="searchForm" @submit.native.prevent>
-            <el-form-item label="实例名称">
-              <el-input v-model="searchForm.name" placeholder="请输入实例名称" />
-            </el-form-item>
-            <el-form-item label="主机名称">
-              <el-input v-model="searchForm.hostName" placeholder="请输入主机名称" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" style="margin-right: 8px" @click="onSearch">
-                查询
-              </el-button>
-              <el-button @click="onReset">重置</el-button>
-            </el-form-item>
-          </el-form>
+      </section-card>
 
-          <el-button type="primary" style="margin-bottom: 16px" @click="handleCreateHostDrawer">
-            新增主机
-          </el-button>
-
-          <el-table :data="hostPage.items" row-key="hostId" style="width: 100%">
+      <section-card dense body-class="pane-main-body" class="pane-main" title="主机列表" icon="el-icon-cpu">
+        <div class="table-wrap dense-table fill">
+          <el-table class="dense-table" height="100%" :data="hostPage.items" row-key="hostId" size="small" stripe style="width: 100%">
             <el-table-column prop="name" label="实例名称" />
             <el-table-column prop="hostName" label="主机名称" />
             <el-table-column prop="serverAddr" label="服务地址" />
@@ -56,19 +53,18 @@
               </template>
             </el-table-column>
           </el-table>
-
-          <el-pagination
-            style="margin-top: 12px; text-align: right"
-            layout="total, prev, pager, next, sizes"
-            :total="hostPage.total"
-            :current-page="pagination.pageNo"
-            :page-size="pagination.pageSize"
-            @current-change="handlePageChange"
-            @size-change="handleSizeChange"
-          />
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+        <el-pagination
+          class="pane-pagination"
+          layout="total, prev, pager, next, sizes"
+          :total="hostPage.total"
+          :current-page="pagination.pageNo"
+          :page-size="pagination.pageSize"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </section-card>
+    </div>
 
     <!-- 新增和编辑主机的抽屉 -->
     <el-drawer
@@ -98,10 +94,12 @@
       :modal-host="modalHost"
       @close="closeTerminal"
     />
-  </div>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import HostGroupTree from "./components/HostGroupTree.vue";
 import CreateHostForm from "./components/CreateHostForm.vue";
 import SingleTerminalComponent from "./components/SingleTerminalComponent.vue";
@@ -120,6 +118,8 @@ import { fetchProxies } from "@/api/proxy";
 export default {
   name: "HostList",
   components: {
+    ScreenPage,
+    SectionCard,
     HostGroupTree,
     CreateHostForm,
     SingleTerminalComponent,
@@ -289,7 +289,41 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(121, 124, 242);
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
+
+.two-pane {
+  display: flex;
+  gap: 8px;
+  min-height: 0;
+}
+.pane-side {
+  width: 240px;
+  flex-shrink: 0;
+}
+.pane-main {
+  flex: 1;
+  min-width: 0;
+}
+
+// 主体填满，表格占据剩余高度内部滚动，分页固定在底部
+.pane-main /deep/ .pane-main-body {
+  display: flex;
+  flex-direction: column;
+}
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+.pane-pagination {
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 8px;
 }
 </style>

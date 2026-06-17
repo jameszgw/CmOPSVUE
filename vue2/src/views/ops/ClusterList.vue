@@ -1,19 +1,20 @@
 <template>
-  <div class="page-container">
-    <h2 class="title">集群管理</h2>
-    <el-card shadow="never">
-      <el-button type="primary" style="margin-bottom: 16px" @click="handleCreateClusterDrawer">
+  <screen-page title="集群管理" gap="8px">
+    <template #header-extra>
+      <el-button type="primary" size="mini" icon="el-icon-plus" @click="handleCreateClusterDrawer">
         新增集群
       </el-button>
+    </template>
 
-      <create-cluster-drawer
-        :create-cluster-visible="createClusterVisible"
-        @submit="handleCreateCluster"
-        @connect="connectCluster"
-        @close="handleCreateClusterDrawer"
-      />
+    <create-cluster-drawer
+      :create-cluster-visible="createClusterVisible"
+      @submit="handleCreateCluster"
+      @connect="connectCluster"
+      @close="handleCreateClusterDrawer"
+    />
 
-      <el-table :data="pagedClusterList" row-key="clusterId" style="width: 100%">
+    <section-card dense scrollable body-class="dense-table fill" class="fill" title="集群列表" icon="el-icon-s-grid">
+      <el-table class="dense-table" height="100%" :data="pagedClusterList" row-key="clusterId" size="small" stripe style="width: 100%">
         <el-table-column prop="clusterName" label="集群名称" />
         <el-table-column prop="version" label="版本" />
         <el-table-column prop="clusterType" label="集群类型" />
@@ -38,26 +39,30 @@
         </el-table-column>
         <el-table-column label="操作" />
       </el-table>
+    </section-card>
 
-      <el-pagination
-        style="margin-top: 12px; text-align: right"
-        layout="total, prev, pager, next"
-        :total="clusterList.length"
-        :current-page="pageNo"
-        :page-size="10"
-        @current-change="(page) => (pageNo = page)"
-      />
-    </el-card>
-  </div>
+    <el-pagination
+      class="page-pagination"
+      layout="total, prev, pager, next"
+      :total="clusterList.length"
+      :current-page="pageNo"
+      :page-size="10"
+      @current-change="(page) => (pageNo = page)"
+    />
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateClusterDrawer from "./components/CreateClusterDrawer.vue";
 import { listAll, createCluster, connect } from "@/api/cluster";
 
 export default {
   name: "ClusterList",
   components: {
+    ScreenPage,
+    SectionCard,
     CreateClusterDrawer,
   },
   data() {
@@ -110,7 +115,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(160, 242, 121);
+.page-pagination {
+  flex-shrink: 0;
+  text-align: right;
 }
 </style>

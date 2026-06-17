@@ -1,121 +1,109 @@
 <template>
-  <div v-loading="loading" class="page-container">
-    <!-- ① 健康评分 + 4 统计卡 -->
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :lg="8">
-        <SectionCard title="系统健康评分" icon="el-icon-odometer">
-          <template #extra>{{ healthLevelText }}</template>
-          <div ref="gaugeRef" class="gauge-chart"></div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="16">
-        <el-row :gutter="12">
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-cpu" label="设备总数" :value="num(deviceStats.total)"
-              :sub="`在线 ${num(deviceStats.online)} / 离线 ${num(deviceStats.offline)}`" color="#409eff" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-success" label="在线设备" :value="num(deviceStats.online)"
-              :sub="`共 ${num(deviceStats.total)} 台`" color="#67c23a" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-bell" label="活跃告警" :value="num(alertStats.active)"
-              :sub="`严重 ${num(alertStats.critical)} / 警告 ${num(alertStats.warning)}`" color="#e6a23c" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-warning" label="严重告警" :value="num(alertStats.critical)"
-              :sub="`警告 ${num(alertStats.warning)}`" color="#f56c6c" />
-          </el-col>
-        </el-row>
-        <div class="source-row">
-          <span class="source-row__label">采集来源：</span>
-          <el-tag type="success" size="mini">真实采集 {{ deviceStats.agentCount || 0 }}</el-tag>
-          <el-tag type="info" size="mini">模拟数据 {{ deviceStats.simulatedCount || 0 }}</el-tag>
-        </div>
-      </el-col>
-    </el-row>
+  <screen-page v-loading="loading" title="监控总览" gap="8px">
+    <template #header-extra>
+      <div class="source-row">
+        <span class="source-row__label">采集来源：</span>
+        <el-tag type="success" size="mini">真实采集 {{ deviceStats.agentCount || 0 }}</el-tag>
+        <el-tag type="info" size="mini">模拟数据 {{ deviceStats.simulatedCount || 0 }}</el-tag>
+      </div>
+    </template>
 
-    <!-- ② 设备类型分布饼图 + 告警趋势折线 -->
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="设备类型分布" icon="el-icon-pie-chart">
-          <div ref="pieRef" class="dist-chart"></div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="告警趋势" icon="el-icon-data-line">
-          <div ref="trendRef" class="dist-chart"></div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <!-- 顶部统计卡 -->
+    <card-grid min="220px" gap="8px" class="row-stats">
+      <stat-card dense icon="el-icon-cpu" label="设备总数" :value="num(deviceStats.total)"
+        :sub="`在线 ${num(deviceStats.online)} / 离线 ${num(deviceStats.offline)}`" color="#409eff" />
+      <stat-card dense icon="el-icon-success" label="在线设备" :value="num(deviceStats.online)"
+        :sub="`共 ${num(deviceStats.total)} 台`" color="#67c23a" />
+      <stat-card dense icon="el-icon-bell" label="活跃告警" :value="num(alertStats.active)"
+        :sub="`严重 ${num(alertStats.critical)} / 警告 ${num(alertStats.warning)}`" color="#e6a23c" />
+      <stat-card dense icon="el-icon-warning" label="严重告警" :value="num(alertStats.critical)"
+        :sub="`警告 ${num(alertStats.warning)}`" color="#f56c6c" />
+    </card-grid>
 
-    <!-- ③ 资源水位概览 -->
-    <SectionCard title="资源水位概览" icon="el-icon-monitor">
-      <el-row :gutter="12">
-        <el-col v-for="r in resourceRows" :key="r.label" :xs="24" :sm="12" :lg="6">
-          <div class="res-item">
-            <div class="res-item__head">
-              <span class="res-item__label">{{ r.label }}</span>
-              <span class="res-item__value" :style="{ color: r.color }">{{ num1(r.value) }}%</span>
-            </div>
-            <el-progress :percentage="clamp(r.value)" :color="r.color" :stroke-width="10" :show-text="false" />
+    <!-- 图表行：健康评分 + 设备分布 + 告警趋势 -->
+    <card-grid min="300px" gap="8px" class="row-charts">
+      <section-card dense title="系统健康评分" icon="el-icon-odometer">
+        <template #extra>{{ healthLevelText }}</template>
+        <div ref="gaugeRef" class="gauge-chart"></div>
+      </section-card>
+      <section-card dense title="设备类型分布" icon="el-icon-pie-chart">
+        <div ref="pieRef" class="trend-chart"></div>
+      </section-card>
+      <section-card dense title="告警趋势" icon="el-icon-data-line">
+        <div ref="trendRef" class="trend-chart"></div>
+      </section-card>
+    </card-grid>
+
+    <!-- 资源水位概览 -->
+    <section-card dense title="资源水位概览" icon="el-icon-monitor" class="row-resource">
+      <card-grid min="200px" gap="8px">
+        <div v-for="r in resourceRows" :key="r.label" class="res-item">
+          <div class="res-item__head">
+            <span class="res-item__label">{{ r.label }}</span>
+            <span class="res-item__value" :style="{ color: r.color }">{{ num1(r.value) }}%</span>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+          <el-progress :percentage="clamp(r.value)" :color="r.color" :stroke-width="10" :show-text="false" />
+        </div>
+      </card-grid>
+    </section-card>
 
-    <!-- ④ 问题设备 Top -->
-    <SectionCard title="问题设备 Top" icon="el-icon-warning-outline">
-      <el-table :data="topProblems" size="small" stripe>
-        <el-table-column prop="deviceName" label="设备" min-width="160" />
-        <el-table-column label="类型" width="120">
-          <template slot-scope="{ row }">
-            <el-tag size="small" type="info" effect="plain">{{ typeLabel(row.type) }}</el-tag>
+    <!-- 表格行：问题设备 + 最近告警，并排各自内部滚动 -->
+    <card-grid min="360px" gap="8px" class="row-tables fill">
+      <section-card dense scrollable body-class="dense-table fill" class="fill"
+        title="问题设备 Top" icon="el-icon-warning-outline">
+        <el-table class="dense-table" height="100%" :data="topProblems" size="small" stripe>
+          <el-table-column prop="deviceName" label="设备" min-width="140" />
+          <el-table-column label="类型" width="100">
+            <template slot-scope="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ typeLabel(row.type) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="严重" width="80">
+            <template slot-scope="{ row }">
+              <span style="color: #f56c6c">{{ num(row.critical) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="警告" width="80">
+            <template slot-scope="{ row }">
+              <span style="color: #e6a23c">{{ num(row.warning) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="topIssue" label="主要问题" min-width="160" show-overflow-tooltip />
+          <template slot="empty">
+            <el-empty description="暂无问题设备" :image-size="60" />
           </template>
-        </el-table-column>
-        <el-table-column label="严重" width="100">
-          <template slot-scope="{ row }">
-            <span style="color: #f56c6c">{{ num(row.critical) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="警告" width="100">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ num(row.warning) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="topIssue" label="主要问题" min-width="200" />
-      </el-table>
-      <el-empty v-if="!topProblems.length" description="暂无问题设备" :image-size="80" />
-    </SectionCard>
+        </el-table>
+      </section-card>
 
-    <!-- ⑤ 最近告警 -->
-    <SectionCard title="最近告警" icon="el-icon-bell">
-      <el-table :data="recentAlerts" size="small" stripe>
-        <el-table-column label="级别" width="100">
-          <template slot-scope="{ row }">
-            <el-tag size="small" :type="row.level === 'critical' ? 'danger' : 'warning'">
-              {{ row.levelText || (row.level === 'critical' ? '严重' : '警告') }}
-            </el-tag>
+      <section-card dense scrollable body-class="dense-table fill" class="fill"
+        title="最近告警" icon="el-icon-bell">
+        <el-table class="dense-table" height="100%" :data="recentAlerts" size="small" stripe>
+          <el-table-column label="级别" width="80">
+            <template slot-scope="{ row }">
+              <el-tag size="small" :type="row.level === 'critical' ? 'danger' : 'warning'">
+                {{ row.levelText || (row.level === 'critical' ? '严重' : '警告') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="deviceName" label="设备" min-width="130" />
+          <el-table-column prop="metricLabel" label="指标" width="120" />
+          <el-table-column prop="message" label="描述" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="firstTime" label="首次时间" width="160" />
+          <template slot="empty">
+            <el-empty description="暂无告警" :image-size="60" />
           </template>
-        </el-table-column>
-        <el-table-column prop="deviceName" label="设备" min-width="140" />
-        <el-table-column prop="metricLabel" label="指标" width="140" />
-        <el-table-column label="描述" min-width="220">
-          <template slot-scope="{ row }">
-            <span>{{ row.message }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="firstTime" label="首次" width="180" />
-      </el-table>
-      <el-empty v-if="!recentAlerts.length" description="暂无告警" :image-size="80" />
-    </SectionCard>
-  </div>
+        </el-table>
+      </section-card>
+    </card-grid>
+  </screen-page>
 </template>
 
 <script>
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getDashboardSummary } from "@/api/monitor-dashboard";
@@ -140,7 +128,7 @@ const TYPE_LABEL = {
 export default {
   name: "MonitorDashboard",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard },
+  components: { ScreenPage, CardGrid, StatCard, SectionCard },
   data() {
     return {
       loading: false,
@@ -193,12 +181,15 @@ export default {
   mounted() {
     this.load();
     this.timer = setInterval(this.load, 5000);
+    this.resizeAll = this.resizeAll.bind(this);
+    window.addEventListener("resize", this.resizeAll);
   },
   beforeDestroy() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
+    window.removeEventListener("resize", this.resizeAll);
     Object.keys(this.charts).forEach((k) => {
       if (this.charts[k]) {
         this.charts[k].dispose();
@@ -218,6 +209,11 @@ export default {
     },
     typeLabel(t) {
       return TYPE_LABEL[t] || t || "-";
+    },
+    resizeAll() {
+      Object.keys(this.charts).forEach((k) => {
+        if (this.charts[k]) this.charts[k].resize();
+      });
     },
     async load() {
       this.loading = true;
@@ -355,42 +351,44 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
+
 .source-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: @space-sm;
   font-size: 13px;
 
   &__label {
     color: var(--cm-text-regular, @text-regular);
   }
 }
-.gauge-chart {
-  height: 240px;
+
+// 各区块默认不收缩；表格行占据剩余空间并内部滚动
+.row-stats,
+.row-charts,
+.row-resource {
+  flex-shrink: 0;
+}
+
+.row-tables {
+  flex: 1;
+  min-height: 0;
+}
+
+.gauge-chart,
+.trend-chart {
+  height: @chart-h-sm;
   width: 100%;
 }
-.dist-chart {
-  height: 260px;
-  width: 100%;
-}
+
 .res-item {
-  padding: 8px 0 16px;
+  padding: @space-xs @space-xs @space-sm;
 
   &__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: @space-sm;
   }
 
   &__label {
@@ -399,7 +397,7 @@ export default {
   }
 
   &__value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
   }
 

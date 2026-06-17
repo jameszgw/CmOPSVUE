@@ -1,18 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="API Server" icon="el-icon-cpu">
+  <div v-loading="loading" class="screen-tab">
+    <div class="main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense title="API Server" icon="el-icon-cpu">
           <template #extra>
             <el-tag size="small" :color="statusColor(apiserver.health)"
               effect="dark" class="status-tag">{{ apiserver.health || "-" }}</el-tag>
           </template>
           <InfoTable :rows="apiserverRows" />
-        </SectionCard>
-      </el-col>
+        </section-card>
 
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="etcd" icon="el-icon-coin">
+        <section-card dense title="etcd" icon="el-icon-coin">
           <template #extra>
             <el-tag size="small" :color="statusColor(etcd.health)"
               effect="dark" class="status-tag">{{ etcd.health || "-" }}</el-tag>
@@ -26,43 +24,38 @@
             <el-progress :percentage="clamp(etcd.dbSizeUsagePct)" :stroke-width="12"
               :color="usageColor(etcd.dbSizeUsagePct)" :show-text="false" />
           </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </section-card>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Scheduler" icon="el-icon-set-up">
+        <section-card dense title="Scheduler" icon="el-icon-set-up">
           <template #extra>
             <el-tag size="small" :color="statusColor(scheduler.health)"
               effect="dark" class="status-tag">{{ scheduler.health || "-" }}</el-tag>
           </template>
           <InfoTable :rows="schedulerRows" />
-        </SectionCard>
-      </el-col>
+        </section-card>
 
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Controller Manager" icon="el-icon-s-operation">
+        <section-card dense title="Controller Manager" icon="el-icon-s-operation">
           <template #extra>
             <el-tag size="small" :color="statusColor(controllerManager.health)"
               effect="dark" class="status-tag">{{ controllerManager.health || "-" }}</el-tag>
           </template>
           <InfoTable :rows="controllerManagerRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getK8sControlPlane } from "@/api/monitor-k8s";
 
 export default {
   name: "K8sControlPlane",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -169,11 +162,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.tab-pane {
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
   /deep/ .status-tag {
     border: none;
     color: var(--cm-bg-card, @bg-card);
   }
+}
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .bar-block {
   margin-top: 16px;

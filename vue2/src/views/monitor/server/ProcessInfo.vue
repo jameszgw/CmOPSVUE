@@ -5,51 +5,44 @@
     <el-alert v-if="limited" type="warning" :closable="false" :title="limitNote"
       show-icon class="limit-alert" />
 
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-s-order" label="总进程数" :value="num(d.total)"
-          sub="系统进程总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-video-play" label="运行中" :value="num(d.running)"
-          sub="正在运行的进程" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-moon" label="休眠中" :value="num(d.sleeping)"
-          sub="休眠状态的进程" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="其他状态" :value="num(d.other)"
-          sub="停止/僵尸等状态" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="180px" gap="8px" class="kpi-row">
+      <StatCard dense icon="el-icon-s-order" label="总进程数" :value="num(d.total)"
+        sub="系统进程总数" color="#409eff" />
+      <StatCard dense icon="el-icon-video-play" label="运行中" :value="num(d.running)"
+        sub="正在运行的进程" color="#67c23a" />
+      <StatCard dense icon="el-icon-moon" label="休眠中" :value="num(d.sleeping)"
+        sub="休眠状态的进程" color="#909399" />
+      <StatCard dense icon="el-icon-warning-outline" label="其他状态" :value="num(d.other)"
+        sub="停止/僵尸等状态" color="#e6a23c" />
+    </CardGrid>
 
-    <SectionCard title="Top 进程（按CPU使用率排序）" icon="el-icon-s-order">
-      <el-table :data="d.topProcess || []" size="small" stripe>
-        <el-table-column prop="pid" label="PID" width="100" />
-        <el-table-column prop="name" label="进程名" />
-        <el-table-column label="CPU %" width="140">
-          <template slot-scope="{ row }">
-            <span style="color: #67c23a">{{ pct(row.cpu) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="内存 %" width="140">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ pct(row.mem) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="140">
-          <template slot-scope="{ row }">
-            <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="220" />
-      </el-table>
-    </SectionCard>
+    <div class="body-grid">
+      <SectionCard dense title="Top 进程（按CPU使用率排序）" icon="el-icon-s-order"
+        class="fill proc-card" body-class="dense-table fill" scrollable>
+        <el-table class="dense-table" :data="d.topProcess || []" height="100%" size="small" stripe>
+          <el-table-column prop="pid" label="PID" width="90" />
+          <el-table-column prop="name" label="进程名" />
+          <el-table-column label="CPU %" width="100">
+            <template slot-scope="{ row }">
+              <span style="color: #67c23a">{{ pct(row.cpu) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="内存 %" width="100">
+            <template slot-scope="{ row }">
+              <span style="color: #e6a23c">{{ pct(row.mem) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template slot-scope="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="180" />
+        </el-table>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="进程状态分布" icon="el-icon-pie-chart">
+      <div class="side-col">
+        <SectionCard dense title="进程状态分布" icon="el-icon-pie-chart">
           <div v-for="item in statusItems" :key="item.key" class="dist-row">
             <span class="dist-row__dot" :style="{ background: item.color }"></span>
             <span class="dist-row__label">{{ item.label }}</span>
@@ -61,9 +54,8 @@
             <span class="dist-total__value">{{ num(statusTotal) }}</span>
           </div>
         </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="资源使用排行" icon="el-icon-s-data">
+
+        <SectionCard dense title="资源使用排行" icon="el-icon-s-data" class="fill rank-card" scrollable>
           <div v-for="item in resourceRank" :key="item.pid" class="rank-item">
             <div class="rank-item__head">
               <span class="rank-item__badge" :class="'rank-item__badge--' + item.rank">{{ item.rank }}</span>
@@ -81,8 +73,8 @@
           </div>
           <el-empty v-if="!resourceRank.length" description="暂无数据" :image-size="80" />
         </SectionCard>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
     </template>
   </div>
 </template>
@@ -91,11 +83,12 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerProcess } from "@/api/monitor-server";
 
 export default {
   name: "ServerProcessInfo",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -166,19 +159,49 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
 }
 .limit-alert {
-  margin-bottom: 12px;
+  margin-bottom: @dense-gap;
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: @dense-gap;
+}
+.side-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
+}
+.proc-card {
+  min-height: 0;
+}
+.rank-card {
+  min-height: 0;
+}
+@media (max-width: 1100px) {
+  .body-grid {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
 }
 .dist-row {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--cm-bg-page, @bg-page);
 
   &__dot {
@@ -224,13 +247,13 @@ export default {
 .rank-item {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
 
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   &__badge {
     width: 20px;

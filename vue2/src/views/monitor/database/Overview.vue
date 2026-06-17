@@ -1,71 +1,55 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-share" label="连接使用率" :value="`${num(d.connUsage)}%`"
-          :percent="d.connUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="数据库大小" :value="dbSizeText"
-          :sub="storageSub" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-data-analysis" label="缓存命中率" :value="`${num(d.hitRate)}%`"
-          :percent="d.hitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="活动连接"
-          :value="d.activeConnections == null ? '-' : d.activeConnections"
-          sub="当前活动连接数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-share" label="连接使用率" :value="`${num(d.connUsage)}%`"
+        :percent="d.connUsage" color="#409eff" />
+      <stat-card dense icon="el-icon-coin" label="数据库大小" :value="dbSizeText"
+        :sub="storageSub" color="#909399" />
+      <stat-card dense icon="el-icon-data-analysis" label="缓存命中率" :value="`${num(d.hitRate)}%`"
+        :percent="d.hitRate" color="#67c23a" />
+      <stat-card dense icon="el-icon-odometer" label="活动连接"
+        :value="d.activeConnections == null ? '-' : d.activeConnections"
+        sub="当前活动连接数" color="#e6a23c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基本信息" icon="el-icon-info">
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense title="基本信息" icon="el-icon-info">
           <template #extra>
             <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
               {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
             </el-tag>
           </template>
           <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接信息" icon="el-icon-share">
+        </section-card>
+        <section-card dense title="连接信息" icon="el-icon-share">
           <InfoTable :rows="connectionRows" />
           <el-progress :percentage="clamp(connUsage)" :stroke-width="10"
             :color="usageColor(connUsage)" class="usage-bar" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="存储信息" icon="el-icon-coin">
+        </section-card>
+        <section-card dense title="存储信息" icon="el-icon-coin">
           <InfoTable :rows="storageRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="性能统计" icon="el-icon-data-line">
+        </section-card>
+        <section-card dense title="性能统计" icon="el-icon-data-line">
           <InfoTable :rows="performanceRows" />
           <el-progress :percentage="clamp(perfHitRate)" :stroke-width="10"
             :color="usageColor(perfHitRate)" class="usage-bar" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getDatabaseOverview } from "@/api/monitor-database";
 
 export default {
   name: "DatabaseOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -166,11 +150,21 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.screen-tab__main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .usage-bar {
   margin-top: 14px;

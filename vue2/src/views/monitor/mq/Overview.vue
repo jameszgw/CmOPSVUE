@@ -1,87 +1,77 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="Broker"
-          :value="`${num0(d.brokerOnline)} / ${num0(d.brokerTotal)}`"
-          :sub="`在线 ${num0(d.brokerOnline)} / 离线 ${num0(d.brokerOffline)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-collection" label="主题数"
-          :value="num0(d.topicCount)" :sub="`分区 ${num0(d.partitionCount)}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-upload" label="生产速率"
-          :value="`${num0(d.produceRate)} msg/s`" :sub="`消费 ${num0(d.consumeRate)} msg/s`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="消费积压"
-          :value="num0(d.totalLag)" :sub="`堆积 ${num0(d.messageBacklog)}`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-cpu" label="Broker"
+        :value="`${num0(d.brokerOnline)} / ${num0(d.brokerTotal)}`"
+        :sub="`在线 ${num0(d.brokerOnline)} / 离线 ${num0(d.brokerOffline)}`" color="#409eff" />
+      <stat-card dense icon="el-icon-collection" label="主题数"
+        :value="num0(d.topicCount)" :sub="`分区 ${num0(d.partitionCount)}`" color="#67c23a" />
+      <stat-card dense icon="el-icon-upload" label="生产速率"
+        :value="`${num0(d.produceRate)} msg/s`" :sub="`消费 ${num0(d.consumeRate)} msg/s`" color="#e6a23c" />
+      <stat-card dense icon="el-icon-warning-outline" label="消费积压"
+        :value="num0(d.totalLag)" :sub="`堆积 ${num0(d.messageBacklog)}`" color="#f56c6c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="el-icon-info">
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense title="基础信息" icon="el-icon-info">
           <template #extra>
             <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
               {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
             </el-tag>
           </template>
           <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="吞吐统计" icon="el-icon-data-line">
+        </section-card>
+        <section-card dense title="吞吐统计" icon="el-icon-data-line">
           <InfoTable :rows="throughputRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="健康状态" icon="el-icon-odometer">
-      <el-row :gutter="12">
-        <el-col :xs="12" :sm="6">
-          <div class="count-card">
-            <div class="count-card__value" :style="{ color: underReplColor }">{{ num0(d.underReplicated) }}</div>
-            <div class="count-card__label">副本不足分区</div>
+        </section-card>
+        <section-card dense title="健康状态" icon="el-icon-odometer">
+          <el-row :gutter="12">
+            <el-col :xs="12" :sm="6">
+              <div class="count-card">
+                <div class="count-card__value" :style="{ color: underReplColor }">{{ num0(d.underReplicated) }}</div>
+                <div class="count-card__label">副本不足分区</div>
+              </div>
+            </el-col>
+            <el-col :xs="12" :sm="6">
+              <div class="count-card">
+                <div class="count-card__value" :style="{ color: offlineColor }">{{ num0(d.offlinePartitions) }}</div>
+                <div class="count-card__label">离线分区</div>
+              </div>
+            </el-col>
+            <el-col :xs="12" :sm="6">
+              <div class="count-card">
+                <div class="count-card__value" style="color:#409eff">{{ num0(d.consumerGroupCount) }}</div>
+                <div class="count-card__label">消费组数</div>
+              </div>
+            </el-col>
+            <el-col :xs="12" :sm="6">
+              <div class="count-card">
+                <div class="count-card__value" style="color:#909399">{{ num0(d.totalMessages) }}</div>
+                <div class="count-card__label">总消息数</div>
+              </div>
+            </el-col>
+          </el-row>
+          <div class="bar-row">
+            <span class="bar-row__label">磁盘使用率</span>
+            <el-progress :percentage="clamp(d.diskUsagePct)" :stroke-width="14" :text-inside="true" :color="diskColor" />
           </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="count-card">
-            <div class="count-card__value" :style="{ color: offlineColor }">{{ num0(d.offlinePartitions) }}</div>
-            <div class="count-card__label">离线分区</div>
-          </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="count-card">
-            <div class="count-card__value" style="color:#409eff">{{ num0(d.consumerGroupCount) }}</div>
-            <div class="count-card__label">消费组数</div>
-          </div>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <div class="count-card">
-            <div class="count-card__value" style="color:#909399">{{ num0(d.totalMessages) }}</div>
-            <div class="count-card__label">总消息数</div>
-          </div>
-        </el-col>
-      </el-row>
-      <div class="bar-row">
-        <span class="bar-row__label">磁盘使用率</span>
-        <el-progress :percentage="clamp(d.diskUsagePct)" :stroke-width="14" :text-inside="true" :color="diskColor" />
-      </div>
-    </SectionCard>
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getMqOverview } from "@/api/monitor-mq";
 
 export default {
   name: "MqOverview",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -163,11 +153,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+  box-sizing: border-box;
+  &__main {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
 }
 .count-card {
   border: 1px solid var(--cm-border-light, @border-light);

@@ -1,23 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
-          :percent="hitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-data-line" label="事务提交"
-          :value="d.commits == null ? '-' : d.commits" sub="累计提交事务数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-data-analysis" label="事务回滚"
-          :value="d.rollbacks == null ? '-' : d.rollbacks" sub="累计回滚事务数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
+        :percent="hitRate" color="#67c23a" />
+      <stat-card dense icon="el-icon-data-line" label="事务提交"
+        :value="d.commits == null ? '-' : d.commits" sub="累计提交事务数" color="#409eff" />
+      <stat-card dense icon="el-icon-data-analysis" label="事务回滚"
+        :value="d.rollbacks == null ? '-' : d.rollbacks" sub="累计回滚事务数" color="#e6a23c" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="事务统计" icon="el-icon-data-line">
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense title="事务统计" icon="el-icon-data-line">
           <InfoTable :rows="txRows" />
           <div class="bar-row">
             <span class="bar-row__label">提交率</span>
@@ -31,37 +25,35 @@
               color="#67c23a" class="bar-row__bar" />
             <span class="bar-row__val">{{ num(tx.hitRate) }}%</span>
           </div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="元组操作" icon="el-icon-s-grid">
+        </section-card>
+        <section-card dense title="元组操作" icon="el-icon-s-grid">
           <InfoTable :rows="tupleRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="性能指标说明" icon="el-icon-info">
-      <el-row :gutter="12">
-        <el-col v-for="(it, i) in notes" :key="i" :xs="24" :sm="12" :lg="8">
-          <div class="note-item">
-            <div class="note-item__title">{{ it.title }}</div>
-            <div class="note-item__desc">{{ it.desc }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        </section-card>
+        <section-card dense title="性能指标说明" icon="el-icon-info">
+          <el-row :gutter="12">
+            <el-col v-for="(it, i) in notes" :key="i" :xs="24" :sm="12" :lg="8">
+              <div class="note-item">
+                <div class="note-item__title">{{ it.title }}</div>
+                <div class="note-item__desc">{{ it.desc }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getDatabasePerformance } from "@/api/monitor-database";
 
 export default {
   name: "DatabasePerformance",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -141,11 +133,21 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.screen-tab__main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .bar-row {
   display: flex;

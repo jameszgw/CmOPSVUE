@@ -1,72 +1,68 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-files" label="电池簇"
-          :value="num0(d.packs)" :sub="`电芯总数 ${num0(d.cellTotal)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="电芯总数"
-          :value="num0(d.cellTotal)" :sub="`每簇 ${num0(d.cellsPerPack)} 节`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lightning" label="压差"
-          :value="`${num0(d.cellVoltDiff)} mV`" :sub="`${num1(d.cellVoltMin)} ~ ${num1(d.cellVoltMax)} V`"
-          color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="温差"
-          :value="`${num1(d.cellTempDiff)} ℃`" :sub="`${num1(d.cellTempMin)} ~ ${num1(d.cellTempMax)} ℃`"
-          color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-files" label="电池簇"
+        :value="num0(d.packs)" :sub="`电芯总数 ${num0(d.cellTotal)}`" color="#409eff" />
+      <StatCard dense icon="el-icon-cpu" label="电芯总数"
+        :value="num0(d.cellTotal)" :sub="`每簇 ${num0(d.cellsPerPack)} 节`" color="#67c23a" />
+      <StatCard dense icon="el-icon-lightning" label="压差"
+        :value="`${num0(d.cellVoltDiff)} mV`" :sub="`${num1(d.cellVoltMin)} ~ ${num1(d.cellVoltMax)} V`"
+        color="#e6a23c" />
+      <StatCard dense icon="el-icon-warning-outline" label="温差"
+        :value="`${num1(d.cellTempDiff)} ℃`" :sub="`${num1(d.cellTempMin)} ~ ${num1(d.cellTempMax)} ℃`"
+        color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="电芯汇总" icon="el-icon-info">
-      <InfoTable :rows="summaryRows" :columns="2" />
-    </SectionCard>
+    <card-grid class="fill" min="420px" gap="8px">
+      <SectionCard dense scrollable title="电芯汇总" icon="el-icon-info" class="fill">
+        <InfoTable :rows="summaryRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="电池簇列表" icon="el-icon-menu">
-      <template #extra>共 {{ items.length }} 个电池簇</template>
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
-        <el-table-column prop="packId" label="电池簇" min-width="140" fixed>
-          <template slot-scope="{ row }">
-            <span class="mono">{{ row.packId || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="电压" width="120">
-          <template slot-scope="{ row }">{{ num1(row.voltage) }} V</template>
-        </el-table-column>
-        <el-table-column label="最高温度" width="120">
-          <template slot-scope="{ row }">{{ num1(row.tempMax) }} ℃</template>
-        </el-table-column>
-        <el-table-column label="SOC" min-width="200">
-          <template slot-scope="{ row }">
-            <el-progress :percentage="clamp(row.socPct)" :stroke-width="10"
-              :color="pctColor(row.socPct)" />
-          </template>
-        </el-table-column>
-        <el-table-column label="均衡" width="100" align="center">
-          <template slot-scope="{ row }">
-            <el-tag size="small" :type="row.balancing ? 'warning' : 'info'" effect="plain">
-              {{ row.balancing ? "均衡中" : "正常" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+      <SectionCard dense scrollable title="电池簇列表" icon="el-icon-menu"
+        body-class="dense-table fill" class="fill">
+        <template #extra>共 {{ items.length }} 个电池簇</template>
+        <el-empty v-if="!items.length" description="暂无数据" />
+        <el-table v-else :data="items" class="dense-table" height="100%" size="small" stripe>
+          <el-table-column prop="packId" label="电池簇" min-width="140" fixed>
+            <template slot-scope="{ row }">
+              <span class="mono">{{ row.packId || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="电压" width="120">
+            <template slot-scope="{ row }">{{ num1(row.voltage) }} V</template>
+          </el-table-column>
+          <el-table-column label="最高温度" width="120">
+            <template slot-scope="{ row }">{{ num1(row.tempMax) }} ℃</template>
+          </el-table-column>
+          <el-table-column label="SOC" min-width="200">
+            <template slot-scope="{ row }">
+              <el-progress :percentage="clamp(row.socPct)" :stroke-width="10"
+                :color="pctColor(row.socPct)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="均衡" width="100" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="small" :type="row.balancing ? 'warning' : 'info'" effect="plain">
+                {{ row.balancing ? "均衡中" : "正常" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getEssCells } from "@/api/monitor-ess";
 
 export default {
   name: "EssCells",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -146,11 +142,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .mono {
   font-family: monospace;

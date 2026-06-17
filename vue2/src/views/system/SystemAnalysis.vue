@@ -1,74 +1,68 @@
 <template>
-  <div class="page-container">
-    <div class="system-analysis-container">
-      <!-- 清理配置 -->
-      <div class="system-clean-container">
-        <div class="system-clean-title">清理配置</div>
-        <div class="system-clean-form-wrapper">
-          <el-form label-width="120px">
-            <el-form-item label="清理阈值(天)">
-              <el-input
-                v-model="fileCleanThreshold"
-                class="clean-threshold-input"
-                :disabled="fileCleanThresholdLoading"
-              />
-              <el-button
-                type="primary"
-                :loading="fileCleanThresholdLoading"
-                style="margin-left: 8px"
-                @click="saveCleanThreshold"
-              >
-                保存
-              </el-button>
-              <div class="extra">
-                设置后清理文件时会删除当前时间减当前值之前修改的所有文件,
-                如果设置为0则全部清理
-              </div>
-            </el-form-item>
-            <el-form-item label="自动清理">
-              <el-switch
-                v-model="autoCleanFile"
-                :disabled="autoCleanFileLoading"
-                @change="changeAutoClean"
-              />
-              <div class="extra">开启后每天1:30会自动清理超过所配置阈值的文件</div>
-            </el-form-item>
-          </el-form>
-        </div>
-      </div>
+  <screen-page title="系统分析" gap="8px">
+    <template #header-extra>
+      <el-button
+        size="small"
+        icon="el-icon-refresh"
+        :loading="reAnalysisLoading"
+        @click="reAnalysis"
+      >
+        重新分析
+      </el-button>
+    </template>
 
-      <!-- 系统统计分析 -->
-      <div class="system-analysis-descriptions">
-        <div class="system-analysis-title">系统统计分析</div>
-        <div class="analysis-items">
-          <div v-for="item in analysisItems" :key="item.key" class="analysis-item">
-            <span class="analysis-label">{{ item.label }}：</span>
-            <span class="analysis-count">{{ analysis[item.countField] }} 个</span>
-            <span class="analysis-size">{{ analysis[item.sizeField] }}</span>
+    <section-card dense title="清理配置" icon="el-icon-setting">
+      <el-form :inline="true" class="clean-form">
+        <el-form-item label="清理阈值(天)">
+          <el-input
+            v-model="fileCleanThreshold"
+            class="clean-threshold-input"
+            size="small"
+            :disabled="fileCleanThresholdLoading"
+          />
+          <el-button
+            type="primary"
+            size="small"
+            :loading="fileCleanThresholdLoading"
+            style="margin-left: 8px"
+            @click="saveCleanThreshold"
+          >
+            保存
+          </el-button>
+        </el-form-item>
+        <el-form-item label="自动清理">
+          <el-switch
+            v-model="autoCleanFile"
+            :disabled="autoCleanFileLoading"
+            @change="changeAutoClean"
+          />
+        </el-form-item>
+      </el-form>
+      <div class="extra">
+        清理阈值设置后清理文件时会删除当前时间减当前值之前修改的所有文件，设置为0则全部清理；自动清理开启后每天1:30会自动清理超过阈值的文件。
+      </div>
+    </section-card>
+
+    <section-card dense scrollable class="fill" title="系统统计分析" icon="el-icon-data-analysis">
+      <card-grid min="220px" gap="8px">
+        <div v-for="item in analysisItems" :key="item.key" class="stat-tile">
+          <div class="stat-tile__head">
+            <span class="stat-tile__label">{{ item.label }}</span>
             <el-button
               v-if="visibleClean[item.key]"
               type="text"
-              class="clean-button"
+              class="stat-tile__clean"
               @click="clear(item.clearType)"
             >
               清理
             </el-button>
           </div>
+          <div class="stat-tile__count">{{ analysis[item.countField] }} 个</div>
+          <div class="stat-tile__size">{{ analysis[item.sizeField] }}</div>
         </div>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="system-analysis-handler-container">
-        <el-button
-          class="re-analysis-button"
-          :loading="reAnalysisLoading"
-          @click="reAnalysis"
-        >
-          重新分析
-        </el-button>
-      </div>
-    </div>
-  </div>
+      </card-grid>
+    </section-card>
+  </screen-page>
 </template>
 
 <script>
@@ -78,6 +72,9 @@ import {
   cleanSystemFile,
   reAnalysisSystem,
 } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 
 // 系统配置项 (原 src/utils/index SYSTEM_OPTION_KEY)
 const SYSTEM_OPTION_KEY = {
@@ -97,6 +94,7 @@ const SYSTEM_CLEAR_TYPE = {
 
 export default {
   name: "SystemAnalysis",
+  components: { ScreenPage, SectionCard, CardGrid },
   data() {
     return {
       analysis: {
@@ -260,83 +258,53 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.system-analysis-container {
-  padding: 24px;
-  background: var(--cm-bg-card);
-  border-radius: 4px;
+@import (reference) "@/styles/variables.less";
 
-  .system-clean-container {
-    margin-bottom: 24px;
+.clean-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
+.clean-threshold-input {
+  width: 160px;
+}
+.extra {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 8px;
+}
 
-    .system-clean-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.85);
-      margin-bottom: 16px;
-    }
+.stat-tile {
+  border: 1px solid var(--cm-border-light, @border-light);
+  border-radius: @radius-base;
+  padding: @space-md;
+  background: var(--cm-bg-card, @bg-card);
 
-    .system-clean-form-wrapper {
-      .clean-threshold-input {
-        width: 200px;
-      }
-
-      .extra {
-        color: rgba(0, 0, 0, 0.45);
-        margin-top: 8px;
-      }
-    }
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .system-analysis-descriptions {
-    .system-analysis-title {
-      font-size: 16px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.85);
-      margin: 24px 0 16px;
-    }
-
-    .analysis-items {
-      .analysis-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 16px;
-
-        .analysis-label {
-          width: 120px;
-          text-align: right;
-          margin-right: 16px;
-          color: rgba(0, 0, 0, 0.65);
-        }
-
-        .analysis-count,
-        .analysis-size {
-          font-size: 14px;
-          color: rgba(0, 0, 0, 0.65);
-        }
-
-        .analysis-size {
-          margin-left: 16px;
-          color: #1890ff;
-        }
-
-        .clean-button {
-          margin-left: 16px;
-          padding: 0;
-        }
-      }
-    }
+  &__label {
+    font-size: 13px;
+    color: var(--cm-text-regular, @text-regular);
   }
 
-  .system-analysis-handler-container {
-    margin-top: 24px;
-    text-align: left;
+  &__clean {
+    padding: 0;
+  }
 
-    .re-analysis-button {
-      padding: 0 16px;
-      height: 32px;
-      line-height: 32px;
-      font-size: 14px;
-    }
+  &__count {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--cm-text-primary, @text-primary);
+    margin-top: @space-sm;
+  }
+
+  &__size {
+    font-size: 12px;
+    color: #1890ff;
+    margin-top: @space-xs;
   }
 }
 </style>

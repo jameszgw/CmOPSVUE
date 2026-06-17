@@ -7,129 +7,116 @@
       :reason="d.note"
       title="无物理硬件传感器"
     >
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-circle-check" label="整体健康"
-            :value="summary.overallHealth || '-'"
-            :color="summary.overallHealth === '正常' ? '#67c23a' : '#f56c6c'"
-            :sub="`异常传感器 ${summary.criticalSensors || 0} 个`" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-odometer" label="温度传感器" :value="summary.tempSensors || 0"
-            :sub="`采集方式 ${d.bmc || '-'}`" color="#e6a23c" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-cpu" label="风扇 / 电源"
-            :value="`${summary.fanCount || 0} / ${summary.psuCount || 0}`"
-            sub="风扇 / 电源模块" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="el-icon-files" label="物理磁盘" :value="summary.diskCount || 0"
-            sub="SMART 监测" color="#909399" />
-        </el-col>
-      </el-row>
+      <CardGrid min="180px" gap="8px" class="kpi-row">
+        <StatCard dense icon="el-icon-circle-check" label="整体健康"
+          :value="summary.overallHealth || '-'"
+          :color="summary.overallHealth === '正常' ? '#67c23a' : '#f56c6c'"
+          :sub="`异常传感器 ${summary.criticalSensors || 0} 个`" />
+        <StatCard dense icon="el-icon-odometer" label="温度传感器" :value="summary.tempSensors || 0"
+          :sub="`采集方式 ${d.bmc || '-'}`" color="#e6a23c" />
+        <StatCard dense icon="el-icon-cpu" label="风扇 / 电源"
+          :value="`${summary.fanCount || 0} / ${summary.psuCount || 0}`"
+          sub="风扇 / 电源模块" color="#409eff" />
+        <StatCard dense icon="el-icon-files" label="物理磁盘" :value="summary.diskCount || 0"
+          sub="SMART 监测" color="#909399" />
+      </CardGrid>
 
-      <SectionCard title="温度传感器" icon="el-icon-odometer">
-        <el-row :gutter="12">
-          <el-col v-for="t in d.temperature || []" :key="t.name" :xs="12" :sm="8" :lg="4">
-            <div class="sensor" :class="t.status">
+      <div class="body-grid">
+        <SectionCard dense title="温度传感器" icon="el-icon-odometer" class="span-2">
+          <div class="sensor-grid">
+            <div v-for="t in d.temperature || []" :key="t.name" class="sensor" :class="t.status">
               <div class="sensor__name">{{ t.name }}</div>
               <div class="sensor__val">{{ t.value }}<span class="sensor__unit">{{ t.unit }}</span></div>
-              <el-tag :type="tagType(t.status)" size="small" effect="plain">{{ statusText(t.status) }}</el-tag>
+              <el-tag :type="tagType(t.status)" size="mini" effect="plain">{{ statusText(t.status) }}</el-tag>
             </div>
-          </el-col>
-        </el-row>
-      </SectionCard>
+          </div>
+        </SectionCard>
 
-      <el-row :gutter="12">
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="风扇" icon="el-icon-refresh">
-            <el-table :data="d.fans || []" size="small" stripe>
-              <el-table-column prop="name" label="风扇" width="100" />
-              <el-table-column label="转速">
-                <template slot-scope="{ row }">{{ row.rpm }} RPM</template>
-              </el-table-column>
-              <el-table-column label="占比" width="160">
-                <template slot-scope="{ row }">
-                  <el-progress :percentage="clamp(row.pct)" :stroke-width="8"
-                    :color="row.status === 'normal' ? '#409eff' : '#f56c6c'" />
-                </template>
-              </el-table-column>
-              <el-table-column label="状态" width="90">
-                <template slot-scope="{ row }">
-                  <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-          </SectionCard>
-        </el-col>
-        <el-col :xs="24" :lg="12">
-          <SectionCard title="电源模块" icon="el-icon-lightning">
-            <el-table :data="d.power || []" size="small" stripe>
-              <el-table-column prop="name" label="电源" width="90" />
-              <el-table-column label="功率">
-                <template slot-scope="{ row }">{{ row.watt }} W / {{ row.capacity }} W</template>
-              </el-table-column>
-              <el-table-column prop="inputVoltage" label="输入电压" width="110" />
-              <el-table-column label="状态" width="90">
-                <template slot-scope="{ row }">
-                  <el-tag :type="tagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
-                </template>
-              </el-table-column>
-            </el-table>
-          </SectionCard>
-        </el-col>
-      </el-row>
+        <SectionCard dense title="风扇" icon="el-icon-refresh" body-class="dense-table" scrollable>
+          <el-table class="dense-table" :data="d.fans || []" max-height="180" size="small" stripe>
+            <el-table-column prop="name" label="风扇" width="80" />
+            <el-table-column label="转速">
+              <template slot-scope="{ row }">{{ row.rpm }} RPM</template>
+            </el-table-column>
+            <el-table-column label="占比" width="130">
+              <template slot-scope="{ row }">
+                <el-progress :percentage="clamp(row.pct)" :stroke-width="6"
+                  :color="row.status === 'normal' ? '#409eff' : '#f56c6c'" />
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="80">
+              <template slot-scope="{ row }">
+                <el-tag :type="tagType(row.status)" size="mini">{{ statusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
 
-      <SectionCard v-if="d.raid" title="RAID 卡" icon="el-icon-coin">
-        <template #extra>
-          <el-tag :type="d.raid.status === 'Optimal' ? 'success' : 'danger'" size="small">{{ d.raid.status }}</el-tag>
-        </template>
-        <InfoTable :rows="raidRows" :columns="2" />
-        <el-table :data="d.raid.logicalDrives || []" size="small" stripe style="margin-top: 12px">
-          <el-table-column prop="name" label="逻辑盘" width="100" />
-          <el-table-column prop="level" label="级别" width="100" />
-          <el-table-column label="容量"><template slot-scope="{ row }">{{ row.sizeTB }} TB</template></el-table-column>
-          <el-table-column label="状态" width="120">
-            <template slot-scope="{ row }">
-              <el-tag :type="row.status === 'Optimal' ? 'success' : 'danger'" size="small">{{ row.status }}</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </SectionCard>
+        <SectionCard dense title="电源模块" icon="el-icon-lightning" body-class="dense-table" scrollable>
+          <el-table class="dense-table" :data="d.power || []" max-height="180" size="small" stripe>
+            <el-table-column prop="name" label="电源" width="80" />
+            <el-table-column label="功率">
+              <template slot-scope="{ row }">{{ row.watt }} W / {{ row.capacity }} W</template>
+            </el-table-column>
+            <el-table-column prop="inputVoltage" label="输入电压" width="100" />
+            <el-table-column label="状态" width="80">
+              <template slot-scope="{ row }">
+                <el-tag :type="tagType(row.status)" size="mini">{{ statusText(row.status) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
 
-      <SectionCard title="硬盘 SMART" icon="el-icon-files">
-        <el-table :data="d.disks || []" size="small" stripe>
-          <el-table-column prop="slot" label="槽位" width="90" />
-          <el-table-column prop="model" label="型号" min-width="180" />
-          <el-table-column prop="type" label="类型" width="110" />
-          <el-table-column prop="capacity" label="容量" width="90" />
-          <el-table-column label="温度" width="90">
-            <template slot-scope="{ row }">
-              <span :style="{ color: row.temperature > 70 ? '#f56c6c' : '#303133' }">{{ row.temperature }}°C</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="重映射扇区" width="110">
-            <template slot-scope="{ row }">
-              <span :style="{ color: row.reallocatedSectors > 100 ? '#e6a23c' : '#303133' }">{{ row.reallocatedSectors }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="磨损/备件" width="120">
-            <template slot-scope="{ row }">
-              <span v-if="row.wearLevelPct != null">磨损 {{ row.wearLevelPct }}% / 备件 {{ row.availableSparePct }}%</span>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="通电时长" width="110">
-            <template slot-scope="{ row }">{{ row.powerOnHours }} h</template>
-          </el-table-column>
-          <el-table-column label="健康" width="90">
-            <template slot-scope="{ row }">
-              <el-tag :type="diskTag(row.health)" size="small">{{ diskText(row.health) }}</el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </SectionCard>
+        <SectionCard v-if="d.raid" dense title="RAID 卡" icon="el-icon-coin" class="span-2" body-class="dense-table" scrollable>
+          <template #extra>
+            <el-tag :type="d.raid.status === 'Optimal' ? 'success' : 'danger'" size="mini">{{ d.raid.status }}</el-tag>
+          </template>
+          <InfoTable :rows="raidRows" :columns="2" />
+          <el-table class="dense-table" :data="d.raid.logicalDrives || []" max-height="160" size="small" stripe style="margin-top: 8px">
+            <el-table-column prop="name" label="逻辑盘" width="100" />
+            <el-table-column prop="level" label="级别" width="100" />
+            <el-table-column label="容量"><template slot-scope="{ row }">{{ row.sizeTB }} TB</template></el-table-column>
+            <el-table-column label="状态" width="120">
+              <template slot-scope="{ row }">
+                <el-tag :type="row.status === 'Optimal' ? 'success' : 'danger'" size="mini">{{ row.status }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+
+        <SectionCard dense title="硬盘 SMART" icon="el-icon-files" class="span-2 fill smart-card" body-class="dense-table fill" scrollable>
+          <el-table class="dense-table" :data="d.disks || []" height="100%" size="small" stripe>
+            <el-table-column prop="slot" label="槽位" width="80" />
+            <el-table-column prop="model" label="型号" min-width="160" />
+            <el-table-column prop="type" label="类型" width="100" />
+            <el-table-column prop="capacity" label="容量" width="80" />
+            <el-table-column label="温度" width="80">
+              <template slot-scope="{ row }">
+                <span :style="{ color: row.temperature > 70 ? '#f56c6c' : '#303133' }">{{ row.temperature }}°C</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="重映射扇区" width="100">
+              <template slot-scope="{ row }">
+                <span :style="{ color: row.reallocatedSectors > 100 ? '#e6a23c' : '#303133' }">{{ row.reallocatedSectors }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="磨损/备件" width="120">
+              <template slot-scope="{ row }">
+                <span v-if="row.wearLevelPct != null">磨损 {{ row.wearLevelPct }}% / 备件 {{ row.availableSparePct }}%</span>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="通电时长" width="100">
+              <template slot-scope="{ row }">{{ row.powerOnHours }} h</template>
+            </el-table-column>
+            <el-table-column label="健康" width="80">
+              <template slot-scope="{ row }">
+                <el-tag :type="diskTag(row.health)" size="mini">{{ diskText(row.health) }}</el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </SectionCard>
+      </div>
     </UnsupportedMask>
   </div>
 </template>
@@ -138,12 +125,13 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
 import { getServerHardware } from "@/api/monitor-server";
 
 export default {
   name: "ServerHardwareSensors",
-  components: { StatCard, SectionCard, InfoTable, UnsupportedMask },
+  components: { StatCard, SectionCard, InfoTable, CardGrid, UnsupportedMask },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -209,28 +197,51 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: @dense-gap;
+  align-content: start;
+}
+.span-2 {
+  grid-column: 1 / -1;
+}
+.smart-card {
+  min-height: 200px;
+}
+.sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: @space-sm;
 }
 .sensor {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 12px;
+  padding: 8px;
   text-align: center;
-  margin-bottom: 12px;
 
   &__name {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
   }
   &__val {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--cm-text-primary, @text-primary);
-    margin: 6px 0;
+    margin: 4px 0;
   }
   &__unit {
     font-size: 12px;

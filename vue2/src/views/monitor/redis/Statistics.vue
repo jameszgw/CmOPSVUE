@@ -1,72 +1,57 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="每秒操作数" :value="d.opsPerSec == null ? '-' : d.opsPerSec"
-          sub="OPS" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-aim" label="缓存命中率" :value="`${num(d.hitRate)}%`"
-          :percent="d.hitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-data-line" label="总命令数" :value="fmt(d.totalCommands)"
-          sub="累计处理" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="总连接数" :value="fmt(d.totalConnections)"
-          sub="累计连接" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-odometer" label="每秒操作数" :value="d.opsPerSec == null ? '-' : d.opsPerSec"
+        sub="OPS" color="#409eff" />
+      <stat-card dense icon="el-icon-aim" label="缓存命中率" :value="`${num(d.hitRate)}%`"
+        :percent="d.hitRate" color="#67c23a" />
+      <stat-card dense icon="el-icon-data-line" label="总命令数" :value="fmt(d.totalCommands)"
+        sub="累计处理" color="#e6a23c" />
+      <stat-card dense icon="el-icon-connection" label="总连接数" :value="fmt(d.totalConnections)"
+        sub="累计连接" color="#909399" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="命令统计" icon="el-icon-data-line">
-          <InfoTable :rows="cmdRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接统计" icon="el-icon-connection">
-          <InfoTable :rows="connRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense title="命令统计" icon="el-icon-data-line">
+        <InfoTable :rows="cmdRows" />
+      </section-card>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="键操作统计" icon="el-icon-key">
-          <InfoTable :rows="keyOpsRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="同步统计" icon="el-icon-refresh">
-          <InfoTable :rows="syncRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <section-card dense title="连接统计" icon="el-icon-connection">
+        <InfoTable :rows="connRows" />
+      </section-card>
 
-    <SectionCard title="指标说明" icon="el-icon-data-analysis">
-      <el-row :gutter="16">
-        <el-col v-for="f in metricDesc" :key="f.label" :xs="24" :sm="12" :lg="8">
-          <div class="metric-desc">
-            <div class="metric-desc__label">{{ f.label }}</div>
-            <div class="metric-desc__text">{{ f.text }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+      <section-card dense title="键操作统计" icon="el-icon-key">
+        <InfoTable :rows="keyOpsRows" />
+      </section-card>
+
+      <section-card dense title="同步统计" icon="el-icon-refresh">
+        <InfoTable :rows="syncRows" />
+      </section-card>
+
+      <section-card dense title="指标说明" icon="el-icon-data-analysis">
+        <el-row :gutter="16">
+          <el-col v-for="f in metricDesc" :key="f.label" :xs="24" :sm="12">
+            <div class="metric-desc">
+              <div class="metric-desc__label">{{ f.label }}</div>
+              <div class="metric-desc__text">{{ f.text }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisStatistics } from "@/api/monitor-redis";
 
 export default {
   name: "RedisStatistics",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -165,11 +150,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
 }
 .metric-desc {
   padding: 12px 14px;

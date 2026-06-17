@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
+  <div v-loading="loading" class="screen-tab">
     <div class="engine-head">
       <i class="el-icon-cpu engine-head__icon"></i>
       <span class="engine-head__title">当前引擎</span>
@@ -7,60 +7,63 @@
       <span v-if="d.dbType" class="engine-head__type">{{ d.dbType }}</span>
     </div>
 
-    <el-row :gutter="12" class="metric-grid">
-      <el-col v-for="(s, i) in stats" :key="i" :xs="12" :sm="8" :lg="6">
-        <div class="metric-card" :style="{ borderColor: levelColor(s.level) }">
-          <div class="metric-card__label">{{ s.label }}</div>
-          <div class="metric-card__value" :style="{ color: levelColor(s.level) }">
-            {{ s.value == null ? '-' : s.value }}<span v-if="s.unit" class="metric-card__unit">{{ s.unit }}</span>
-          </div>
+    <card-grid min="160px" gap="8px" class="metric-grid kpi-grid">
+      <div v-for="(s, i) in stats" :key="i" class="metric-card" :style="{ borderColor: levelColor(s.level) }">
+        <div class="metric-card__label">{{ s.label }}</div>
+        <div class="metric-card__value" :style="{ color: levelColor(s.level) }">
+          {{ s.value == null ? '-' : s.value }}<span v-if="s.unit" class="metric-card__unit">{{ s.unit }}</span>
         </div>
-      </el-col>
-    </el-row>
+      </div>
+    </card-grid>
     <el-empty v-if="!stats.length" description="暂无指标数据" />
 
-    <SectionCard v-for="(g, gi) in groups" :key="'g' + gi" :title="g.title || '指标组'" icon="el-icon-s-data">
-      <InfoTable :rows="groupRows(g)" :columns="2" />
-    </SectionCard>
+    <div class="screen-tab__main">
+      <card-grid min="320px" gap="8px">
+        <section-card dense v-for="(g, gi) in groups" :key="'g' + gi" :title="g.title || '指标组'" icon="el-icon-s-data">
+          <InfoTable :rows="groupRows(g)" :columns="2" />
+        </section-card>
 
-    <SectionCard title="Top SQL" icon="el-icon-s-marketing">
-      <template #extra>共 {{ topSql.length }} 条</template>
-      <el-table :data="topSql" size="small" stripe>
-        <el-table-column label="排名" width="80" align="center">
-          <template slot-scope="{ row }">
-            <span class="rank-badge" :class="rankClass(row.rank)">{{ row.rank }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="SQL" min-width="280">
-          <template slot-scope="{ row }">
-            <span class="sql-text">{{ row.sql }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="调用次数" width="120" align="right">
-          <template slot-scope="{ row }">{{ fmt(row.calls) }}</template>
-        </el-table-column>
-        <el-table-column label="平均耗时" width="120" align="right">
-          <template slot-scope="{ row }">
-            <span style="color: #e6a23c">{{ fmt(row.avgMs) }} ms</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="总耗时" width="120" align="right">
-          <template slot-scope="{ row }">
-            <span style="color: #f56c6c">{{ fmt(row.totalSec) }} s</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="平均行数" width="120" align="right">
-          <template slot-scope="{ row }">{{ fmt(row.rowsAvg) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!topSql.length" description="暂无 SQL 数据" />
-    </SectionCard>
+        <section-card dense scrollable class="fill" body-class="dense-table fill" title="Top SQL" icon="el-icon-s-marketing">
+          <template #extra>共 {{ topSql.length }} 条</template>
+          <el-table class="dense-table" height="100%" :data="topSql" size="small" stripe>
+            <el-table-column label="排名" width="80" align="center">
+              <template slot-scope="{ row }">
+                <span class="rank-badge" :class="rankClass(row.rank)">{{ row.rank }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="SQL" min-width="280">
+              <template slot-scope="{ row }">
+                <span class="sql-text">{{ row.sql }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="调用次数" width="120" align="right">
+              <template slot-scope="{ row }">{{ fmt(row.calls) }}</template>
+            </el-table-column>
+            <el-table-column label="平均耗时" width="120" align="right">
+              <template slot-scope="{ row }">
+                <span style="color: #e6a23c">{{ fmt(row.avgMs) }} ms</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="总耗时" width="120" align="right">
+              <template slot-scope="{ row }">
+                <span style="color: #f56c6c">{{ fmt(row.totalSec) }} s</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="平均行数" width="120" align="right">
+              <template slot-scope="{ row }">{{ fmt(row.rowsAvg) }}</template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-if="!topSql.length" description="暂无 SQL 数据" />
+        </section-card>
+      </card-grid>
+    </div>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getDatabaseEngine } from "@/api/monitor-database";
 
@@ -68,7 +71,7 @@ const LEVEL_COLOR = { warning: "#e6a23c", critical: "#f56c6c" };
 
 export default {
   name: "DatabaseEngineMetrics",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -138,14 +141,30 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: 8px;
+}
+.kpi-grid {
+  flex-shrink: 0;
+}
+.screen-tab__main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
 .engine-head {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   background: var(--cm-bg-card, @bg-card);
   border: 1px solid var(--cm-border-light, @border-light);
   border-radius: 8px;
-  padding: 14px 18px;
-  margin-bottom: 16px;
+  padding: 10px 18px;
 
   &__icon {
     font-size: 20px;
@@ -166,29 +185,23 @@ export default {
     color: var(--cm-text-secondary, @text-secondary);
   }
 }
-.metric-grid {
-  margin-bottom: 4px;
-}
-.metric-grid .el-col {
-  margin-bottom: 12px;
-}
 .metric-card {
   background: var(--cm-bg-card, @bg-card);
   border: 1px solid var(--cm-border-light, @border-light);
   border-left-width: 3px;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 8px 12px;
   height: 100%;
   box-sizing: border-box;
 
   &__label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--cm-text-regular, @text-regular);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   &__value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     line-height: 1.2;
   }

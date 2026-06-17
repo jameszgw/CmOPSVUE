@@ -1,17 +1,28 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">系统日志</h2>
-    <el-card>
-      <el-form :inline="true" :model="searchForm" @submit.native.prevent="handleSearch">
-        <el-form-item label="用户名">
-          <el-input v-model="searchForm.userName" placeholder="请输入用户名称" clearable />
+  <screen-page title="系统日志" gap="8px">
+    <template #header-extra>
+      <el-form
+        :inline="true"
+        :model="searchForm"
+        class="filter-form"
+        @submit.native.prevent="handleSearch"
+      >
+        <el-form-item>
+          <el-input
+            v-model="searchForm.userName"
+            placeholder="用户名称"
+            style="width: 130px"
+            size="small"
+            clearable
+          />
         </el-form-item>
 
-        <el-form-item label="事件分类">
+        <el-form-item>
           <el-select
             v-model="searchForm.eventClassify"
-            placeholder="请选择事件分类"
-            style="width: 150px"
+            placeholder="事件分类"
+            style="width: 130px"
+            size="small"
             clearable
             @change="handleClassifyChange"
           >
@@ -24,11 +35,12 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="操作内容">
+        <el-form-item>
           <el-select
             v-model="searchForm.eventType"
-            placeholder="请选择操作内容"
-            style="width: 150px"
+            placeholder="操作内容"
+            style="width: 130px"
+            size="small"
             clearable
           >
             <el-option
@@ -40,27 +52,45 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="时间范围">
+        <el-form-item>
           <el-date-picker
             v-model="searchForm.timeRange"
             type="datetimerange"
+            size="small"
             start-placeholder="开始时间"
             end-placeholder="结束时间"
             value-format="yyyy-MM-dd HH:mm:ss"
+            style="width: 340px"
           />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" native-type="submit">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" size="small" native-type="submit">查询</el-button>
+          <el-button size="small" @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <el-table :data="logs" row-key="id" v-loading="loading">
+    <section-card
+      dense
+      scrollable
+      body-class="dense-table fill"
+      class="fill"
+      title="操作日志"
+      icon="el-icon-tickets"
+    >
+      <el-table
+        class="dense-table"
+        height="100%"
+        :data="logs"
+        row-key="id"
+        size="small"
+        v-loading="loading"
+      >
         <el-table-column prop="userName" label="用户名" />
         <el-table-column prop="eventClassifyName" label="事件分类" />
         <el-table-column prop="eventTypeName" label="事件类型" />
-        <el-table-column label="日志时间" width="170">
+        <el-table-column label="日志时间" width="160">
           <template slot-scope="{ row }">
             {{ formatTime(row.gmtCreate) }}
           </template>
@@ -81,26 +111,29 @@
           </template>
         </el-table-column>
       </el-table>
+    </section-card>
 
-      <el-pagination
-        class="pagination"
-        layout="total, prev, pager, next, sizes"
-        :total="total"
-        :current-page="pagination.pageNo"
-        :page-size="pagination.pageSize"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-    </el-card>
-  </div>
+    <el-pagination
+      class="pagination"
+      layout="total, prev, pager, next, sizes"
+      :total="total"
+      :current-page="pagination.pageNo"
+      :page-size="pagination.pageSize"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
+  </screen-page>
 </template>
 
 <script>
 import dayjs from "dayjs";
 import { queryLogs, getEventClassify, getEventType } from "@/api/logs";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 export default {
   name: "SystemLog",
+  components: { ScreenPage, SectionCard },
   data() {
     return {
       loading: false,
@@ -196,19 +229,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  margin: 0 0 16px;
-  font-size: 20px;
-  font-weight: 500;
+.filter-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
-
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
 .pagination {
-  margin-top: 16px;
+  flex-shrink: 0;
   text-align: right;
-}
-
-// 原 system-log.less
-.title {
-  background: rgb(242, 121, 135);
 }
 </style>

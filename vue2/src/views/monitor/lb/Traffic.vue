@@ -1,56 +1,45 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="QPS"
-          :value="d.qps == null ? '-' : d.qps" sub="每秒请求数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-timer" label="P99 延迟"
-          :value="latency.p99 == null ? '-' : `${num(latency.p99)} ms`"
-          :sub="`P50 ${num(latency.p50)} ms`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-upload2" label="入站速率"
-          :value="bytes.inRate == null ? '-' : bytes.inRate"
-          :sub="`总入 ${bytes.totalIn == null ? '-' : bytes.totalIn}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-download" label="出站速率"
-          :value="bytes.outRate == null ? '-' : bytes.outRate"
-          :sub="`总出 ${bytes.totalOut == null ? '-' : bytes.totalOut}`" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-odometer" label="QPS"
+        :value="d.qps == null ? '-' : d.qps" sub="每秒请求数" color="#409eff" />
+      <StatCard dense icon="el-icon-timer" label="P99 延迟"
+        :value="latency.p99 == null ? '-' : `${num(latency.p99)} ms`"
+        :sub="`P50 ${num(latency.p50)} ms`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-upload2" label="入站速率"
+        :value="bytes.inRate == null ? '-' : bytes.inRate"
+        :sub="`总入 ${bytes.totalIn == null ? '-' : bytes.totalIn}`" color="#67c23a" />
+      <StatCard dense icon="el-icon-download" label="出站速率"
+        :value="bytes.outRate == null ? '-' : bytes.outRate"
+        :sub="`总出 ${bytes.totalOut == null ? '-' : bytes.totalOut}`" color="#909399" />
+    </card-grid>
 
-    <SectionCard title="流量趋势" icon="el-icon-data-line">
-      <template #extra>最近 {{ trendPoints }} 个数据点</template>
-      <div ref="chartRef" class="trend-chart"></div>
-    </SectionCard>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense title="流量趋势" icon="el-icon-data-line">
+        <template #extra>最近 {{ trendPoints }} 个数据点</template>
+        <div ref="chartRef" class="trend-chart"></div>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="状态码分布" icon="el-icon-pie-chart">
-          <div v-for="it in statusItems" :key="it.key" class="status-item">
-            <div class="status-item__head">
-              <span class="status-item__dot" :style="{ background: it.color }"></span>
-              <span class="status-item__label">{{ it.label }}</span>
-              <span class="status-item__val">{{ num(it.value) }}%</span>
-            </div>
-            <el-progress :percentage="clamp(it.value)" :stroke-width="10"
-              :color="it.color" :show-text="false" />
+      <SectionCard dense scrollable title="状态码分布" icon="el-icon-pie-chart">
+        <div v-for="it in statusItems" :key="it.key" class="status-item">
+          <div class="status-item__head">
+            <span class="status-item__dot" :style="{ background: it.color }"></span>
+            <span class="status-item__label">{{ it.label }}</span>
+            <span class="status-item__val">{{ num(it.value) }}%</span>
           </div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="延迟分布" icon="el-icon-timer">
-          <InfoTable :rows="latencyRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+          <el-progress :percentage="clamp(it.value)" :stroke-width="10"
+            :color="it.color" :show-text="false" />
+        </div>
+      </SectionCard>
 
-    <SectionCard title="流量统计" icon="el-icon-data-analysis">
-      <InfoTable :rows="bytesRows" :columns="2" />
-    </SectionCard>
+      <SectionCard dense scrollable title="延迟分布" icon="el-icon-timer">
+        <InfoTable :rows="latencyRows" />
+      </SectionCard>
+
+      <SectionCard dense scrollable title="流量统计" icon="el-icon-data-analysis">
+        <InfoTable :rows="bytesRows" :columns="2" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
@@ -60,13 +49,14 @@ import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getLbTraffic } from "@/api/monitor-lb";
 
 export default {
   name: "LbTraffic",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -209,14 +199,15 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .trend-chart {
-  height: 300px;
+  height: @chart-h-sm;
   width: 100%;
 }
 .status-item {

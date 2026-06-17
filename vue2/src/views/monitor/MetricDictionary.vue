@@ -1,81 +1,112 @@
 <template>
-  <div class="page-container metric-dict-page">
-    <div class="dict-header">
-      <h2 class="dict-title">指标说明（指标字典）</h2>
-      <p class="dict-note">
-        指标字典：解释每个监控指标“是什么/怎么看/从哪来”，阈值为推荐值。
-      </p>
-    </div>
-
-    <div class="dict-toolbar">
-      <el-select
-        v-model="activeType"
-        size="small"
-        clearable
-        placeholder="全部设备类型"
-        class="type-select"
-        @change="applyFilter"
-      >
-        <el-option
-          v-for="code in deviceTypes"
-          :key="code"
-          :label="typeLabel(code)"
-          :value="code"
+  <screen-page v-loading="loading" title="指标说明（指标字典）" gap="8px">
+    <template #header-extra>
+      <div class="dict-filter">
+        <el-select
+          v-model="activeType"
+          size="small"
+          clearable
+          placeholder="全部设备类型"
+          class="dict-filter__type"
+          @change="applyFilter"
+        >
+          <el-option
+            v-for="code in deviceTypes"
+            :key="code"
+            :label="typeLabel(code)"
+            :value="code"
+          />
+        </el-select>
+        <el-input
+          v-model="keyword"
+          size="small"
+          clearable
+          placeholder="搜索指标 / 键 / 含义"
+          prefix-icon="el-icon-search"
+          class="dict-filter__search"
+          @input="applyFilter"
         />
-      </el-select>
-      <el-input
-        v-model="keyword"
-        size="small"
-        clearable
-        placeholder="搜索指标 / 键 / 含义"
-        class="keyword-input"
-        @input="applyFilter"
-      />
-      <span class="dict-count">共 {{ filteredList.length }} 项</span>
-    </div>
+        <span class="dict-filter__count">共 {{ filteredList.length }} 项</span>
+      </div>
+    </template>
 
-    <el-table
-      v-loading="loading"
-      :data="filteredList"
-      size="small"
-      border
-      stripe
-      class="dict-table"
+    <section-card
+      dense
+      scrollable
+      body-class="dense-table fill"
+      class="fill"
+      title="指标字典"
+      icon="el-icon-collection"
     >
-      <el-table-column
-        prop="deviceType"
-        label="类型"
-        width="100"
+      <template slot="extra">
+        <span class="dict-note">
+          解释每个监控指标“是什么/怎么看/从哪来”，阈值为推荐值（可在告警规则中调整）。
+        </span>
+      </template>
+
+      <!-- 指标表 -->
+      <el-table
+        :data="filteredList"
+        size="small"
+        stripe
+        border
+        height="100%"
+        class="dense-table dict-table"
       >
-        <template slot-scope="{ row }">{{ typeLabel(row.deviceType) }}</template>
-      </el-table-column>
-      <el-table-column prop="label" label="指标" min-width="120" />
-      <el-table-column prop="metricKey" label="键" min-width="140">
-        <template slot-scope="{ row }">
-          <span class="metric-key">{{ row.metricKey }}</span>
+        <el-table-column prop="deviceType" label="类型" width="100">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" type="info">{{ typeLabel(row.deviceType) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="指标" min-width="160">
+          <template slot-scope="{ row }">
+            <div class="dict-metric">
+              <span class="dict-metric__label">{{ row.label }}</span>
+              <span class="dict-metric__key">{{ row.metricKey }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="单位" width="80">
+          <template slot-scope="{ row }">{{ row.unit || "-" }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="definition"
+          label="含义"
+          min-width="220"
+          show-overflow-tooltip
+        >
+          <template slot-scope="{ row }">{{ row.definition || "-" }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="interpretation"
+          label="解读"
+          min-width="240"
+          show-overflow-tooltip
+        >
+          <template slot-scope="{ row }">{{ row.interpretation || "-" }}</template>
+        </el-table-column>
+        <el-table-column label="推荐阈值" min-width="180">
+          <template slot-scope="{ row }">{{ thresholdText(row) }}</template>
+        </el-table-column>
+        <el-table-column label="采集来源" width="110">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" :type="sourceType(row.source)">
+              {{ row.source || "-" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <template slot="empty">
+          <el-empty description="暂无匹配指标" :image-size="80" />
         </template>
-      </el-table-column>
-      <el-table-column label="单位" width="80">
-        <template slot-scope="{ row }">{{ row.unit || "-" }}</template>
-      </el-table-column>
-      <el-table-column prop="definition" label="含义" min-width="220" />
-      <el-table-column prop="interpretation" label="解读" min-width="220" />
-      <el-table-column label="推荐阈值" min-width="180">
-        <template slot-scope="{ row }">{{ thresholdText(row) }}</template>
-      </el-table-column>
-      <el-table-column label="采集来源" width="110">
-        <template slot-scope="{ row }">
-          <el-tag
-            size="mini"
-            :type="sourceType(row.source)"
-          >{{ row.source || "-" }}</el-tag>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+      </el-table>
+    </section-card>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getMetricDeviceTypes, getMetricGlossary } from "@/api/monitor-metric";
 
 const TYPE_LABEL = {
@@ -98,6 +129,10 @@ const TYPE_LABEL = {
 
 export default {
   name: "MetricDictionary",
+  components: {
+    ScreenPage,
+    SectionCard,
+  },
   data() {
     return {
       loading: false,
@@ -155,45 +190,51 @@ export default {
 };
 </script>
 
-<style scoped>
-.metric-dict-page {
-  padding: 12px 16px;
-}
-.dict-header {
-  margin-bottom: 10px;
-}
-.dict-title {
-  margin: 0 0 4px;
-  font-size: 18px;
-  font-weight: 600;
-}
+<style lang="less" scoped>
+@import (reference) "@/styles/variables.less";
+
 .dict-note {
-  margin: 0;
+  color: @text-secondary;
   font-size: 12px;
-  color: #909399;
 }
-.dict-toolbar {
+
+.dict-filter {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: @space-sm;
+  flex-wrap: wrap;
+
+  &__type {
+    width: 160px;
+  }
+
+  &__search {
+    width: 240px;
+  }
+
+  &__count {
+    color: @text-secondary;
+    font-size: 12px;
+  }
 }
-.type-select {
-  width: 160px;
+
+.dict-metric {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+
+  &__label {
+    color: @text-primary;
+  }
+
+  &__key {
+    color: @text-secondary;
+    font-size: 11px;
+    font-family: Menlo, Consolas, monospace;
+  }
 }
-.keyword-input {
-  width: 240px;
-}
-.dict-count {
-  font-size: 12px;
-  color: #909399;
-}
+
 .dict-table {
   width: 100%;
-}
-.metric-key {
-  color: #909399;
-  font-family: Menlo, Consolas, monospace;
-  font-size: 12px;
 }
 </style>

@@ -1,20 +1,26 @@
 <template>
-  <div class="page-container">
-    <el-card v-if="appDetail" class="detail-card">
-      <div slot="header" class="card-header">
-        <span>{{ appDetail.appName }} 详情页</span>
-        <div>
-          <el-button
-            :disabled="!appDetail.appEnvList || appDetail.appEnvList.length === 0"
-            @click="handleDeploy"
-          >
-            立即部署
-          </el-button>
-          <el-button style="margin-left: 16px" @click="switchMemberDrawer">项目成员</el-button>
-        </div>
-      </div>
+  <screen-page :title="appDetail ? `${appDetail.appName} 详情` : '应用详情'" gap="8px">
+    <template #header-extra>
+      <el-button
+        size="small"
+        :disabled="!appDetail || !appDetail.appEnvList || appDetail.appEnvList.length === 0"
+        @click="handleDeploy"
+      >
+        立即部署
+      </el-button>
+      <el-button size="small" style="margin-left: 8px" @click="switchMemberDrawer">
+        项目成员
+      </el-button>
+    </template>
 
-      <el-descriptions title="应用基础详情" :column="3" border>
+    <section-card
+      v-if="appDetail"
+      dense
+      title="应用基础详情"
+      icon="el-icon-info"
+      class="basic-card"
+    >
+      <el-descriptions :column="3" size="small" border>
         <el-descriptions-item label="应用名称">
           {{ appDetail.appName || "--" }}
           <i class="el-icon-document-copy copy-icon" @click="copyText(appDetail.appName)" />
@@ -31,48 +37,53 @@
         <el-descriptions-item label="创建时间">{{ formatTime(appDetail.gmtCreate) }}</el-descriptions-item>
         <el-descriptions-item label="更新时间">{{ formatTime(appDetail.gmtModified) }}</el-descriptions-item>
       </el-descriptions>
-    </el-card>
+    </section-card>
 
-    <el-card class="detail-card">
-      <div slot="header" class="card-header">
-        <span>环境信息</span>
-        <el-button @click="switchDrawer">添加环境</el-button>
-      </div>
-      <el-row v-if="appDetail" :gutter="16">
-        <el-col v-for="appEnv in appDetail.appEnvList || []" :key="appEnv.envId" :span="8">
-          <el-card class="env-card" shadow="never">
-            <div slot="header">{{ appEnv.envName }}</div>
-            <p>环境: {{ appEnv.env }}</p>
-            <p>
-              环境状态:
-              <el-tag :type="appEnv.status === '0' ? 'success' : 'danger'">
-                {{ appEnv.status === "0" ? "已启用" : "已停用" }}
-              </el-tag>
-            </p>
-            <div style="margin-top: 16px">
-              <h5>资源策略</h5>
-              <el-descriptions :column="1" border size="mini">
-                <el-descriptions-item label="副本数">
-                  {{ appEnv.resourceStrategy && appEnv.resourceStrategy.replicas }}
-                </el-descriptions-item>
-                <el-descriptions-item label="CPU">
-                  {{ appEnv.resourceStrategy && appEnv.resourceStrategy.cpu }}
-                </el-descriptions-item>
-                <el-descriptions-item label="内存">
-                  {{ appEnv.resourceStrategy && appEnv.resourceStrategy.memory }}
-                </el-descriptions-item>
-                <el-descriptions-item label="最大CPU">
-                  {{ appEnv.resourceStrategy && appEnv.resourceStrategy.maxCpu }}
-                </el-descriptions-item>
-                <el-descriptions-item label="最大内存">
-                  {{ appEnv.resourceStrategy && appEnv.resourceStrategy.maxMemory }}
-                </el-descriptions-item>
-              </el-descriptions>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </el-card>
+    <section-card
+      dense
+      scrollable
+      class="fill"
+      title="环境信息"
+      icon="el-icon-coordinate"
+    >
+      <template #extra>
+        <el-button type="text" @click="switchDrawer">添加环境</el-button>
+      </template>
+      <card-grid v-if="appDetail" min="280px" gap="8px">
+        <el-card
+          v-for="appEnv in appDetail.appEnvList || []"
+          :key="appEnv.envId"
+          class="env-card"
+          shadow="never"
+        >
+          <div slot="header" class="env-card__header">
+            <span>{{ appEnv.envName }}</span>
+            <el-tag :type="appEnv.status === '0' ? 'success' : 'danger'" size="mini">
+              {{ appEnv.status === "0" ? "已启用" : "已停用" }}
+            </el-tag>
+          </div>
+          <p class="env-card__env">环境: {{ appEnv.env }}</p>
+          <h5 class="env-card__sub">资源策略</h5>
+          <el-descriptions :column="1" border size="mini">
+            <el-descriptions-item label="副本数">
+              {{ appEnv.resourceStrategy && appEnv.resourceStrategy.replicas }}
+            </el-descriptions-item>
+            <el-descriptions-item label="CPU">
+              {{ appEnv.resourceStrategy && appEnv.resourceStrategy.cpu }}
+            </el-descriptions-item>
+            <el-descriptions-item label="内存">
+              {{ appEnv.resourceStrategy && appEnv.resourceStrategy.memory }}
+            </el-descriptions-item>
+            <el-descriptions-item label="最大CPU">
+              {{ appEnv.resourceStrategy && appEnv.resourceStrategy.maxCpu }}
+            </el-descriptions-item>
+            <el-descriptions-item label="最大内存">
+              {{ appEnv.resourceStrategy && appEnv.resourceStrategy.maxMemory }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+      </card-grid>
+    </section-card>
 
     <CreateEnvDrawer
       :visible="drawerVisible"
@@ -87,7 +98,7 @@
       @close="switchMemberDrawer"
       @changed="pageAppMembers"
     />
-  </div>
+  </screen-page>
 </template>
 
 <script>
@@ -95,12 +106,21 @@ import dayjs from "dayjs";
 import { getAppDetail, createAppEnv, pageAppMembers } from "@/api/app";
 import { listAll } from "@/api/cluster";
 import { copyToClipboard } from "@/utils/release-utils";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import CreateEnvDrawer from "./components/CreateEnvDrawer.vue";
 import TeamMemberDrawer from "./components/TeamMemberDrawer.vue";
 
 export default {
   name: "AppDetail",
-  components: { CreateEnvDrawer, TeamMemberDrawer },
+  components: {
+    ScreenPage,
+    SectionCard,
+    CardGrid,
+    CreateEnvDrawer,
+    TeamMemberDrawer,
+  },
   data() {
     return {
       appDetail: null,
@@ -181,18 +201,30 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.detail-card {
-  margin-bottom: 16px;
+.basic-card {
+  flex-shrink: 0;
 }
-.card-header {
+.env-card {
+  width: 100%;
+}
+.env-card /deep/ .el-card__header {
+  padding: 8px 12px;
+}
+.env-card /deep/ .el-card__body {
+  padding: 10px 12px;
+}
+.env-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.env-card {
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 16px;
+.env-card__env {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.env-card__sub {
+  margin: 0 0 8px;
+  font-size: 13px;
 }
 .copy-icon {
   margin-left: 6px;

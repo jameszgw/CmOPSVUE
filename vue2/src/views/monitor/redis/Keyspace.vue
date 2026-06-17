@@ -1,83 +1,82 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-key" label="总键数" :value="fmt(d.totalKeys)"
-          sub="所有数据库" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-time" label="过期键数" :value="fmt(d.expiredKeys)"
-          :sub="expiredSub" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="el-icon-odometer" label="平均TTL" :value="d.avgTtl == null ? '-' : d.avgTtl"
-          sub="平均存活时间" color="#67c23a" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <card-grid min="220px" gap="8px" class="kpi-grid">
+      <stat-card dense icon="el-icon-key" label="总键数" :value="fmt(d.totalKeys)"
+        sub="所有数据库" color="#409eff" />
+      <stat-card dense icon="el-icon-time" label="过期键数" :value="fmt(d.expiredKeys)"
+        :sub="expiredSub" color="#e6a23c" />
+      <stat-card dense icon="el-icon-odometer" label="平均TTL" :value="d.avgTtl == null ? '-' : d.avgTtl"
+        sub="平均存活时间" color="#67c23a" />
+    </card-grid>
 
-    <SectionCard title="数据库列表" icon="el-icon-coin">
-      <template #extra>共 {{ dbCount }} 个数据库</template>
-      <el-empty v-if="!dbCount" description="暂无数据库" />
-      <div v-for="db in d.databases || []" :key="db.index" class="db-card">
-        <div class="db-card__head">
-          <div class="db-card__icon"><i class="el-icon-coin"></i></div>
-          <div class="db-card__title">
-            <div class="db-card__name">{{ db.name }}</div>
-            <div class="db-card__sub">数据库 {{ db.index }}</div>
+    <card-grid min="320px" gap="8px" class="content-grid">
+      <section-card dense scrollable class="fill" body-class="fill"
+        title="数据库列表" icon="el-icon-coin">
+        <template #extra>共 {{ dbCount }} 个数据库</template>
+        <el-empty v-if="!dbCount" description="暂无数据库" />
+        <div v-for="db in d.databases || []" :key="db.index" class="db-card">
+          <div class="db-card__head">
+            <div class="db-card__icon"><i class="el-icon-coin"></i></div>
+            <div class="db-card__title">
+              <div class="db-card__name">{{ db.name }}</div>
+              <div class="db-card__sub">数据库 {{ db.index }}</div>
+            </div>
+            <el-tag size="small" type="success" effect="plain" class="db-card__tag">活跃</el-tag>
           </div>
-          <el-tag size="small" type="success" effect="plain" class="db-card__tag">活跃</el-tag>
-        </div>
-        <el-row :gutter="16" class="db-card__body">
-          <el-col :xs="24" :sm="8">
-            <div class="db-metric">
-              <div class="db-metric__label"><i class="el-icon-key"></i> 键数量</div>
-              <div class="db-metric__value">{{ fmt(db.keys) }}</div>
-              <el-progress :percentage="clamp(db.expireRate)" :stroke-width="6"
-                :show-text="false" color="#409eff" class="db-metric__bar" />
-              <div class="db-metric__hint">
-                <span style="color:#67c23a">{{ num(db.expireRate) }}%</span> 过期率
+          <el-row :gutter="16" class="db-card__body">
+            <el-col :xs="24" :sm="8">
+              <div class="db-metric">
+                <div class="db-metric__label"><i class="el-icon-key"></i> 键数量</div>
+                <div class="db-metric__value">{{ fmt(db.keys) }}</div>
+                <el-progress :percentage="clamp(db.expireRate)" :stroke-width="6"
+                  :show-text="false" color="#409eff" class="db-metric__bar" />
+                <div class="db-metric__hint">
+                  <span style="color:#67c23a">{{ num(db.expireRate) }}%</span> 过期率
+                </div>
               </div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="8">
-            <div class="db-metric">
-              <div class="db-metric__label"><i class="el-icon-time"></i> 过期键</div>
-              <div class="db-metric__value">{{ fmt(db.expires) }}</div>
-            </div>
-          </el-col>
-          <el-col :xs="24" :sm="8">
-            <div class="db-metric">
-              <div class="db-metric__label"><i class="el-icon-odometer"></i> 平均TTL</div>
-              <div class="db-metric__value">{{ db.avgTtl == null ? '-' : db.avgTtl }}</div>
-              <div class="db-metric__hint">{{ fmt(db.avgTtlMs) }}</div>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <div class="db-metric">
+                <div class="db-metric__label"><i class="el-icon-time"></i> 过期键</div>
+                <div class="db-metric__value">{{ fmt(db.expires) }}</div>
+              </div>
+            </el-col>
+            <el-col :xs="24" :sm="8">
+              <div class="db-metric">
+                <div class="db-metric__label"><i class="el-icon-odometer"></i> 平均TTL</div>
+                <div class="db-metric__value">{{ db.avgTtl == null ? '-' : db.avgTtl }}</div>
+                <div class="db-metric__hint">{{ fmt(db.avgTtlMs) }}</div>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+      </section-card>
+
+      <section-card dense scrollable class="fill" body-class="fill"
+        title="字段说明" icon="el-icon-data-line">
+        <el-row :gutter="16">
+          <el-col v-for="f in fieldDesc" :key="f.label" :xs="24" :sm="12">
+            <div class="field-desc">
+              <div class="field-desc__label">{{ f.label }}</div>
+              <div class="field-desc__text">{{ f.text }}</div>
             </div>
           </el-col>
         </el-row>
-      </div>
-    </SectionCard>
-
-    <SectionCard title="字段说明" icon="el-icon-data-line">
-      <el-row :gutter="16">
-        <el-col v-for="f in fieldDesc" :key="f.label" :xs="24" :sm="12" :lg="8">
-          <div class="field-desc">
-            <div class="field-desc__label">{{ f.label }}</div>
-            <div class="field-desc__text">{{ f.text }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+      </section-card>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getRedisKeyspace } from "@/api/monitor-redis";
 
 export default {
   name: "RedisKeyspace",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -148,11 +147,22 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding: @dense-gap;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-grid {
+  flex-shrink: 0;
+}
+.content-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-content: stretch;
 }
 .db-card {
   border: 1px solid var(--cm-border-light, @border-light);

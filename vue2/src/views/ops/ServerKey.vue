@@ -1,28 +1,26 @@
 <template>
-  <div class="page-container">
-    <h2 class="title">主机秘钥</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.native.prevent>
+  <screen-page title="主机秘钥" gap="8px">
+    <template #header-extra>
+      <el-form inline size="mini" :model="searchForm" class="filter-form" @submit.native.prevent>
         <el-form-item label="用户名">
-          <el-input v-model="searchForm.displayName" placeholder="请输入用户名" />
+          <el-input v-model="searchForm.displayName" placeholder="请输入用户名" clearable style="width: 150px" />
         </el-form-item>
         <el-form-item label="活跃状态">
-          <el-select v-model="searchForm.active" placeholder="请选择活跃状态" clearable style="width: 150px">
+          <el-select v-model="searchForm.active" placeholder="活跃状态" clearable style="width: 120px">
             <el-option label="活 跃" value="1" />
             <el-option label="不活跃" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="margin-right: 8px" @click="onSearch">查询</el-button>
+          <el-button type="primary" @click="onSearch">查询</el-button>
           <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="handleAddKey">新增秘钥</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <el-button type="primary" style="margin-bottom: 16px" @click="handleAddKey">
-        新增秘钥
-      </el-button>
-
-      <el-table :data="serverKeys.items" row-key="id" style="width: 100%">
+    <section-card dense scrollable body-class="dense-table fill" class="fill" title="秘钥列表" icon="el-icon-key">
+      <el-table class="dense-table" height="100%" :data="serverKeys.items" row-key="id" size="small" stripe style="width: 100%">
         <el-table-column prop="displayName" label="显示名称" />
         <el-table-column label="账户类型">
           <template #default="{ row }">
@@ -46,17 +44,17 @@
           </template>
         </el-table-column>
       </el-table>
+    </section-card>
 
-      <el-pagination
-        style="margin-top: 12px; text-align: right"
-        layout="total, prev, pager, next, sizes"
-        :total="serverKeys.total"
-        :current-page="pagination.pageNo"
-        :page-size="pagination.pageSize"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
-      />
-    </el-card>
+    <el-pagination
+      class="page-pagination"
+      layout="total, prev, pager, next, sizes"
+      :total="serverKeys.total"
+      :current-page="pagination.pageNo"
+      :page-size="pagination.pageSize"
+      @current-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
 
     <!-- 添加或编辑服务器秘钥的抽屉 -->
     <el-drawer
@@ -75,10 +73,12 @@
         />
       </div>
     </el-drawer>
-  </div>
+  </screen-page>
 </template>
 
 <script>
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateServerKeyForm from "./components/CreateServerKeyForm.vue";
 import {
   queryServerKeys,
@@ -90,6 +90,8 @@ import {
 export default {
   name: "ServerKey",
   components: {
+    ScreenPage,
+    SectionCard,
     CreateServerKeyForm,
   },
   data() {
@@ -163,7 +165,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(121, 242, 154);
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-form /deep/ .el-form-item {
+  margin-bottom: 0;
+}
+.page-pagination {
+  flex-shrink: 0;
+  text-align: right;
 }
 </style>

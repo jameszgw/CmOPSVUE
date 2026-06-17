@@ -1,58 +1,46 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-connection" label="活动连接"
-          :value="connections.active == null ? '-' : connections.active"
-          sub="当前活动连接数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-time" label="等待连接"
-          :value="connections.waiting == null ? '-' : connections.waiting"
-          :sub="`读 ${connections.reading == null ? '-' : connections.reading} / 写 ${connections.writing == null ? '-' : connections.writing}`"
-          color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lock" label="SSL 握手/秒"
-          :value="ssl.handshakesPerSec == null ? '-' : ssl.handshakesPerSec"
-          :sub="`握手耗时 ${ssl.handshakeMs == null ? '-' : num(ssl.handshakeMs) + ' ms'}`"
-          color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-key" label="证书剩余天数"
-          :value="ssl.certDaysLeft == null ? '-' : `${ssl.certDaysLeft} 天`"
-          sub="SSL 证书有效期" :color="certColor" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-connection" label="活动连接"
+        :value="connections.active == null ? '-' : connections.active"
+        sub="当前活动连接数" color="#409eff" />
+      <StatCard dense icon="el-icon-time" label="等待连接"
+        :value="connections.waiting == null ? '-' : connections.waiting"
+        :sub="`读 ${connections.reading == null ? '-' : connections.reading} / 写 ${connections.writing == null ? '-' : connections.writing}`"
+        color="#e6a23c" />
+      <StatCard dense icon="el-icon-lock" label="SSL 握手/秒"
+        :value="ssl.handshakesPerSec == null ? '-' : ssl.handshakesPerSec"
+        :sub="`握手耗时 ${ssl.handshakeMs == null ? '-' : num(ssl.handshakeMs) + ' ms'}`"
+        color="#67c23a" />
+      <StatCard dense icon="el-icon-key" label="证书剩余天数"
+        :value="ssl.certDaysLeft == null ? '-' : `${ssl.certDaysLeft} 天`"
+        sub="SSL 证书有效期" :color="certColor" />
+    </card-grid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接统计" icon="el-icon-data-analysis">
-          <InfoTable :rows="connRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="SSL / TLS" icon="el-icon-lock">
-          <InfoTable :rows="sslRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="安全防护" icon="el-icon-s-claim">
-      <InfoTable :rows="securityRows" :columns="2" />
-    </SectionCard>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="连接统计" icon="el-icon-data-analysis">
+        <InfoTable :rows="connRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable title="SSL / TLS" icon="el-icon-lock">
+        <InfoTable :rows="sslRows" :columns="2" />
+      </SectionCard>
+      <SectionCard dense scrollable title="安全防护" icon="el-icon-s-claim">
+        <InfoTable :rows="securityRows" :columns="2" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getLbConnections } from "@/api/monitor-lb";
 
 export default {
   name: "LbConnections",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -152,10 +140,12 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 </style>

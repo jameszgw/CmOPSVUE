@@ -1,133 +1,143 @@
 <template>
-  <div class="page-container">
-    <el-tabs v-model="activeTab" class="resilience-tabs">
+  <screen-page title="韧性中心" gap="8px" class="resilience">
+    <template #header-extra>
+      <el-tag size="mini" type="success" effect="plain">真实采集</el-tag>
+    </template>
+
+    <el-tabs v-model="activeTab" class="resilience-tabs fill" @tab-click="onTabClick">
       <!-- 韧性评分 -->
       <el-tab-pane label="韧性评分" name="resilience">
-        <el-row :gutter="12">
-          <el-col :xs="24" :lg="12">
-            <SectionCard title="韧性维度评分" icon="el-icon-aim">
+        <div class="tab-pane">
+          <card-grid min="300px" gap="8px" class="row-top">
+            <section-card dense title="韧性维度评分" icon="el-icon-aim" class="radar-card">
               <template #extra>满分 100</template>
               <div ref="radarRef" class="radar-chart"></div>
-            </SectionCard>
-          </el-col>
-          <el-col :xs="24" :lg="12">
-            <SectionCard title="总体评分" icon="el-icon-medal">
+            </section-card>
+            <section-card dense title="总体评分" icon="el-icon-medal">
               <div class="score-box">
                 <div class="score-num" :style="{ color: gradeColor }">{{ overallScore }}</div>
                 <el-tag :type="gradeTagType" effect="dark" size="medium">等级 {{ grade }}</el-tag>
               </div>
-              <el-row :gutter="12" class="drill-stat-row">
-                <el-col :xs="24" :sm="12">
-                  <StatCard
-                    icon="el-icon-circle-check"
-                    label="演练通过"
-                    :value="drillPassed"
-                    color="#67c23a"
-                  />
-                </el-col>
-                <el-col :xs="24" :sm="12">
-                  <StatCard
-                    icon="el-icon-circle-close"
-                    label="演练未通过"
-                    :value="drillFailed"
-                    color="#f56c6c"
-                  />
-                </el-col>
-              </el-row>
-            </SectionCard>
-          </el-col>
-        </el-row>
+              <card-grid min="130px" gap="8px">
+                <stat-card
+                  dense
+                  icon="el-icon-circle-check"
+                  label="演练通过"
+                  :value="drillPassed"
+                  :sub="`共 ${drillTotal} 项`"
+                  color="#67c23a"
+                />
+                <stat-card
+                  dense
+                  icon="el-icon-circle-close"
+                  label="演练未通过"
+                  :value="drillFailed"
+                  :sub="`共 ${drillTotal} 项`"
+                  color="#f56c6c"
+                />
+              </card-grid>
+            </section-card>
+          </card-grid>
 
-        <SectionCard title="混沌演练" icon="el-icon-cpu">
-          <template #extra>共 {{ drillTotal }} 项</template>
-          <el-table :data="drills" size="small" stripe>
-            <el-table-column prop="name" label="场景" min-width="160" />
-            <el-table-column prop="desc" label="说明" min-width="200" />
-            <el-table-column label="结果" width="100">
-              <template slot-scope="{ row }">
-                <el-tag
-                  size="small"
-                  effect="dark"
-                  :type="row.status === 'passed' ? 'success' : 'danger'"
-                >{{ row.statusText || (row.status === 'passed' ? '通过' : '未通过') }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="lastRun" label="最近" width="170" />
-            <el-table-column label="检测耗时" width="110">
-              <template slot-scope="{ row }">{{ num(row.detectionTimeSec) }} s</template>
-            </el-table-column>
-            <el-table-column label="恢复耗时" width="110">
-              <template slot-scope="{ row }">{{ num(row.recoveryTimeSec) }} s</template>
-            </el-table-column>
-            <el-table-column label="告警准确率" width="120">
-              <template slot-scope="{ row }">{{ num(row.alertAccuracy) }}%</template>
-            </el-table-column>
-          </el-table>
-        </SectionCard>
+          <div class="row-bottom fill">
+            <section-card dense scrollable body-class="dense-table fill" class="drills-card fill"
+              title="混沌演练" icon="el-icon-cpu">
+              <template #extra>共 {{ drillTotal }} 项</template>
+              <el-table class="dense-table" height="100%" :data="drills" size="small" stripe>
+                <el-table-column prop="name" label="场景" min-width="150" />
+                <el-table-column prop="desc" label="说明" min-width="220" show-overflow-tooltip />
+                <el-table-column label="结果" width="100">
+                  <template slot-scope="{ row }">
+                    <el-tag
+                      size="small"
+                      effect="dark"
+                      :type="row.status === 'passed' ? 'success' : 'danger'"
+                    >{{ row.statusText || (row.status === 'passed' ? '通过' : '未通过') }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="lastRun" label="最近" width="180" />
+                <el-table-column label="检测耗时" width="110">
+                  <template slot-scope="{ row }">{{ num(row.detectionTimeSec) }} s</template>
+                </el-table-column>
+                <el-table-column label="恢复耗时" width="110">
+                  <template slot-scope="{ row }">{{ num(row.recoveryTimeSec) }} s</template>
+                </el-table-column>
+                <el-table-column label="告警准确率" width="120">
+                  <template slot-scope="{ row }">{{ num(row.alertAccuracy) }}%</template>
+                </el-table-column>
+                <template slot="empty">
+                  <el-empty description="暂无演练记录" :image-size="60" />
+                </template>
+              </el-table>
+            </section-card>
 
-        <SectionCard title="改进建议" icon="el-icon-magic-stick">
-          <el-empty v-if="!improvements.length" description="暂无改进建议" />
-          <ul v-else class="improve-list">
-            <li v-for="(item, i) in improvements" :key="i">
-              <i class="el-icon-arrow-right"></i>
-              <span>{{ item }}</span>
-            </li>
-          </ul>
-        </SectionCard>
+            <section-card dense scrollable body-class="fill" class="improve-card fill"
+              title="改进建议" icon="el-icon-magic-stick">
+              <ul v-if="improvements.length" class="improve-list">
+                <li v-for="(item, i) in improvements" :key="i">
+                  <i class="el-icon-arrow-right"></i>
+                  <span>{{ item }}</span>
+                </li>
+              </ul>
+              <el-empty v-else description="暂无改进建议" :image-size="60" />
+            </section-card>
+          </div>
+        </div>
       </el-tab-pane>
 
       <!-- 安全基线 -->
       <el-tab-pane label="安全基线" name="security">
-        <el-row :gutter="12" class="stat-row">
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-warning-outline" label="漂移总数" :value="driftTotal" color="#409eff" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-error" label="高危" :value="highRisk" color="#f56c6c" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-warning" label="中危" :value="mediumRisk" color="#e6a23c" />
-          </el-col>
-          <el-col :xs="24" :sm="12" :lg="6">
-            <StatCard icon="el-icon-info" label="低危" :value="lowRisk" color="#67c23a" />
-          </el-col>
-        </el-row>
+        <div class="tab-pane">
+          <card-grid min="180px" gap="8px" class="row-stats">
+            <stat-card dense icon="el-icon-warning-outline" label="漂移总数" :value="driftTotal" color="#409eff" />
+            <stat-card dense icon="el-icon-error" label="高危" :value="highRisk" color="#f56c6c" />
+            <stat-card dense icon="el-icon-warning" label="中危" :value="mediumRisk" color="#e6a23c" />
+            <stat-card dense icon="el-icon-info" label="低危" :value="lowRisk" color="#67c23a" />
+          </card-grid>
 
-        <SectionCard title="安全基线漂移" icon="el-icon-lock">
-          <el-empty v-if="driftTotal === 0" description="暂无基线漂移" />
-          <el-table v-else :data="drifts" size="small" stripe>
-            <el-table-column prop="deviceName" label="设备" min-width="140" />
-            <el-table-column label="类型" width="110">
-              <template slot-scope="{ row }">{{ deviceTypeLabel(row.deviceType) }}</template>
-            </el-table-column>
-            <el-table-column prop="category" label="类别" width="120" />
-            <el-table-column prop="target" label="项" min-width="160" />
-            <el-table-column prop="baseline" label="基线" min-width="140" />
-            <el-table-column label="当前" min-width="140">
-              <template slot-scope="{ row }">
-                <span style="color: #f56c6c">{{ row.current }}</span>
+          <section-card dense scrollable body-class="dense-table fill" class="fill"
+            title="安全基线漂移" icon="el-icon-lock">
+            <el-table class="dense-table" height="100%" :data="drifts" size="small" stripe>
+              <el-table-column prop="deviceName" label="设备" min-width="150" />
+              <el-table-column label="类型" width="110">
+                <template slot-scope="{ row }">
+                  <el-tag size="small" type="info" effect="plain">{{ deviceTypeLabel(row.deviceType) }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="category" label="类别" width="130" />
+              <el-table-column prop="target" label="项" min-width="140" />
+              <el-table-column prop="baseline" label="基线" min-width="140" show-overflow-tooltip />
+              <el-table-column label="当前" min-width="140">
+                <template slot-scope="{ row }">
+                  <span style="color: #f56c6c">{{ row.current }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="风险" width="90">
+                <template slot-scope="{ row }">
+                  <el-tag size="small" effect="dark" :type="riskTagType(row.risk)">{{
+                    row.riskText || riskTextOf(row.risk)
+                  }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="detectedTime" label="时间" width="180" />
+              <el-table-column prop="recommendation" label="建议" min-width="220" show-overflow-tooltip />
+              <template slot="empty">
+                <el-empty description="暂无基线漂移" :image-size="60" />
               </template>
-            </el-table-column>
-            <el-table-column label="风险" width="90">
-              <template slot-scope="{ row }">
-                <el-tag size="small" effect="dark" :type="riskTagType(row.risk)">{{
-                  row.riskText || riskTextOf(row.risk)
-                }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="detectedTime" label="时间" width="170" />
-            <el-table-column prop="recommendation" label="建议" min-width="220" />
-          </el-table>
-        </SectionCard>
+            </el-table>
+          </section-card>
+        </div>
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </screen-page>
 </template>
 
 <script>
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import chartSkin from "@/mixins/chartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -151,7 +161,7 @@ const GRADE_TAG = { A: "success", B: "success", C: "warning", D: "danger" };
 export default {
   name: "MonitorResilience",
   mixins: [chartSkin],
-  components: { StatCard, SectionCard, InfoTable },
+  components: { ScreenPage, CardGrid, StatCard, SectionCard, InfoTable },
   data() {
     return {
       activeTab: "resilience",
@@ -212,12 +222,14 @@ export default {
   mounted() {
     this.loadAll();
     this.timer = setInterval(this.loadAll, 5000);
+    window.addEventListener("resize", this.resizeRadar);
   },
   beforeDestroy() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
+    window.removeEventListener("resize", this.resizeRadar);
     if (this.chart) {
       this.chart.dispose();
       this.chart = null;
@@ -239,6 +251,17 @@ export default {
       if (risk === "high") return "高危";
       if (risk === "medium") return "中危";
       return "低危";
+    },
+    resizeRadar() {
+      if (this.chart) this.chart.resize();
+    },
+    onTabClick() {
+      if (this.activeTab === "resilience") {
+        this.$nextTick(() => {
+          this.renderRadar();
+          this.resizeRadar();
+        });
+      }
     },
     reinitChartsForSkin() {
       if (this.chart) {
@@ -291,39 +314,80 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
-.resilience-tabs /deep/ .el-tabs__content {
-  overflow: visible;
-}
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
-.radar-chart {
-  height: 320px;
-  width: 100%;
-}
-.score-box {
+
+// el-tabs 填满 ScreenPage 主体
+.resilience-tabs {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 0 24px;
+  min-height: 0;
 
-  .score-num {
-    font-size: 56px;
-    font-weight: 700;
-    line-height: 1.1;
-    margin-bottom: 12px;
+  /deep/ .el-tabs__header {
+    margin: 0 0 8px;
+    flex-shrink: 0;
+  }
+
+  /deep/ .el-tabs__content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /deep/ .el-tab-pane {
+    height: 100%;
   }
 }
-.drill-stat-row .el-col {
-  margin-bottom: 12px;
+
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  min-height: 0;
 }
+
+.row-top,
+.row-stats {
+  flex-shrink: 0;
+}
+
+// 演练表 + 改进建议并排，填满剩余高度
+.row-bottom {
+  display: flex;
+  gap: @space-sm;
+  flex: 1;
+  min-height: 0;
+}
+.drills-card {
+  flex: 2;
+  min-width: 0;
+}
+.improve-card {
+  flex: 1;
+  min-width: 260px;
+}
+
+.radar-card /deep/ .section-card__body {
+  display: flex;
+}
+.radar-chart {
+  height: @chart-h-md;
+  width: 100%;
+}
+
+.score-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: @space-md;
+  padding: 6px 0 @space-md;
+
+  .score-num {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
 .improve-list {
   list-style: none;
   margin: 0;
@@ -332,14 +396,9 @@ export default {
   li {
     display: flex;
     align-items: flex-start;
-    padding: 8px 0;
+    padding: 6px 0;
     font-size: 13px;
     color: var(--cm-text-regular, @text-regular);
-    border-bottom: 1px solid var(--cm-bg-page, @bg-page);
-
-    &:last-child {
-      border-bottom: none;
-    }
 
     i {
       color: #409eff;

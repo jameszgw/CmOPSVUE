@@ -1,19 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-cpu" label="GPU 总数"
-          :value="num0(d.total)" sub="GPU 卡数量" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-warning-outline" label="高温卡数"
-          :value="num0(d.hotCount)" sub="温度过高" color="#f56c6c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-cpu" label="GPU 总数"
+        :value="num0(d.total)" sub="GPU 卡数量" color="#409eff" />
+      <StatCard dense icon="el-icon-warning-outline" label="高温卡数"
+        :value="num0(d.hotCount)" sub="温度过高" color="#f56c6c" />
+    </card-grid>
 
-    <SectionCard title="GPU 卡列表" icon="el-icon-cpu">
-      <template #extra>共 {{ gpus.length }} 张卡</template>
-      <el-table :data="gpus" size="small" stripe>
+    <card-grid class="fill" min="300px" gap="8px">
+      <SectionCard dense scrollable title="GPU 卡列表" icon="el-icon-cpu" body-class="dense-table fill">
+        <template #extra>共 {{ gpus.length }} 张卡</template>
+        <el-table :data="gpus" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="index" label="#" width="60" align="center" />
         <el-table-column prop="model" label="型号" min-width="180" />
         <el-table-column label="利用率" min-width="200">
@@ -47,20 +44,22 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-empty v-if="!gpus.length" description="暂无 GPU 数据" />
-    </SectionCard>
+        <el-empty v-if="!gpus.length" description="暂无 GPU 数据" />
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getGpuCards } from "@/api/monitor-gpu";
 
 export default {
   name: "GpuGpus",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -111,11 +110,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .mem-text {
   margin-top: 2px;

@@ -1,25 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-sunny" label="SoC 温度"
-          :value="`${num0(d.socTemp)}℃`" :sub="`CPU ${num0(d.cpuTemp)}℃ / GPU ${num0(d.gpuTemp)}℃`" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-wind-power" label="风扇转速"
-          :value="`${num0(d.fanRpm)} RPM`" :sub="`占空比 ${num0(d.fanDutyPct)}%`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-lightning" label="供电"
-          :value="`${num2(d.supplyVoltage)} V`" :sub="`${num2(d.supplyCurrent)} A`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-odometer" label="整机功耗"
-          :value="`${num1(d.powerWatt)} W`" sub="实时功耗" color="#67c23a" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <card-grid min="200px" gap="8px">
+      <StatCard dense icon="el-icon-sunny" label="SoC 温度"
+        :value="`${num0(d.socTemp)}℃`" :sub="`CPU ${num0(d.cpuTemp)}℃ / GPU ${num0(d.gpuTemp)}℃`" color="#f56c6c" />
+      <StatCard dense icon="el-icon-wind-power" label="风扇转速"
+        :value="`${num0(d.fanRpm)} RPM`" :sub="`占空比 ${num0(d.fanDutyPct)}%`" color="#409eff" />
+      <StatCard dense icon="el-icon-lightning" label="供电"
+        :value="`${num2(d.supplyVoltage)} V`" :sub="`${num2(d.supplyCurrent)} A`" color="#e6a23c" />
+      <StatCard dense icon="el-icon-odometer" label="整机功耗"
+        :value="`${num1(d.powerWatt)} W`" sub="实时功耗" color="#67c23a" />
+    </card-grid>
 
-    <SectionCard title="板级操作" icon="el-icon-set-up" class="action-card">
+    <SectionCard dense title="板级操作" icon="el-icon-set-up">
       <el-form inline class="action-form" @submit.native.prevent>
         <el-form-item label="操作类型">
           <el-select v-model="action.taskType" size="small" style="width: 150px">
@@ -46,132 +38,132 @@
       </el-form>
     </SectionCard>
 
-    <SectionCard title="下发历史" icon="el-icon-tickets">
-      <template #extra>共 {{ total }} 条</template>
-      <el-form inline class="filter-bar" @submit.native.prevent>
-        <el-form-item label="任务类型">
-          <el-select v-model="filters.taskType" size="mini" style="width: 130px">
-            <el-option label="全部" value="" />
-            <el-option label="重启" value="reboot" />
-            <el-option label="GPIO控制" value="gpio-set" />
-            <el-option label="LED" value="led" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="来源">
-          <el-select v-model="filters.source" size="mini" style="width: 150px">
-            <el-option label="全部" value="" />
-            <el-option label="真实·agent" value="agent" />
-            <el-option label="模拟·simulated" value="simulated" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="结果">
-          <el-select v-model="filters.result" size="mini" style="width: 120px">
-            <el-option label="全部" value="" />
-            <el-option label="成功" value="success" />
-            <el-option label="已受理" value="accepted" />
-            <el-option label="失败" value="failed" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" size="mini" @click="onFilter">查询</el-button>
-          <el-button size="mini" @click="onResetFilter">重置</el-button>
-        </el-form-item>
-      </el-form>
-      <el-table :data="history" size="small" stripe>
-        <el-table-column prop="taskType" label="任务类型" min-width="120">
-          <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
-        </el-table-column>
-        <el-table-column prop="scope" label="范围" min-width="140">
-          <template slot-scope="{ row }">{{ val(row.scope) }}</template>
-        </el-table-column>
-        <el-table-column label="来源" width="130" align="center">
-          <template slot-scope="{ row }">
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(row.source) ? 'success' : 'info'">
-              {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp",winrm:"真实·winrm",redis:"真实·redis"}[row.source] || "模拟·simulated" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="result" label="结果" min-width="120">
-          <template slot-scope="{ row }">{{ val(row.result) }}</template>
-        </el-table-column>
-        <el-table-column label="影响" width="100" align="center">
-          <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
-        </el-table-column>
-        <el-table-column prop="gmtCreate" label="时间" min-width="160">
-          <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!history.length" description="暂无下发记录" />
-      <div v-if="total > 0" class="pager-wrap">
-        <el-pagination
-          :current-page.sync="pageNo"
-          :page-size.sync="pageSize"
-          :page-sizes="[10, 20, 50]"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-          background
-          @current-change="onPageChange"
-          @size-change="onSizeChange"
-        />
-      </div>
-    </SectionCard>
+    <card-grid class="fill" min="420px" gap="8px">
+      <SectionCard dense scrollable title="下发历史" icon="el-icon-tickets"
+        body-class="dense-table fill" class="fill">
+        <template #extra>共 {{ total }} 条</template>
+        <el-form inline class="filter-bar" @submit.native.prevent>
+          <el-form-item label="任务类型">
+            <el-select v-model="filters.taskType" size="mini" style="width: 130px">
+              <el-option label="全部" value="" />
+              <el-option label="重启" value="reboot" />
+              <el-option label="GPIO控制" value="gpio-set" />
+              <el-option label="LED" value="led" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="来源">
+            <el-select v-model="filters.source" size="mini" style="width: 150px">
+              <el-option label="全部" value="" />
+              <el-option label="真实·agent" value="agent" />
+              <el-option label="模拟·simulated" value="simulated" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="结果">
+            <el-select v-model="filters.result" size="mini" style="width: 120px">
+              <el-option label="全部" value="" />
+              <el-option label="成功" value="success" />
+              <el-option label="已受理" value="accepted" />
+              <el-option label="失败" value="failed" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" size="mini" @click="onFilter">查询</el-button>
+            <el-button size="mini" @click="onResetFilter">重置</el-button>
+          </el-form-item>
+        </el-form>
+        <el-table :data="history" class="dense-table" size="small" stripe>
+          <el-table-column prop="taskType" label="任务类型" min-width="120">
+            <template slot-scope="{ row }">{{ val(row.taskType) }}</template>
+          </el-table-column>
+          <el-table-column prop="scope" label="范围" min-width="140">
+            <template slot-scope="{ row }">{{ val(row.scope) }}</template>
+          </el-table-column>
+          <el-table-column label="来源" width="130" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(row.source) ? 'success' : 'info'">
+                {{ {agent:"真实·agent",ssh:"真实·ssh",snmp:"真实·snmp",winrm:"真实·winrm",redis:"真实·redis"}[row.source] || "模拟·simulated" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="result" label="结果" min-width="120">
+            <template slot-scope="{ row }">{{ val(row.result) }}</template>
+          </el-table-column>
+          <el-table-column label="影响" width="100" align="center">
+            <template slot-scope="{ row }">{{ num0(row.affected) }}</template>
+          </el-table-column>
+          <el-table-column prop="gmtCreate" label="时间" min-width="160">
+            <template slot-scope="{ row }">{{ val(row.gmtCreate) }}</template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!history.length" description="暂无下发记录" />
+        <div v-if="total > 0" class="pager-wrap">
+          <el-pagination
+            :current-page.sync="pageNo"
+            :page-size.sync="pageSize"
+            :page-sizes="[10, 20, 50]"
+            :total="total"
+            layout="total, sizes, prev, pager, next"
+            background
+            @current-change="onPageChange"
+            @size-change="onSizeChange"
+          />
+        </div>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="14">
-        <SectionCard title="热区状态" icon="el-icon-sunny">
-          <template #extra>共 {{ thermals.length }} 个热区</template>
-          <el-table :data="thermals" size="small" stripe>
-            <el-table-column prop="zone" label="热区" min-width="160" />
-            <el-table-column label="温度" width="120" align="center">
-              <template slot-scope="{ row }">{{ num1(row.temp) }} ℃</template>
-            </el-table-column>
-            <el-table-column label="状态" width="120" align="center">
-              <template slot-scope="{ row }">
-                <el-tag size="mini" :type="zoneTag(row.status)" effect="dark">{{ val(row.status) }}</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-          <el-empty v-if="!thermals.length" description="暂无热区数据" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="10">
-        <SectionCard title="风扇与供电" icon="el-icon-wind-power">
-          <InfoTable :rows="fanRows" />
-          <div class="flag-grid">
-            <div class="flag-grid__item">
-              <span class="flag-grid__label">当前欠压</span>
-              <el-tag size="small" :type="d.underVoltage ? 'danger' : 'success'">
-                {{ d.underVoltage ? "是" : "否" }}
-              </el-tag>
-            </div>
-            <div class="flag-grid__item">
-              <span class="flag-grid__label">当前降频</span>
-              <el-tag size="small" :type="d.throttledNow ? 'warning' : 'success'">
-                {{ d.throttledNow ? "是" : "否" }}
-              </el-tag>
-            </div>
-            <div class="flag-grid__item">
-              <span class="flag-grid__label">历史降频</span>
-              <el-tag size="small" :type="d.throttledEver ? 'warning' : 'success'">
-                {{ d.throttledEver ? "是" : "否" }}
-              </el-tag>
-            </div>
-            <div class="flag-grid__item">
-              <span class="flag-grid__label">频率受限</span>
-              <el-tag size="small" :type="d.freqCapped ? 'warning' : 'success'">
-                {{ d.freqCapped ? "是" : "否" }}
-              </el-tag>
-            </div>
+      <SectionCard dense scrollable title="热区状态" icon="el-icon-sunny"
+        body-class="dense-table fill" class="fill">
+        <template #extra>共 {{ thermals.length }} 个热区</template>
+        <el-table :data="thermals" class="dense-table" size="small" stripe>
+          <el-table-column prop="zone" label="热区" min-width="160" />
+          <el-table-column label="温度" width="120" align="center">
+            <template slot-scope="{ row }">{{ num1(row.temp) }} ℃</template>
+          </el-table-column>
+          <el-table-column label="状态" width="120" align="center">
+            <template slot-scope="{ row }">
+              <el-tag size="mini" :type="zoneTag(row.status)" effect="dark">{{ val(row.status) }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-empty v-if="!thermals.length" description="暂无热区数据" />
+      </SectionCard>
+
+      <SectionCard dense scrollable title="风扇与供电" icon="el-icon-wind-power" class="fill">
+        <InfoTable :rows="fanRows" />
+        <div class="flag-grid">
+          <div class="flag-grid__item">
+            <span class="flag-grid__label">当前欠压</span>
+            <el-tag size="small" :type="d.underVoltage ? 'danger' : 'success'">
+              {{ d.underVoltage ? "是" : "否" }}
+            </el-tag>
           </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+          <div class="flag-grid__item">
+            <span class="flag-grid__label">当前降频</span>
+            <el-tag size="small" :type="d.throttledNow ? 'warning' : 'success'">
+              {{ d.throttledNow ? "是" : "否" }}
+            </el-tag>
+          </div>
+          <div class="flag-grid__item">
+            <span class="flag-grid__label">历史降频</span>
+            <el-tag size="small" :type="d.throttledEver ? 'warning' : 'success'">
+              {{ d.throttledEver ? "是" : "否" }}
+            </el-tag>
+          </div>
+          <div class="flag-grid__item">
+            <span class="flag-grid__label">频率受限</span>
+            <el-tag size="small" :type="d.freqCapped ? 'warning' : 'success'">
+              {{ d.freqCapped ? "是" : "否" }}
+            </el-tag>
+          </div>
+        </div>
+      </SectionCard>
+    </card-grid>
   </div>
 </template>
 
 <script>
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getSbcBoardSensors, dispatchBoardAction } from "@/api/monitor-sbc";
 import { getDispatchHistory } from "@/api/monitor-dispatch";
@@ -184,7 +176,7 @@ const ZONE_TAG = {
 
 export default {
   name: "SbcBoardSensors",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, CardGrid, InfoTable },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -327,14 +319,12 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
-.action-card {
-  margin-bottom: 12px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  overflow: hidden;
 }
 .action-form ::v-deep .el-form-item {
   margin-bottom: 0;

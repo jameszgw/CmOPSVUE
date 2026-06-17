@@ -2,76 +2,58 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '暂无数据'" :image-size="120" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-download" label="读取速度" :value="d.readSpeed || '-'"
-          sub="当前读取速度" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-upload2" label="写入速度" :value="d.writeSpeed || '-'"
-          sub="当前写入速度" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-coin" label="总容量" :value="d.totalCapacity || '-'"
-          sub="磁盘总容量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-files" label="总写入" :value="d.totalWritten || '-'"
-          sub="累计写入数据" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="el-icon-timer" label="磁盘最大await" :value="maxAwait"
-          sub="分区最大IO等待时延" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="180px" gap="8px" class="kpi-row">
+      <StatCard dense icon="el-icon-download" label="读取速度" :value="d.readSpeed || '-'"
+        sub="当前读取速度" color="#409eff" />
+      <StatCard dense icon="el-icon-upload2" label="写入速度" :value="d.writeSpeed || '-'"
+        sub="当前写入速度" color="#67c23a" />
+      <StatCard dense icon="el-icon-coin" label="总容量" :value="d.totalCapacity || '-'"
+        sub="磁盘总容量" color="#e6a23c" />
+      <StatCard dense icon="el-icon-files" label="总写入" :value="d.totalWritten || '-'"
+        sub="累计写入数据" color="#909399" />
+      <StatCard dense icon="el-icon-timer" label="磁盘最大await" :value="maxAwait"
+        sub="分区最大IO等待时延" color="#e6a23c" />
+    </CardGrid>
 
-    <SectionCard v-for="(p, i) in partitions" :key="i" :title="p.mount || p.device || '分区'" icon="el-icon-folder-opened">
-      <template #extra>
-        <el-tag v-if="i === 0" size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-        {{ p.used || '-' }} / {{ p.total || '-' }} · {{ num(p.usage) }}%
-      </template>
-      <div class="part-sub">磁盘空间</div>
-      <el-progress :percentage="clamp(p.usage)" :stroke-width="12"
-        :color="usageColor(p.usage)" class="block-progress" />
-      <div class="part-sub">inode 使用率</div>
-      <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="12"
-        :color="usageColor(p.inodeUsage)" class="block-progress" />
-      <InfoTable :rows="partitionRows(p)" :columns="2" />
-    </SectionCard>
+    <CardGrid min="320px" gap="8px" class="section-grid">
+      <SectionCard v-for="(p, i) in partitions" :key="i" dense :title="p.mount || p.device || '分区'" icon="el-icon-folder-opened">
+        <template #extra>
+          <el-tag v-if="i === 0" size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          {{ p.used || '-' }} / {{ p.total || '-' }} · {{ num(p.usage) }}%
+        </template>
+        <div class="part-sub">磁盘空间</div>
+        <el-progress :percentage="clamp(p.usage)" :stroke-width="10"
+          :color="usageColor(p.usage)" class="block-progress" />
+        <div class="part-sub">inode 使用率</div>
+        <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="10"
+          :color="usageColor(p.inodeUsage)" class="block-progress" />
+        <InfoTable :rows="partitionRows(p)" :columns="2" />
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="读取统计" icon="el-icon-download">
-          <InfoTable :rows="readRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="写入统计" icon="el-icon-upload2">
-          <InfoTable :rows="writeRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <SectionCard dense title="读取统计" icon="el-icon-download">
+        <InfoTable :rows="readRows" />
+      </SectionCard>
+      <SectionCard dense title="写入统计" icon="el-icon-upload2">
+        <InfoTable :rows="writeRows" />
+      </SectionCard>
 
-    <SectionCard title="实时磁盘IO" icon="el-icon-time">
-      <el-row :gutter="12">
-        <el-col :xs="24" :sm="12">
+      <SectionCard dense title="实时磁盘IO" icon="el-icon-time">
+        <div class="rt-grid">
           <div class="rt-item">
             <div class="rt-item__label">读取速度</div>
             <div class="rt-item__value" style="color: #409eff">{{ realtimeRead }}</div>
             <div class="rt-item__sub">当前读取速度</div>
           </div>
-        </el-col>
-        <el-col :xs="24" :sm="12">
           <div class="rt-item">
             <div class="rt-item__label">写入速度</div>
             <div class="rt-item__value" style="color: #67c23a">{{ realtimeWrite }}</div>
             <div class="rt-item__sub">当前写入速度</div>
           </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+        </div>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -80,11 +62,12 @@
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerDisk } from "@/api/monitor-server";
 
 export default {
   name: "ServerDiskInfo",
-  components: { StatCard, SectionCard, InfoTable },
+  components: { StatCard, SectionCard, InfoTable, CardGrid },
   props: {
     deviceId: { type: String, default: "" },
     device: { type: Object, default: () => ({}) },
@@ -190,37 +173,51 @@ export default {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.kpi-row {
+  flex-shrink: 0;
+  margin-bottom: @dense-gap;
+}
+.section-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
 }
 .part-sub {
   font-size: 12px;
   color: var(--cm-text-secondary, @text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .block-progress {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+}
+.rt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: @space-sm;
 }
 .rt-item {
   border: 1px solid var(--cm-bg-page, @bg-page);
   border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 10px 12px;
 
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   &__value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
   }
   &__sub {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
   }
