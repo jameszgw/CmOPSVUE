@@ -1,69 +1,76 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="page-title">告警组列表</div>
-      <el-form inline @submit.prevent="handleSearch">
-        <el-form-item label="名称">
-          <el-input
-            v-model="searchForm.groupName"
-            placeholder="请输入名称"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="toolbar">
-        <el-button type="primary" @click="handleAdd">新增告警组</el-button>
+  <ScreenPage title="告警组列表" gap="8px">
+    <template #header-extra>
+      <div class="head-tools">
+        <el-input
+          v-model="searchForm.groupName"
+          size="small"
+          placeholder="请输入名称"
+          clearable
+          class="head-tools__input"
+          @keyup.enter="handleSearch"
+        />
+        <el-button size="small" type="primary" @click="handleSearch">查询</el-button>
+        <el-button size="small" @click="handleReset">重置</el-button>
+        <el-button size="small" type="primary" @click="handleAdd">新增告警组</el-button>
       </div>
+    </template>
 
-      <el-table :data="alarmGroupPage.items" row-key="id">
-        <el-table-column prop="groupName" label="告警组名称" />
-        <el-table-column prop="groupDescription" label="描述" />
-        <el-table-column label="通知人">
+    <SectionCard
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      class="fill"
+      title="告警组"
+      icon="Bell"
+    >
+      <el-table class="dense-table" height="100%" :data="alarmGroupPage.items" row-key="id" size="small" stripe>
+        <el-table-column prop="groupName" label="告警组名称" min-width="140" />
+        <el-table-column prop="groupDescription" label="描述" min-width="140" show-overflow-tooltip />
+        <el-table-column label="通知人" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">
             {{ (row.users || []).map((user) => user.username).join(", ") }}
           </template>
         </el-table-column>
-        <el-table-column label="WebHook">
+        <el-table-column label="WebHook" min-width="140" show-overflow-tooltip>
           <template #default="{ row }">
             {{ (row.notifies || []).map((n) => n.webHookName).join(", ") }}
           </template>
         </el-table-column>
-        <el-table-column label="创建时间">
+        <el-table-column label="创建时间" min-width="160">
           <template #default="{ row }">
             {{ formatTime(row.gmtCreate) }}
           </template>
         </el-table-column>
-        <el-table-column label="修改时间">
+        <el-table-column label="修改时间" min-width="160">
           <template #default="{ row }">
             {{ formatTime(row.gmtModified) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">
+            <el-button type="primary" link size="small" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button type="primary" link @click="handleDelete(row.id)">
+            <el-button type="primary" link size="small" @click="handleDelete(row.id)">
               删除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
+    </SectionCard>
 
+    <div class="pager">
       <el-pagination
-        class="pagination"
+        background
+        small
         layout="total, prev, pager, next"
         :total="alarmGroupPage.total"
         :current-page="pagination.pageNo"
         :page-size="pagination.pageSize"
         @current-change="handlePageChange"
       />
-    </el-card>
+    </div>
 
     <el-drawer
       v-model="drawerVisible"
@@ -80,7 +87,7 @@
         @cancel="handleCloseDrawer"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -95,6 +102,8 @@ import {
 } from "@/api/alarm-group";
 import { fetchWebhooks } from "@/api/webhook";
 import { queryMembers } from "@/api/user";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateAlarmGroupForm from "./components/CreateAlarmGroup.vue";
 
 const pagination = reactive({ pageNo: 1, pageSize: 10 });
@@ -197,22 +206,21 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+
+  &__input {
+    width: 180px;
+  }
 }
 
-.toolbar {
-  margin: 16px 0;
-}
-
-.pagination {
-  margin-top: 16px;
+.pager {
+  flex-shrink: 0;
+  display: flex;
   justify-content: flex-end;
-}
-
-.title {
-  background: rgb(219, 242, 121);
 }
 </style>

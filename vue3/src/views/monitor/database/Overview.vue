@@ -1,66 +1,50 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="连接使用率" :value="`${num(connUsage)}%`"
-          :percent="connUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="数据库大小" :value="d.dbSize || '-'"
-          :sub="storage.sizeMb != null ? `${storage.sizeMb} MB` : ''" color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
-          :percent="hitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Histogram" label="活动连接" :value="d.activeConnections ?? '-'"
-          sub="当前活动连接数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Connection" label="连接使用率" :value="`${num(connUsage)}%`"
+        :percent="connUsage" color="#409eff" />
+      <StatCard dense icon="Coin" label="数据库大小" :value="d.dbSize || '-'"
+        :sub="storage.sizeMb != null ? `${storage.sizeMb} MB` : ''" color="#9254de" />
+      <StatCard dense icon="Odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
+        :percent="hitRate" color="#67c23a" />
+      <StatCard dense icon="Histogram" label="活动连接" :value="d.activeConnections ?? '-'"
+        sub="当前活动连接数" color="#e6a23c" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基本信息" icon="InfoFilled">
-          <template #extra>
-            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接信息" icon="Connection">
-          <InfoTable :rows="connRows" />
-          <div class="progress-row">
-            <span class="progress-row__label">连接使用率</span>
-            <el-progress :percentage="clamp(connUsage)" :stroke-width="10"
-              :color="usageColor(connUsage)" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(connUsage) }}%</span>
-          </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="基本信息" icon="InfoFilled">
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="存储信息" icon="Coin">
-          <InfoTable :rows="storageRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="性能统计" icon="TrendCharts">
-          <div class="progress-row">
-            <span class="progress-row__label">缓存命中率</span>
-            <el-progress :percentage="clamp(hitRate)" :stroke-width="10"
-              :color="usageColor(hitRate)" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(hitRate) }}%</span>
-          </div>
-          <InfoTable :rows="perfRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+      <SectionCard dense title="连接信息" icon="Connection">
+        <InfoTable :rows="connRows" />
+        <div class="progress-row">
+          <span class="progress-row__label">连接使用率</span>
+          <el-progress :percentage="clamp(connUsage)" :stroke-width="10"
+            :color="usageColor(connUsage)" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(connUsage) }}%</span>
+        </div>
+      </SectionCard>
+
+      <SectionCard dense title="存储信息" icon="Coin">
+        <InfoTable :rows="storageRows" />
+      </SectionCard>
+
+      <SectionCard dense title="性能统计" icon="TrendCharts">
+        <div class="progress-row">
+          <span class="progress-row__label">缓存命中率</span>
+          <el-progress :percentage="clamp(hitRate)" :stroke-width="10"
+            :color="usageColor(hitRate)" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(hitRate) }}%</span>
+        </div>
+        <InfoTable :rows="perfRows" />
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -69,6 +53,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getDatabaseOverview } from "@/api/monitor-database";
 
 const props = defineProps({
@@ -147,16 +132,29 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .progress-row {
   display: flex;
   align-items: center;
-  margin: 12px 0;
+  margin: 8px 0;
   &__label {
     font-size: 13px;
     color: var(--cm-text-regular);

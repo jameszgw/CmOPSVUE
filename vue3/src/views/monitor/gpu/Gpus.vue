@@ -1,20 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Cpu" label="GPU 总数" :value="d.total ?? 0"
-          sub="GPU 卡数量" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Sunny" label="高温卡数" :value="d.hotCount ?? 0"
-          sub="温度过高" :color="(d.hotCount || 0) > 0 ? '#f56c6c' : '#67c23a'" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Cpu" label="GPU 总数" :value="d.total ?? 0"
+        sub="GPU 卡数量" color="#409eff" dense />
+      <StatCard icon="Sunny" label="高温卡数" :value="d.hotCount ?? 0"
+        sub="温度过高" :color="(d.hotCount || 0) > 0 ? '#f56c6c' : '#67c23a'" dense />
+    </CardGrid>
 
-    <SectionCard title="GPU 卡列表" icon="List">
+    <SectionCard title="GPU 卡列表" icon="List" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (d.gpus || []).length }} 张卡</template>
       <el-empty v-if="!(d.gpus || []).length" description="暂无数据" />
-      <el-table v-else :data="d.gpus || []" size="small" stripe>
+      <el-table v-else :data="d.gpus || []" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="index" label="#" width="60" align="center">
           <template #default="{ row }">{{ row.index ?? "-" }}</template>
         </el-table-column>
@@ -64,6 +60,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getGpuCards } from "@/api/monitor-gpu";
@@ -103,11 +100,13 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .mem-sub {
   display: block;

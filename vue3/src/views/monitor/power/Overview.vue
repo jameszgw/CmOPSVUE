@@ -1,29 +1,19 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="负载率" :value="`${num(d.loadPct)}%`"
-          :percent="d.loadPct" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Lightning" label="有功功率" :value="`${num(d.activePowerKw)} kW`"
-          color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Position" label="输入电压" :value="`${num(d.inputVoltage)} V`"
-          color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="今日电能" :value="`${num(d.energyTodayKwh)} kWh`"
-          :sub="`累计 ${d.energyTotalKwh ?? '-'} kWh`" color="#9254de" />
-      </el-col>
-      <el-col v-if="showBattery" :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Lightning" label="电池电量" :value="`${num(d.batterySoc)}%`"
-          :percent="d.batterySoc" :sub="`续航 ${d.batteryRuntimeMin ?? '-'} min`" color="#13c2c2" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Odometer" label="负载率" :value="`${num(d.loadPct)}%`"
+        :percent="d.loadPct" color="#409eff" />
+      <StatCard dense icon="Lightning" label="有功功率" :value="`${num(d.activePowerKw)} kW`"
+        color="#67c23a" />
+      <StatCard dense icon="Position" label="输入电压" :value="`${num(d.inputVoltage)} V`"
+        color="#e6a23c" />
+      <StatCard dense icon="DataLine" label="今日电能" :value="`${num(d.energyTodayKwh)} kWh`"
+        :sub="`累计 ${d.energyTotalKwh ?? '-'} kWh`" color="#9254de" />
+      <StatCard v-if="showBattery" dense icon="Lightning" label="电池电量" :value="`${num(d.batterySoc)}%`"
+        :percent="d.batterySoc" :sub="`续航 ${d.batteryRuntimeMin ?? '-'} min`" color="#13c2c2" />
+    </CardGrid>
 
-    <SectionCard title="基础信息" icon="InfoFilled">
+    <SectionCard dense class="row-mid" title="基础信息" icon="InfoFilled">
       <template #extra>
         <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
           {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
@@ -39,6 +29,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getPowerOverview } from "@/api/monitor-power";
 
 const props = defineProps({
@@ -95,10 +86,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
 }
 </style>

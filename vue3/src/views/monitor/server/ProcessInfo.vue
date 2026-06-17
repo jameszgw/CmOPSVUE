@@ -5,51 +5,44 @@
     <el-alert v-if="d.limited" type="warning" :closable="false" show-icon class="limit-alert"
       :title="d.limitNote || '当前设备未安装 Agent，进程信息为受限模式。'" />
 
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="List" label="总进程数" :value="d.total ?? '-'"
-          sub="系统进程总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="VideoPlay" label="运行中" :value="d.running ?? '-'"
-          sub="正在运行的进程" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Moon" label="休眠中" :value="d.sleeping ?? '-'"
-          sub="休眠状态的进程" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="其他状态" :value="d.other ?? '-'"
-          sub="停止/僵尸等状态" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="200px" gap="8px">
+      <StatCard dense icon="List" label="总进程数" :value="d.total ?? '-'"
+        sub="系统进程总数" color="#409eff" />
+      <StatCard dense icon="VideoPlay" label="运行中" :value="d.running ?? '-'"
+        sub="正在运行的进程" color="#67c23a" />
+      <StatCard dense icon="Moon" label="休眠中" :value="d.sleeping ?? '-'"
+        sub="休眠状态的进程" color="#909399" />
+      <StatCard dense icon="Warning" label="其他状态" :value="d.other ?? '-'"
+        sub="停止/僵尸等状态" color="#e6a23c" />
+    </CardGrid>
 
-    <SectionCard title="Top 进程（按CPU使用率排序）" icon="List">
-      <el-table :data="d.topProcess || []" size="small" stripe>
-        <el-table-column prop="pid" label="PID" width="100" />
-        <el-table-column prop="name" label="进程名" min-width="160" />
-        <el-table-column label="CPU %" width="120">
-          <template #default="{ row }">
-            <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="内存 %" width="120">
-          <template #default="{ row }">
-            <span style="color: #e6a23c">{{ num(row.mem) }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="120">
-          <template #default="{ row }">
-            <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="200" />
-      </el-table>
-    </SectionCard>
+    <div class="proc-body">
+      <SectionCard dense title="Top 进程（按CPU使用率排序）" icon="List" scrollable
+        bodyClass="dense-table fill" class="fill proc-card">
+        <el-table class="dense-table" height="100%" :data="d.topProcess || []" size="small" stripe>
+          <el-table-column prop="pid" label="PID" width="80" />
+          <el-table-column prop="name" label="进程名" min-width="140" />
+          <el-table-column label="CPU %" width="90">
+            <template #default="{ row }">
+              <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="内存 %" width="90">
+            <template #default="{ row }">
+              <span style="color: #e6a23c">{{ num(row.mem) }}%</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="90">
+            <template #default="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" min-width="160" />
+        </el-table>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="进程状态分布" icon="PieChart">
+      <CardGrid min="280px" gap="8px" class="proc-side">
+        <SectionCard dense title="进程状态分布" icon="PieChart" scrollable class="side-card">
           <div v-for="item in statusRows" :key="item.label" class="dist-item">
             <span class="dist-item__dot" :style="{ background: item.color }"></span>
             <span class="dist-item__label">{{ item.label }}</span>
@@ -61,9 +54,7 @@
             <span class="dist-total__count">{{ d.statusDist?.total ?? "-" }}</span>
           </div>
         </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="资源使用排行" icon="Histogram">
+        <SectionCard dense title="资源使用排行" icon="Histogram" scrollable class="side-card">
           <div v-for="item in d.resourceRank || []" :key="item.pid" class="rank-item">
             <div class="rank-item__head">
               <span class="rank-item__rank">{{ item.rank }}</span>
@@ -80,8 +71,8 @@
             </div>
           </div>
         </SectionCard>
-      </el-col>
-    </el-row>
+      </CardGrid>
+    </div>
     </template>
   </div>
 </template>
@@ -90,6 +81,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerProcess } from "@/api/monitor-server";
 
 const props = defineProps({
@@ -132,19 +124,39 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
 .limit-alert {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+}
+.proc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: @dense-gap;
+  align-items: stretch;
+}
+.proc-card {
+  min-height: @chart-h-md;
+  max-height: 420px;
+}
+.proc-side {
+  align-content: start;
+}
+.side-card {
+  max-height: 420px;
+}
+@media (max-width: 1100px) {
+  .proc-body {
+    grid-template-columns: 1fr;
+  }
 }
 .dist-item {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--cm-bg-page);
   font-size: 13px;
   &__dot {

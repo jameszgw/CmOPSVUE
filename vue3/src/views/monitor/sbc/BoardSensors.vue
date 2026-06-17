@@ -1,25 +1,18 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Sunny" label="SoC温度" :value="`${num(d.socTemp)}°C`"
-          :color="tempColor(d.socTemp)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="WindPower" label="风扇转速" :value="`${d.fanRpm ?? '-'} rpm`"
-          :sub="`占空比 ${d.fanDutyPct ?? '-'}%`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Lightning" label="供电" :value="`${num(d.supplyVoltage)} V`"
-          :sub="`${num(d.supplyCurrent)} A · ${num(d.powerWatt)} W`" :color="powerColor" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="电源状态"
-          :value="statusText" :color="statusCardColor" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Sunny" label="SoC温度" :value="`${num(d.socTemp)}°C`"
+        :color="tempColor(d.socTemp)" />
+      <StatCard dense icon="WindPower" label="风扇转速" :value="`${d.fanRpm ?? '-'} rpm`"
+        :sub="`占空比 ${d.fanDutyPct ?? '-'}%`" color="#409eff" />
+      <StatCard dense icon="Lightning" label="供电" :value="`${num(d.supplyVoltage)} V`"
+        :sub="`${num(d.supplyCurrent)} A · ${num(d.powerWatt)} W`" :color="powerColor" />
+      <StatCard dense icon="Warning" label="电源状态"
+        :value="statusText" :color="statusCardColor" />
+    </CardGrid>
 
-    <SectionCard title="电源/限频状态" icon="Cpu">
+    <CardGrid min="300px" gap="8px" class="row-mid">
+    <SectionCard dense title="电源/限频状态" icon="Cpu">
       <div class="tag-row">
         <el-tag :type="d.underVoltage ? 'danger' : 'success'" effect="dark">
           欠压：{{ d.underVoltage ? "是" : "否" }}
@@ -36,7 +29,7 @@
       </div>
     </SectionCard>
 
-    <SectionCard title="板级操作" icon="Operation" class="action-card">
+    <SectionCard dense title="板级操作" icon="Operation" class="action-card">
       <el-form inline class="action-form" @submit.prevent>
         <el-form-item label="操作类型">
           <el-select v-model="action.taskType" size="small" style="width: 150px">
@@ -64,8 +57,10 @@
         </el-form-item>
       </el-form>
     </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="下发历史" icon="Tickets">
+    <CardGrid min="340px" gap="8px" class="row-tables fill">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="下发历史" icon="Tickets">
       <template #extra>共 {{ total }} 条</template>
       <el-form inline class="filter-bar" @submit.prevent>
         <el-form-item label="任务类型">
@@ -96,8 +91,7 @@
           <el-button size="small" @click="onResetFilter">重置</el-button>
         </el-form-item>
       </el-form>
-      <el-empty v-if="!history.length" description="暂无下发记录" />
-      <el-table v-else :data="history" size="small" stripe>
+      <el-table :data="history" class="dense-table hist-table" height="100%" size="small" stripe>
         <el-table-column prop="taskType" label="任务类型" min-width="120">
           <template #default="{ row }">{{ row.taskType || "-" }}</template>
         </el-table-column>
@@ -120,6 +114,7 @@
         <el-table-column prop="gmtCreate" label="时间" min-width="170">
           <template #default="{ row }">{{ row.gmtCreate || "-" }}</template>
         </el-table-column>
+        <template #empty><el-empty description="暂无下发记录" :image-size="60" /></template>
       </el-table>
       <div v-if="total > 0" class="pager-wrap">
         <el-pagination
@@ -136,10 +131,9 @@
       </div>
     </SectionCard>
 
-    <SectionCard title="热区传感器" icon="Sunny">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="热区传感器" icon="Sunny">
       <template #extra>共 {{ thermals.length }} 个热区</template>
-      <el-empty v-if="!thermals.length" description="暂无数据" />
-      <el-table v-else :data="thermals" size="small" stripe>
+      <el-table :data="thermals" class="dense-table" height="100%" size="small" stripe>
         <el-table-column prop="zone" label="热区" min-width="160">
           <template #default="{ row }">{{ row.zone || "-" }}</template>
         </el-table-column>
@@ -155,8 +149,10 @@
             <el-tag :type="thermalTagType(row.status)" size="small">{{ row.status || "-" }}</el-tag>
           </template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -165,6 +161,7 @@ import { ref, reactive, computed, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getSbcBoardSensors, dispatchBoardAction } from "@/api/monitor-sbc";
 import { getDispatchHistory } from "@/api/monitor-dispatch";
 
@@ -297,19 +294,28 @@ onMounted(loadAll);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
 .tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-}
-.action-card {
-  margin-bottom: 12px;
+  gap: 8px;
 }
 .action-form {
   :deep(.el-form-item) {
@@ -317,14 +323,25 @@ onMounted(loadAll);
   }
 }
 .filter-bar {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
   :deep(.el-form-item) {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
+}
+// 下发历史卡片正文：纵向 flex，表格填满 filter 与分页之间的剩余高度
+:deep(.section-card__body.fill) {
+  display: flex;
+  flex-direction: column;
+}
+.hist-table {
+  flex: 1;
+  min-height: 0;
 }
 .pager-wrap {
   display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 8px;
+  flex-shrink: 0;
 }
 </style>

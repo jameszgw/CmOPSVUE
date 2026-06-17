@@ -1,15 +1,12 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Cpu" label="传感器总数" :value="d.total ?? 0" color="#409eff" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Cpu" label="传感器总数" :value="d.total ?? 0" color="#409eff" />
+    </CardGrid>
 
-    <SectionCard title="传感器列表" icon="List">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="fill row-tables" title="传感器列表" icon="List">
       <template #extra>共 {{ items.length }} 个</template>
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
+      <el-table :data="items" class="dense-table" height="100%" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="140">
           <template #default="{ row }">{{ row.name || "-" }}</template>
         </el-table-column>
@@ -40,6 +37,7 @@
         <el-table-column prop="lastSeen" label="最后在线" min-width="160">
           <template #default="{ row }">{{ row.lastSeen ?? "-" }}</template>
         </el-table-column>
+        <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
       </el-table>
     </SectionCard>
   </div>
@@ -49,6 +47,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getIotSensors } from "@/api/monitor-iot";
 
 const props = defineProps({
@@ -92,10 +91,19 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
 </style>

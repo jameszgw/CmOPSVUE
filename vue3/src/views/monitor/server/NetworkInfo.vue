@@ -2,87 +2,77 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Top" label="上传速度" :value="d.upSpeed || '-'"
-          sub="当前上行速率" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Bottom" label="下载速度" :value="d.downSpeed || '-'"
-          sub="当前下行速率" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Upload" label="总发送" :value="d.totalSent || '-'"
-          sub="累计发送流量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Download" label="总接收" :value="d.totalRecv || '-'"
-          sub="累计接收流量" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Refresh" label="TCP 重传率" :value="`${num(d.maxRetransRate)}%`"
-          sub="接口最大重传率" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleClose" label="丢包率" :value="`${num(d.maxLossRate)}%`"
-          sub="接口最大丢包率" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="180px" gap="8px">
+      <StatCard dense icon="Top" label="上传速度" :value="d.upSpeed || '-'"
+        sub="当前上行速率" color="#409eff" />
+      <StatCard dense icon="Bottom" label="下载速度" :value="d.downSpeed || '-'"
+        sub="当前下行速率" color="#67c23a" />
+      <StatCard dense icon="Upload" label="总发送" :value="d.totalSent || '-'"
+        sub="累计发送流量" color="#e6a23c" />
+      <StatCard dense icon="Download" label="总接收" :value="d.totalRecv || '-'"
+        sub="累计接收流量" color="#909399" />
+      <StatCard dense icon="Refresh" label="TCP 重传率" :value="`${num(d.maxRetransRate)}%`"
+        sub="接口最大重传率" color="#e6a23c" />
+      <StatCard dense icon="CircleClose" label="丢包率" :value="`${num(d.maxLossRate)}%`"
+        sub="接口最大丢包率" color="#f56c6c" />
+    </CardGrid>
 
-    <SectionCard v-for="(itf, i) in d.interfaces || []" :key="i" :title="itf.name || `接口 ${i + 1}`"
-      icon="Connection">
-      <template #extra>
-        <el-tag size="small" :type="statusType(itf.status)" effect="plain">{{ itf.status || '-' }}</el-tag>
-      </template>
-      <InfoTable :rows="interfaceRows(itf)" :columns="2" />
-    </SectionCard>
+    <CardGrid min="340px" gap="8px">
+      <SectionCard dense v-for="(itf, i) in d.interfaces || []" :key="i" :title="itf.name || `接口 ${i + 1}`"
+        icon="Connection">
+        <template #extra>
+          <el-tag size="small" :type="statusType(itf.status)" effect="plain">{{ itf.status || '-' }}</el-tag>
+        </template>
+        <InfoTable :rows="interfaceRows(itf)" :columns="2" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="TCP 连接状态" icon="Connection">
-      <el-row :gutter="12">
-        <el-col v-for="item in connStateCards" :key="item.label" :xs="12" :sm="8" :lg="4">
-          <div class="grid-metric">
-            <div class="grid-metric__label">{{ item.label }}</div>
-            <div class="grid-metric__value" :style="{ color: item.color }">
-              {{ item.value ?? '-' }}
+    <CardGrid min="320px" gap="8px">
+      <SectionCard dense title="TCP 连接状态" icon="Connection">
+        <el-row :gutter="8">
+          <el-col v-for="item in connStateCards" :key="item.label" :xs="12" :sm="8">
+            <div class="grid-metric">
+              <div class="grid-metric__label">{{ item.label }}</div>
+              <div class="grid-metric__value" :style="{ color: item.color }">
+                {{ item.value ?? '-' }}
+              </div>
             </div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <SectionCard title="网络总计统计" icon="DataAnalysis">
-      <el-row :gutter="12">
-        <el-col :xs="24" :lg="12">
-          <div class="io-block">
-            <div class="io-block__head">发送统计</div>
-            <InfoTable :rows="sentRows" />
-          </div>
-        </el-col>
-        <el-col :xs="24" :lg="12">
-          <div class="io-block">
-            <div class="io-block__head">接收统计</div>
-            <InfoTable :rows="recvRows" />
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <SectionCard title="实时网络 IO" icon="Histogram">
-      <el-row :gutter="12">
-        <el-col :xs="24" :sm="12">
-          <div class="grid-metric">
-            <div class="grid-metric__label">上传速度</div>
-            <div class="grid-metric__value" style="color: #409eff">{{ d.realtime?.upSpeed || '-' }}</div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <div class="grid-metric">
-            <div class="grid-metric__label">下载速度</div>
-            <div class="grid-metric__value" style="color: #67c23a">{{ d.realtime?.downSpeed || '-' }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="网络总计统计" icon="DataAnalysis">
+        <el-row :gutter="8">
+          <el-col :xs="24" :sm="12">
+            <div class="io-block">
+              <div class="io-block__head">发送统计</div>
+              <InfoTable :rows="sentRows" />
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <div class="io-block">
+              <div class="io-block__head">接收统计</div>
+              <InfoTable :rows="recvRows" />
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="实时网络 IO" icon="Histogram">
+        <el-row :gutter="8">
+          <el-col :xs="24" :sm="12">
+            <div class="grid-metric">
+              <div class="grid-metric__label">上传速度</div>
+              <div class="grid-metric__value" style="color: #409eff">{{ d.realtime?.upSpeed || '-' }}</div>
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <div class="grid-metric">
+              <div class="grid-metric__label">下载速度</div>
+              <div class="grid-metric__value" style="color: #67c23a">{{ d.realtime?.downSpeed || '-' }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -92,6 +82,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerNetwork } from "@/api/monitor-server";
 
 const props = defineProps({
@@ -174,33 +165,31 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
 .io-block {
-  margin-bottom: 12px;
   &__head {
     font-size: 13px;
     font-weight: 600;
     color: var(--cm-text-primary);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 }
 .grid-metric {
   border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--cm-text-primary);
   }

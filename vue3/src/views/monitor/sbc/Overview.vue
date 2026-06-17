@@ -1,25 +1,17 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Cpu" label="CPU使用率" :value="`${num(d.cpuUsage)}%`"
-          :percent="d.cpuUsage" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Sunny" label="SoC温度" :value="`${num(d.socTemp)}°C`"
-          :sub="`功耗 ${d.powerWatt ?? '-'} W`" :color="tempColor(d.socTemp)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="内存使用率" :value="`${num(d.memUsage)}%`"
-          :percent="d.memUsage" :sub="`总量 ${d.memTotalMb ?? '-'} MB`" color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Lightning" label="供电电压" :value="`${num(d.supplyVoltage)} V`"
-          :sub="`电流 ${d.supplyCurrent ?? '-'} A`" :color="powerColor" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Cpu" label="CPU使用率" :value="`${num(d.cpuUsage)}%`"
+        :percent="d.cpuUsage" color="#409eff" />
+      <StatCard dense icon="Sunny" label="SoC温度" :value="`${num(d.socTemp)}°C`"
+        :sub="`功耗 ${d.powerWatt ?? '-'} W`" :color="tempColor(d.socTemp)" />
+      <StatCard dense icon="Coin" label="内存使用率" :value="`${num(d.memUsage)}%`"
+        :percent="d.memUsage" :sub="`总量 ${d.memTotalMb ?? '-'} MB`" color="#9254de" />
+      <StatCard dense icon="Lightning" label="供电电压" :value="`${num(d.supplyVoltage)} V`"
+        :sub="`电流 ${d.supplyCurrent ?? '-'} A`" :color="powerColor" />
+    </CardGrid>
 
-    <SectionCard title="基础信息" icon="InfoFilled">
+    <SectionCard dense title="基础信息" icon="InfoFilled" class="row-mid">
       <template #extra>
         <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
           {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
@@ -37,6 +29,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getSbcOverview } from "@/api/monitor-sbc";
 
 const props = defineProps({
@@ -111,10 +104,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
 }
 </style>

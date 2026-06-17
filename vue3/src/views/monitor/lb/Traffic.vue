@@ -1,48 +1,36 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="QPS" :value="num(d.qps)" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Timer" label="P99 延迟" :value="`${num(latency.p99)} ms`"
-          :sub="`最大 ${num(latency.max)} ms`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Top" label="入流量速率" :value="bytes.inRate || '-'"
-          :sub="`累计入 ${bytes.totalIn || '-'}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Bottom" label="出流量速率" :value="bytes.outRate || '-'"
-          :sub="`累计出 ${bytes.totalOut || '-'}`" color="#909399" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="TrendCharts" label="QPS" :value="num(d.qps)" color="#409eff" dense />
+      <StatCard icon="Timer" label="P99 延迟" :value="`${num(latency.p99)} ms`"
+        :sub="`最大 ${num(latency.max)} ms`" color="#e6a23c" dense />
+      <StatCard icon="Top" label="入流量速率" :value="bytes.inRate || '-'"
+        :sub="`累计入 ${bytes.totalIn || '-'}`" color="#67c23a" dense />
+      <StatCard icon="Bottom" label="出流量速率" :value="bytes.outRate || '-'"
+        :sub="`累计出 ${bytes.totalOut || '-'}`" color="#909399" dense />
+    </CardGrid>
 
-    <SectionCard title="流量趋势" icon="TrendCharts">
+    <SectionCard title="流量趋势" icon="TrendCharts" dense class="fill">
       <template #extra>最近 {{ trend.times?.length || 0 }} 个数据点</template>
       <div ref="chartRef" class="trend-chart"></div>
     </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="状态码分布" icon="PieChart">
-          <div v-for="item in statusList" :key="item.key" class="dist-row">
-            <span class="dist-row__dot" :style="{ background: item.color }"></span>
-            <span class="dist-row__label">{{ item.label }}</span>
-            <el-progress :percentage="item.percent" :stroke-width="12"
-              :color="item.color" :show-text="false" class="dist-row__bar" />
-            <span class="dist-row__num">{{ item.percent }}%</span>
-          </div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="延迟分布" icon="Timer">
-          <InfoTable :rows="latencyRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="状态码分布" icon="PieChart" dense>
+        <div v-for="item in statusList" :key="item.key" class="dist-row">
+          <span class="dist-row__dot" :style="{ background: item.color }"></span>
+          <span class="dist-row__label">{{ item.label }}</span>
+          <el-progress :percentage="item.percent" :stroke-width="12"
+            :color="item.color" :show-text="false" class="dist-row__bar" />
+          <span class="dist-row__num">{{ item.percent }}%</span>
+        </div>
+      </SectionCard>
+      <SectionCard title="延迟分布" icon="Timer" dense>
+        <InfoTable :rows="latencyRows" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="流量统计" icon="DataLine">
+    <SectionCard title="流量统计" icon="DataLine" dense>
       <InfoTable :rows="bytesRows" :columns="2" />
     </SectionCard>
   </div>
@@ -53,6 +41,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue"
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -171,20 +160,22 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .trend-chart {
-  height: 300px;
+  height: @chart-h-md;
   width: 100%;
 }
 .dist-row {
   display: flex;
   align-items: center;
-  padding: 8px 0;
+  padding: 6px 0;
   &__dot {
     width: 8px;
     height: 8px;

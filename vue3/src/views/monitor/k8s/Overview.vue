@@ -1,113 +1,97 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Cpu" label="节点" :value="`${d.nodeReady ?? 0}/${d.nodeTotal ?? 0}`"
-          :sub="`就绪 ${d.nodeReady ?? 0} / 未就绪 ${d.nodeNotReady ?? 0}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Box" label="Pod" :value="d.podRunning ?? 0"
-          :sub="`Pending ${d.podPending ?? 0} / Failed ${d.podFailed ?? 0}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="CPU 使用率" :value="`${num(d.cpu?.usedPct)}%`"
-          :percent="d.cpu?.usedPct" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Coin" label="内存使用率" :value="`${num(d.memory?.usedPct)}%`"
-          :percent="d.memory?.usedPct" color="#9254de" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Cpu" label="节点" :value="`${d.nodeReady ?? 0}/${d.nodeTotal ?? 0}`"
+        :sub="`就绪 ${d.nodeReady ?? 0} / 未就绪 ${d.nodeNotReady ?? 0}`" color="#409eff" />
+      <StatCard dense icon="Box" label="Pod" :value="d.podRunning ?? 0"
+        :sub="`Pending ${d.podPending ?? 0} / Failed ${d.podFailed ?? 0}`" color="#67c23a" />
+      <StatCard dense icon="Odometer" label="CPU 使用率" :value="`${num(d.cpu?.usedPct)}%`"
+        :percent="d.cpu?.usedPct" color="#e6a23c" />
+      <StatCard dense icon="Coin" label="内存使用率" :value="`${num(d.memory?.usedPct)}%`"
+        :percent="d.memory?.usedPct" color="#9254de" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="集群基础信息" icon="InfoFilled">
-          <template #extra>
-            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="集群基础信息" icon="InfoFilled">
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+
+      <SectionCard dense title="控制平面健康" icon="SetUp">
+        <div class="cp-grid">
+          <div v-for="cp in controlPlaneItems" :key="cp.key" class="cp-item">
+            <span class="cp-item__label">{{ cp.label }}</span>
+            <el-tag size="small" :color="statusColor(cp.value)" effect="dark" class="cp-tag">
+              {{ cp.value || "-" }}
             </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="控制平面健康" icon="SetUp">
-          <div class="cp-grid">
-            <div v-for="cp in controlPlaneItems" :key="cp.key" class="cp-item">
-              <span class="cp-item__label">{{ cp.label }}</span>
-              <el-tag size="small" :color="statusColor(cp.value)" effect="dark" class="cp-tag">
-                {{ cp.value || "-" }}
-              </el-tag>
-            </div>
           </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="工作负载汇总" icon="Grid">
-      <div class="count-grid">
-        <div v-for="w in workloadItems" :key="w.label" class="count-card">
-          <span class="count-card__icon" :style="{ color: w.color }">
-            <el-icon :size="20"><component :is="w.icon" /></el-icon>
-          </span>
-          <span class="count-card__value">{{ w.value ?? 0 }}</span>
-          <span class="count-card__label">{{ w.label }}</span>
         </div>
-      </div>
-    </SectionCard>
+      </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="CPU 请求 vs 使用" icon="Odometer">
-          <div class="bar-line">
-            <span class="bar-line__label">请求</span>
-            <el-progress :percentage="clamp(d.cpu?.requestedPct)" :stroke-width="14" color="#409eff" />
+      <SectionCard dense title="工作负载汇总" icon="Grid" class="span-all">
+        <div class="count-grid">
+          <div v-for="w in workloadItems" :key="w.label" class="count-card">
+            <span class="count-card__icon" :style="{ color: w.color }">
+              <el-icon :size="20"><component :is="w.icon" /></el-icon>
+            </span>
+            <span class="count-card__value">{{ w.value ?? 0 }}</span>
+            <span class="count-card__label">{{ w.label }}</span>
           </div>
-          <div class="bar-line">
-            <span class="bar-line__label">使用</span>
-            <el-progress :percentage="clamp(d.cpu?.usedPct)" :stroke-width="14" color="#e6a23c" />
-          </div>
-          <div class="bar-sub">
-            容量 {{ d.cpu?.capacity ?? "-" }} / 可分配 {{ d.cpu?.allocatable ?? "-" }} / 使用 {{ d.cpu?.usedCores ?? "-" }}
-          </div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="内存 请求 vs 使用" icon="Coin">
-          <div class="bar-line">
-            <span class="bar-line__label">请求</span>
-            <el-progress :percentage="clamp(d.memory?.requestedPct)" :stroke-width="14" color="#409eff" />
-          </div>
-          <div class="bar-line">
-            <span class="bar-line__label">使用</span>
-            <el-progress :percentage="clamp(d.memory?.usedPct)" :stroke-width="14" color="#9254de" />
-          </div>
-          <div class="bar-sub">
-            容量 {{ d.memory?.capacity ?? "-" }} / 可分配 {{ d.memory?.allocatable ?? "-" }} / 使用 {{ d.memory?.used ?? "-" }}
-          </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </div>
+      </SectionCard>
 
-    <SectionCard title="Top 节点" icon="Sort">
-      <template #extra>共 {{ (d.topNodes || []).length }} 个节点</template>
-      <el-empty v-if="!(d.topNodes || []).length" description="暂无数据" />
-      <el-table v-else :data="d.topNodes || []" size="small" stripe>
-        <el-table-column prop="name" label="节点名称" min-width="180" />
-        <el-table-column label="CPU%" min-width="220">
-          <template #default="{ row }">
-            <el-progress :percentage="clamp(row.cpuPct)" :stroke-width="12"
-              :color="pctColor(row.cpuPct)" />
-          </template>
-        </el-table-column>
-        <el-table-column label="内存%" min-width="220">
-          <template #default="{ row }">
-            <el-progress :percentage="clamp(row.memPct)" :stroke-width="12"
-              :color="pctColor(row.memPct)" />
-          </template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+      <SectionCard dense title="CPU 请求 vs 使用" icon="Odometer">
+        <div class="bar-line">
+          <span class="bar-line__label">请求</span>
+          <el-progress :percentage="clamp(d.cpu?.requestedPct)" :stroke-width="14" color="#409eff" />
+        </div>
+        <div class="bar-line">
+          <span class="bar-line__label">使用</span>
+          <el-progress :percentage="clamp(d.cpu?.usedPct)" :stroke-width="14" color="#e6a23c" />
+        </div>
+        <div class="bar-sub">
+          容量 {{ d.cpu?.capacity ?? "-" }} / 可分配 {{ d.cpu?.allocatable ?? "-" }} / 使用 {{ d.cpu?.usedCores ?? "-" }}
+        </div>
+      </SectionCard>
+
+      <SectionCard dense title="内存 请求 vs 使用" icon="Coin">
+        <div class="bar-line">
+          <span class="bar-line__label">请求</span>
+          <el-progress :percentage="clamp(d.memory?.requestedPct)" :stroke-width="14" color="#409eff" />
+        </div>
+        <div class="bar-line">
+          <span class="bar-line__label">使用</span>
+          <el-progress :percentage="clamp(d.memory?.usedPct)" :stroke-width="14" color="#9254de" />
+        </div>
+        <div class="bar-sub">
+          容量 {{ d.memory?.capacity ?? "-" }} / 可分配 {{ d.memory?.allocatable ?? "-" }} / 使用 {{ d.memory?.used ?? "-" }}
+        </div>
+      </SectionCard>
+
+      <SectionCard dense title="Top 节点" icon="Sort" class="span-all fill" scrollable bodyClass="dense-table fill">
+        <template #extra>共 {{ (d.topNodes || []).length }} 个节点</template>
+        <el-empty v-if="!(d.topNodes || []).length" description="暂无数据" :image-size="60" />
+        <el-table v-else class="dense-table" height="100%" :data="d.topNodes || []" size="small" stripe>
+          <el-table-column prop="name" label="节点名称" min-width="180" />
+          <el-table-column label="CPU%" min-width="220">
+            <template #default="{ row }">
+              <el-progress :percentage="clamp(row.cpuPct)" :stroke-width="12"
+                :color="pctColor(row.cpuPct)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="内存%" min-width="220">
+            <template #default="{ row }">
+              <el-progress :percentage="clamp(row.memPct)" :stroke-width="12"
+                :color="pctColor(row.memPct)" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -116,6 +100,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sOverview } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -193,16 +178,29 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .cp-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 .cp-item {
   display: flex;
@@ -210,7 +208,7 @@ onMounted(load);
   justify-content: space-between;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 
   &__label {
     font-size: 13px;
@@ -224,7 +222,7 @@ onMounted(load);
 .count-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .count-card {
   display: flex;
@@ -232,7 +230,7 @@ onMounted(load);
   align-items: center;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 16px 12px;
+  padding: 10px 12px;
 
   &__icon {
     margin-bottom: 8px;
@@ -251,7 +249,7 @@ onMounted(load);
 .bar-line {
   display: flex;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 
   &__label {
     width: 48px;

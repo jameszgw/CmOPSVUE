@@ -1,49 +1,60 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">告警管理</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.prevent>
+  <ScreenPage title="告警管理" gap="8px">
+    <template #header-extra>
+      <el-form inline :model="searchForm" class="toolbar-form" @submit.prevent>
         <el-form-item label="报警类型">
           <el-select
             v-model="searchForm.alarmType"
-            placeholder="请选择报警类型"
+            placeholder="报警类型"
             clearable
-            style="width: 160px"
+            size="small"
+            style="width: 140px"
           >
             <el-option :value="10" label="CPU使用率" />
             <el-option :value="20" label="内存使用率" />
           </el-select>
         </el-form-item>
-        <el-form-item label="报警时间范围">
+        <el-form-item label="时间范围">
           <el-date-picker
             v-model="searchForm.timeRange"
             type="datetimerange"
+            size="small"
             start-placeholder="开始时间"
             end-placeholder="结束时间"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="报警值范围">
+        <el-form-item label="报警值">
           <el-input-number
             v-model="searchForm.minValue"
-            placeholder="最小报警值"
+            placeholder="最小值"
             :controls="false"
-            style="width: 120px"
+            size="small"
+            style="width: 100px"
           />
           <el-input-number
             v-model="searchForm.maxValue"
-            placeholder="最大报警值"
+            placeholder="最大值"
             :controls="false"
-            style="width: 120px; margin-left: 8px"
+            size="small"
+            style="width: 100px; margin-left: 8px"
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">查询</el-button>
-          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="onSearch">查询</el-button>
+          <el-button size="small" @click="onReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <el-table :data="alarms" row-key="id" style="width: 100%">
+    <SectionCard
+      dense
+      bodyClass="dense-table fill table-pane"
+      class="fill"
+      title="告警历史"
+      icon="Bell"
+    >
+      <el-table class="dense-table fill" height="100%" :data="alarms" row-key="id" size="small" stripe>
         <el-table-column label="报警类型">
           <template #default="{ row }">
             {{ alarmTypeText(row.alarmType) }}
@@ -60,6 +71,7 @@
       <el-pagination
         class="pagination"
         background
+        small
         layout="total, sizes, prev, pager, next"
         :total="alarmsTotal"
         :current-page="pagination.pageNo"
@@ -67,14 +79,16 @@
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import dayjs from "dayjs";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import { pageAlarms } from "@/api/host-alarm-config";
 
 const route = useRoute();
@@ -165,16 +179,27 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(238, 242, 121);
+@import (reference) "@/styles/variables.less";
+
+.toolbar-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+    margin-right: @space-md;
+  }
 }
 
-.page-title {
-  margin: 0 0 16px;
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 </style>

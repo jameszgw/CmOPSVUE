@@ -1,38 +1,27 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="端口" :value="`${d.portUp ?? 0}/${d.portTotal ?? 0}`"
-          :sub="`Up ${d.portUp ?? 0} / Down ${d.portDown ?? 0}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Odometer" label="CPU 使用率" :value="`${num(d.cpuPct)}%`"
-          :percent="d.cpuPct" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="丢包率" :value="`${num(d.totalPacketLoss)}%`"
-          :sub="`内存使用率 ${num(d.memPct)}%`" :color="pctColor(d.totalPacketLoss)" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="会话使用率" :value="`${num(d.sessionUsagePct)}%`"
-          :percent="d.sessionUsagePct" color="#9254de" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Connection" label="端口" :value="`${d.portUp ?? 0}/${d.portTotal ?? 0}`"
+        :sub="`Up ${d.portUp ?? 0} / Down ${d.portDown ?? 0}`" color="#409eff" dense />
+      <StatCard icon="Odometer" label="CPU 使用率" :value="`${num(d.cpuPct)}%`"
+        :percent="d.cpuPct" color="#e6a23c" dense />
+      <StatCard icon="Warning" label="丢包率" :value="`${num(d.totalPacketLoss)}%`"
+        :sub="`内存使用率 ${num(d.memPct)}%`" :color="pctColor(d.totalPacketLoss)" dense />
+      <StatCard icon="DataLine" label="会话使用率" :value="`${num(d.sessionUsagePct)}%`"
+        :percent="d.sessionUsagePct" color="#9254de" dense />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="InfoFilled">
-          <template #extra>
-            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="设备状态" icon="SetUp">
-          <div class="status-grid">
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="基础信息" icon="InfoFilled" dense>
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" />
+      </SectionCard>
+      <SectionCard title="设备状态" icon="SetUp" dense>
+        <div class="status-grid">
             <div v-for="s in statusItems" :key="s.label" class="status-item">
               <span class="status-item__label">{{ s.label }}</span>
               <el-tag size="small" :color="statusColor(s.value)" effect="dark" class="plain-tag">
@@ -61,13 +50,13 @@
             </div>
           </div>
         </SectionCard>
-      </el-col>
-    </el-row>
+    </CardGrid>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -140,17 +129,19 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .status-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 .status-item {
   display: flex;
@@ -158,7 +149,7 @@ onMounted(load);
   justify-content: space-between;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 8px 12px;
 
   &__label {
     font-size: 13px;
@@ -171,8 +162,8 @@ onMounted(load);
 }
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
 }
 .metric-item {
   display: flex;
@@ -180,12 +171,12 @@ onMounted(load);
   align-items: center;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 12px;
+  padding: 8px;
 
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__value {
     font-size: 18px;

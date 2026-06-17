@@ -1,36 +1,41 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">主机代理</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.prevent>
+  <ScreenPage title="主机代理" gap="8px">
+    <template #header-extra>
+      <el-form inline :model="searchForm" class="toolbar-form" @submit.prevent>
         <el-form-item label="代理主机">
-          <el-input v-model="searchForm.proxyHost" placeholder="请输入代理主机" clearable />
+          <el-input v-model="searchForm.proxyHost" placeholder="代理主机" clearable size="small" style="width: 150px" />
         </el-form-item>
         <el-form-item label="代理用户">
-          <el-input v-model="searchForm.proxyUsername" placeholder="请输入用户" clearable />
+          <el-input v-model="searchForm.proxyUsername" placeholder="用户" clearable size="small" style="width: 130px" />
         </el-form-item>
         <el-form-item label="代理类型">
           <el-select
             v-model="searchForm.proxyType"
-            placeholder="请选择代理类型"
+            placeholder="代理类型"
             clearable
-            style="width: 150px"
+            size="small"
+            style="width: 130px"
           >
             <el-option :value="1" label="HTTP" />
             <el-option :value="2" label="HTTPS" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">查询</el-button>
-          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="onSearch">查询</el-button>
+          <el-button size="small" @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="handleAddProxy">新增代理</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <div class="toolbar">
-        <el-button type="primary" @click="handleAddProxy">新增代理</el-button>
-      </div>
-
-      <el-table :data="proxyPage.items" row-key="id" style="width: 100%">
+    <SectionCard
+      dense
+      bodyClass="dense-table fill table-pane"
+      class="fill"
+      title="代理列表"
+      icon="Share"
+    >
+      <el-table class="dense-table fill" height="100%" :data="proxyPage.items" row-key="id" size="small" stripe>
         <el-table-column prop="proxyHost" label="代理主机" />
         <el-table-column prop="proxyPort" label="代理端口" />
         <el-table-column prop="proxyUsername" label="代理用户" />
@@ -50,6 +55,7 @@
       <el-pagination
         class="pagination"
         background
+        small
         layout="total, sizes, prev, pager, next"
         :total="proxyPage.total"
         :current-page="pagination.pageNo"
@@ -57,7 +63,7 @@
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
       />
-    </el-card>
+    </SectionCard>
 
     <!-- 新增和编辑主机代理的抽屉 -->
     <el-drawer
@@ -74,12 +80,14 @@
         @cancel="handleCloseDrawer"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateProxyForm from "./components/CreateProxyForm.vue";
 import { fetchProxies, createProxy, updateProxy, deleteProxy } from "@/api/proxy";
 
@@ -177,20 +185,27 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(148, 121, 242);
+@import (reference) "@/styles/variables.less";
+
+.toolbar-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+    margin-right: @space-md;
+  }
 }
 
-.page-title {
-  margin: 0 0 16px;
-}
-
-.toolbar {
-  margin-bottom: 16px;
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 </style>

@@ -1,24 +1,16 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <UnsupportedMask :unsupported="!d.supported" :reason="d.note" title="该电源无电池">
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Lightning" label="电量" :value="`${num(d.soc)}%`"
-            :percent="d.soc" color="#13c2c2" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="CircleCheck" label="健康度" :value="`${num(d.healthPct)}%`"
-            :percent="d.healthPct" color="#67c23a" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Timer" label="续航" :value="`${d.runtimeMin ?? '-'} min`" color="#409eff" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="RefreshRight" label="循环次数" :value="d.cycleCount ?? '-'" color="#e6a23c" />
-        </el-col>
-      </el-row>
+  <div v-loading="loading" class="tab-screen">
+    <UnsupportedMask class="battery-mask" :unsupported="!d.supported" :reason="d.note" title="该电源无电池">
+      <CardGrid min="160px" gap="8px" class="row-stats">
+        <StatCard dense icon="Lightning" label="电量" :value="`${num(d.soc)}%`"
+          :percent="d.soc" color="#13c2c2" />
+        <StatCard dense icon="CircleCheck" label="健康度" :value="`${num(d.healthPct)}%`"
+          :percent="d.healthPct" color="#67c23a" />
+        <StatCard dense icon="Timer" label="续航" :value="`${d.runtimeMin ?? '-'} min`" color="#409eff" />
+        <StatCard dense icon="RefreshRight" label="循环次数" :value="d.cycleCount ?? '-'" color="#e6a23c" />
+      </CardGrid>
 
-      <SectionCard title="电池详情" icon="InfoFilled">
+      <SectionCard dense class="row-mid" title="电池详情" icon="InfoFilled">
         <InfoTable :rows="detailRows" :columns="2" />
       </SectionCard>
     </UnsupportedMask>
@@ -31,6 +23,7 @@ import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import UnsupportedMask from "@/components/monitor/UnsupportedMask.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getPowerBattery } from "@/api/monitor-power";
 
 const props = defineProps({
@@ -76,10 +69,24 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.battery-mask {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
 }
 </style>

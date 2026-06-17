@@ -1,23 +1,18 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Key" label="总键数" :value="fmt(d.totalKeys)"
-          sub="所有数据库" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Timer" label="过期键数" :value="fmt(d.expiredKeys)"
-          :sub="expiredSub" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Histogram" label="平均TTL" :value="d.avgTtl ?? '-'"
-          sub="平均存活时间" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Key" label="总键数" :value="fmt(d.totalKeys)"
+        sub="所有数据库" color="#409eff" />
+      <StatCard dense icon="Timer" label="过期键数" :value="fmt(d.expiredKeys)"
+        :sub="expiredSub" color="#e6a23c" />
+      <StatCard dense icon="Histogram" label="平均TTL" :value="d.avgTtl ?? '-'"
+        sub="平均存活时间" color="#67c23a" />
+    </CardGrid>
 
-    <SectionCard title="数据库列表" icon="Coin">
+    <CardGrid min="340px" gap="8px" class="body-grid">
+    <SectionCard dense title="数据库列表" icon="Coin" scrollable bodyClass="fill">
       <template #extra>共 {{ (d.databases || []).length }} 个数据库</template>
-      <el-row :gutter="12">
+      <el-row :gutter="8">
         <el-col v-for="db in d.databases || []" :key="db.name || db.index" :xs="24">
           <div class="db-card">
             <div class="db-card__head">
@@ -56,14 +51,14 @@
           </div>
         </el-col>
         <el-col v-if="!(d.databases && d.databases.length)" :span="24">
-          <el-empty description="暂无数据库数据" :image-size="80" />
+          <el-empty description="暂无数据库数据" :image-size="60" />
         </el-col>
       </el-row>
     </SectionCard>
 
-    <SectionCard title="字段说明" icon="InfoFilled">
-      <el-row :gutter="12">
-        <el-col v-for="f in fieldDocs" :key="f.key" :xs="24" :sm="12" :lg="8">
+    <SectionCard dense title="字段说明" icon="InfoFilled" scrollable bodyClass="fill">
+      <el-row :gutter="8">
+        <el-col v-for="f in fieldDocs" :key="f.key" :xs="24" :sm="12">
           <div class="field-doc">
             <div class="field-doc__title">{{ f.key }}</div>
             <div class="field-doc__text">{{ f.text }}</div>
@@ -71,6 +66,7 @@
         </el-col>
       </el-row>
     </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -78,6 +74,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getRedisKeyspace } from "@/api/monitor-redis";
 
 const props = defineProps({
@@ -127,22 +124,32 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
 }
 .db-card {
   border: 1px solid var(--cm-bg-page);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
   background: var(--cm-bg-muted);
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
   &__icon {
     width: 36px;

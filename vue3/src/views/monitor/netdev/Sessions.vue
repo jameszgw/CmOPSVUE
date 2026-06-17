@@ -1,41 +1,36 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="会话使用率" :value="`${num(st.usagePct)}%`"
-          :percent="st.usagePct" color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Histogram" label="当前会话" :value="st.current ?? 0"
-          :sub="`上限 ${st.max ?? '-'}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="新建速率" :value="st.newPerSec ?? 0"
-          sub="新建会话/秒" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Share" label="TCP 会话" :value="st.tcpSessions ?? 0"
-          :sub="`UDP ${st.udpSessions ?? 0} / ICMP ${st.icmpSessions ?? 0}`" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="DataLine" label="会话使用率" :value="`${num(st.usagePct)}%`"
+        :percent="st.usagePct" color="#9254de" dense />
+      <StatCard icon="Histogram" label="当前会话" :value="st.current ?? 0"
+        :sub="`上限 ${st.max ?? '-'}`" color="#409eff" dense />
+      <StatCard icon="TrendCharts" label="新建速率" :value="st.newPerSec ?? 0"
+        sub="新建会话/秒" color="#67c23a" dense />
+      <StatCard icon="Share" label="TCP 会话" :value="st.tcpSessions ?? 0"
+        :sub="`UDP ${st.udpSessions ?? 0} / ICMP ${st.icmpSessions ?? 0}`" color="#e6a23c" dense />
+    </CardGrid>
 
-    <SectionCard title="会话表" icon="Grid">
-      <div class="usage-line">
-        <span class="usage-line__label">会话使用率</span>
-        <el-progress :percentage="clamp(st.usagePct)" :stroke-width="14"
-          :color="pctColor(st.usagePct)" />
-      </div>
-      <InfoTable :rows="sessionRows" :columns="2" />
-    </SectionCard>
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="会话表" icon="Grid" dense>
+        <div class="usage-line">
+          <span class="usage-line__label">会话使用率</span>
+          <el-progress :percentage="clamp(st.usagePct)" :stroke-width="14"
+            :color="pctColor(st.usagePct)" />
+        </div>
+        <InfoTable :rows="sessionRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard v-if="d.isFirewall" title="防火墙" icon="Lock">
-      <InfoTable :rows="firewallRows" :columns="2" />
-    </SectionCard>
+      <SectionCard v-if="d.isFirewall" title="防火墙" icon="Lock" dense>
+        <InfoTable :rows="firewallRows" :columns="2" />
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -105,16 +100,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .usage-line {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 
   &__label {
     width: 90px;

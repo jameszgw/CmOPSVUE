@@ -1,45 +1,38 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="VideoPlay" label="运行中" :value="d.running ?? 0"
-          sub="Running Pod" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Clock" label="Pending" :value="d.pending ?? 0"
-          sub="等待调度" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleClose" label="失败" :value="d.failed ?? 0"
-          sub="Failed Pod" color="#f56c6c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="CrashLoopBackOff" :value="d.crashLoop ?? 0"
-          :sub="`OOMKilled ${d.oomKilledTotal ?? 0}`" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="VideoPlay" label="运行中" :value="d.running ?? 0"
+        sub="Running Pod" color="#67c23a" />
+      <StatCard dense icon="Clock" label="Pending" :value="d.pending ?? 0"
+        sub="等待调度" color="#e6a23c" />
+      <StatCard dense icon="CircleClose" label="失败" :value="d.failed ?? 0"
+        sub="Failed Pod" color="#f56c6c" />
+      <StatCard dense icon="Warning" label="CrashLoopBackOff" :value="d.crashLoop ?? 0"
+        :sub="`OOMKilled ${d.oomKilledTotal ?? 0}`" color="#f56c6c" />
+    </CardGrid>
 
-    <SectionCard title="工作负载类型计数" icon="Grid">
-      <div class="count-grid">
-        <div v-for="w in workloadItems" :key="w.label" class="count-card">
-          <span class="count-card__icon" :style="{ color: w.color }">
-            <el-icon :size="20"><component :is="w.icon" /></el-icon>
-          </span>
-          <span class="count-card__value">{{ w.value ?? 0 }}</span>
-          <span class="count-card__label">{{ w.label }}</span>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="工作负载类型计数" icon="Grid" class="span-all">
+        <div class="count-grid">
+          <div v-for="w in workloadItems" :key="w.label" class="count-card">
+            <span class="count-card__icon" :style="{ color: w.color }">
+              <el-icon :size="20"><component :is="w.icon" /></el-icon>
+            </span>
+            <span class="count-card__value">{{ w.value ?? 0 }}</span>
+            <span class="count-card__label">{{ w.label }}</span>
+          </div>
         </div>
-      </div>
-    </SectionCard>
+      </SectionCard>
 
-    <SectionCard title="Pod 列表" icon="List">
-      <template #extra>
-        <el-select v-model="statusFilter" size="small" placeholder="状态" style="width: 160px">
-          <el-option label="全部" value="" />
-          <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
-        </el-select>
-      </template>
-      <el-empty v-if="!filteredPods.length" description="暂无数据" />
-      <el-table v-else :data="filteredPods" size="small" stripe>
+      <SectionCard dense title="Pod 列表" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
+        <template #extra>
+          <el-select v-model="statusFilter" size="small" placeholder="状态" style="width: 160px">
+            <el-option label="全部" value="" />
+            <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
+          </el-select>
+        </template>
+        <el-empty v-if="!filteredPods.length" description="暂无数据" :image-size="60" />
+        <el-table v-else class="dense-table" height="100%" :data="filteredPods" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="200" fixed>
           <template #default="{ row }">
             <span class="pod-name">{{ row.name || "-" }}</span>
@@ -81,34 +74,35 @@
           <template #default="{ row }">{{ row.age || "-" }}</template>
         </el-table-column>
       </el-table>
-    </SectionCard>
+      </SectionCard>
 
-    <SectionCard title="重启 Top" icon="Sort">
-      <template #extra>重启次数最多的 Pod</template>
-      <el-empty v-if="!(d.topRestart || []).length" description="暂无数据" />
-      <el-table v-else :data="d.topRestart || []" size="small" stripe>
-        <el-table-column prop="name" label="名称" min-width="220">
-          <template #default="{ row }">
-            <span class="pod-name">{{ row.name || "-" }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="namespace" label="命名空间" width="160">
-          <template #default="{ row }">{{ row.namespace || "-" }}</template>
-        </el-table-column>
-        <el-table-column label="重启次数" width="120" align="center">
-          <template #default="{ row }">
-            <span style="color: #f56c6c; font-weight: 600">{{ row.restarts ?? 0 }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="160">
-          <template #default="{ row }">
-            <el-tag size="small" :color="statusColor(row.status)" effect="dark" class="plain-tag">
-              {{ row.status || "-" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-    </SectionCard>
+      <SectionCard dense title="重启 Top" icon="Sort" class="span-all">
+        <template #extra>重启次数最多的 Pod</template>
+        <el-empty v-if="!(d.topRestart || []).length" description="暂无数据" :image-size="60" />
+        <el-table v-else class="dense-table" :data="d.topRestart || []" size="small" stripe>
+          <el-table-column prop="name" label="名称" min-width="220">
+            <template #default="{ row }">
+              <span class="pod-name">{{ row.name || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="namespace" label="命名空间" width="160">
+            <template #default="{ row }">{{ row.namespace || "-" }}</template>
+          </el-table-column>
+          <el-table-column label="重启次数" width="120" align="center">
+            <template #default="{ row }">
+              <span style="color: #f56c6c; font-weight: 600">{{ row.restarts ?? 0 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="160">
+            <template #default="{ row }">
+              <el-tag size="small" :color="statusColor(row.status)" effect="dark" class="plain-tag">
+                {{ row.status || "-" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -116,6 +110,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sPods } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -176,16 +171,29 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .count-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .count-card {
   display: flex;
@@ -193,7 +201,7 @@ onMounted(load);
   align-items: center;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 16px 12px;
+  padding: 10px 12px;
 
   &__icon {
     margin-bottom: 8px;

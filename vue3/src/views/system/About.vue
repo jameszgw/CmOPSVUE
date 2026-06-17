@@ -1,10 +1,9 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="about-container">
-        <div class="other-title">关于</div>
-        <div class="about-descriptions">
-          <el-descriptions v-if="about" :column="1">
+  <ScreenPage title="关于" gap="8px">
+    <div class="about-body">
+      <CardGrid min="320px" gap="8px" class="about-grid">
+        <SectionCard dense title="版本信息" icon="InfoFilled">
+          <el-descriptions v-if="about" :column="1" size="small">
             <el-descriptions-item label="CmOPS 平台版本">
               <span class="about-value">{{ about.version }}</span>
             </el-descriptions-item>
@@ -14,6 +13,11 @@
             <el-descriptions-item label="维护团队">
               <span class="about-value">CmOPS Team</span>
             </el-descriptions-item>
+          </el-descriptions>
+        </SectionCard>
+
+        <SectionCard dense title="链接" icon="Link">
+          <el-descriptions v-if="about" :column="1" size="small">
             <el-descriptions-item label="github 地址">
               <a
                 class="about-value"
@@ -35,15 +39,18 @@
               </a>
             </el-descriptions-item>
           </el-descriptions>
-        </div>
-      </div>
-    </el-card>
-  </div>
+        </SectionCard>
+      </CardGrid>
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { getSystemAbout } from "@/api/system";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 const about = ref(null);
 
@@ -54,29 +61,20 @@ onMounted(async () => {
 </script>
 
 <style lang="less" scoped>
-.about-container {
-  .other-title {
-    margin: 16px 0 16px 16px;
-    font-weight: 500;
-    font-size: 16px;
-  }
+@import (reference) "@/styles/variables.less";
 
-  .about-descriptions {
-    margin: 18px 0 0 0;
+.about-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
 
-    :deep(.el-descriptions__label) {
-      margin-left: 16px;
-      width: 180px;
-      display: inline-block;
-      text-align: end;
-      font-size: 16px;
-      color: rgba(0, 0, 0, 0.85);
-    }
-  }
+.about-grid {
+  align-content: start;
+}
 
-  .about-value {
-    color: #1890ff;
-    text-decoration: none;
-  }
+.about-value {
+  color: var(--cm-color-primary);
+  text-decoration: none;
 }
 </style>

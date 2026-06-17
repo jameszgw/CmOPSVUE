@@ -1,44 +1,32 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Box" label="Broker" :value="`${d.brokerOnline ?? 0}/${d.brokerTotal ?? 0}`"
-          :sub="`在线 ${d.brokerOnline ?? 0} / 离线 ${d.brokerOffline ?? 0}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Collection" label="主题数" :value="d.topicCount ?? 0"
-          :sub="`分区 ${d.partitionCount ?? 0} / 消费组 ${d.consumerGroupCount ?? 0}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Upload" label="生产速率" :value="`${num(d.produceRate)}`"
-          sub="msg/s" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="消费积压" :value="num0(d.totalLag)"
-          :sub="`积压消息 ${num0(d.messageBacklog)}`" :color="lagColor(d.totalLag)" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Box" label="Broker" :value="`${d.brokerOnline ?? 0}/${d.brokerTotal ?? 0}`"
+        :sub="`在线 ${d.brokerOnline ?? 0} / 离线 ${d.brokerOffline ?? 0}`" color="#409eff" />
+      <StatCard dense icon="Collection" label="主题数" :value="d.topicCount ?? 0"
+        :sub="`分区 ${d.partitionCount ?? 0} / 消费组 ${d.consumerGroupCount ?? 0}`" color="#67c23a" />
+      <StatCard dense icon="Upload" label="生产速率" :value="`${num(d.produceRate)}`"
+        sub="msg/s" color="#e6a23c" />
+      <StatCard dense icon="Warning" label="消费积压" :value="num0(d.totalLag)"
+        :sub="`积压消息 ${num0(d.messageBacklog)}`" :color="lagColor(d.totalLag)" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="基础信息" icon="InfoFilled">
-          <template #extra>
-            <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-            </el-tag>
-          </template>
-          <InfoTable :rows="basicRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="吞吐统计" icon="Histogram">
-          <InfoTable :rows="throughputRows" :columns="2" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="基础信息" icon="InfoFilled">
+        <template #extra>
+          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+        </template>
+        <InfoTable :rows="basicRows" :columns="2" />
+      </SectionCard>
 
-    <SectionCard title="集群健康" icon="FirstAidKit">
-      <div class="health-grid">
+      <SectionCard dense title="吞吐统计" icon="Histogram">
+        <InfoTable :rows="throughputRows" :columns="2" />
+      </SectionCard>
+
+      <SectionCard dense title="集群健康" icon="FirstAidKit" class="span-all">
+        <div class="health-grid">
         <div class="health-item">
           <span class="health-item__label">副本不足分区</span>
           <span class="health-item__value" :style="{ color: countColor(d.underReplicated) }">
@@ -62,8 +50,9 @@
         <span class="disk-line__label">磁盘使用率</span>
         <el-progress :percentage="clamp(d.diskUsagePct)" :stroke-width="14"
           :color="pctColor(d.diskUsagePct)" />
-      </div>
-    </SectionCard>
+        </div>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -72,6 +61,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getMqOverview } from "@/api/monitor-mq";
 
 const props = defineProps({
@@ -139,17 +129,30 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .health-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 .health-item {
   display: flex;
@@ -157,7 +160,7 @@ onMounted(load);
   align-items: center;
   border: 1px solid var(--cm-border-light);
   border-radius: 8px;
-  padding: 16px 12px;
+  padding: 10px 12px;
 
   &__label {
     font-size: 12px;

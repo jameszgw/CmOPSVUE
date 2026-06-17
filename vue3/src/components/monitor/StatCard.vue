@@ -1,8 +1,13 @@
+<!--
+  StatCard — 单个指标卡（图标 + 标签 + 数值 + 进度/副文）。
+  传入 dense 切换紧凑模式（目标高度约 @stat-h-dense=84px，更小的图标/字号/内边距）。
+  不传 dense 时外观与历史完全一致。
+-->
 <template>
-  <div class="stat-card">
+  <div class="stat-card" :class="{ 'stat-card--dense': dense }">
     <div class="stat-card__head">
       <div class="stat-card__icon" :style="{ background: tint, color: color }">
-        <el-icon :size="18"><component :is="icon || 'DataLine'" /></el-icon>
+        <el-icon :size="dense ? 15 : 18"><component :is="icon || 'DataLine'" /></el-icon>
       </div>
       <span class="stat-card__label">{{ label }}</span>
       <span v-if="tag" class="stat-card__tag" :style="{ color }">{{ tag }}</span>
@@ -32,6 +37,8 @@ const props = defineProps({
   tag: { type: String, default: "" },
   percent: { type: [Number, String], default: null },
   color: { type: String, default: "#409eff" },
+  // 紧凑模式：更小的内边距/图标/字号，目标高度约 84px
+  dense: { type: Boolean, default: false },
 });
 
 const tint = computed(() => props.color + "1a");
@@ -105,6 +112,38 @@ const clampPercent = computed(() =>
     margin-top: @space-sm;
     font-size: 12px;
     color: var(--cm-text-secondary);
+  }
+
+  // ---- 紧凑模式（目标高度约 @stat-h-dense=84px）----
+  &--dense {
+    padding: @dense-card-pad @space-md;
+
+    .stat-card__head {
+      margin-bottom: @space-sm;
+    }
+
+    .stat-card__icon {
+      width: 26px;
+      height: 26px;
+      border-radius: @radius-base;
+      margin-right: @space-sm;
+    }
+
+    .stat-card__label {
+      font-size: 12px;
+    }
+
+    .stat-card__value {
+      font-size: 20px;
+    }
+
+    .stat-card__progress {
+      margin-top: @space-sm;
+    }
+
+    .stat-card__sub {
+      margin-top: @space-xs;
+    }
   }
 }
 </style>

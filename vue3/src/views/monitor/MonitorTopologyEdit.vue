@@ -1,110 +1,53 @@
 <template>
-  <div class="page-container">
-    <!-- 顶部工具栏：视图管理 -->
-    <SectionCard title="拓扑维护" icon="Share">
-      <template #extra>
-        <span v-if="currentView.remark">{{ currentView.remark }}</span>
-      </template>
-      <div class="toolbar">
-        <div class="toolbar__group">
-          <span class="toolbar__label">当前视图</span>
-          <el-select
-            v-model="currentViewId"
-            placeholder="请选择视图"
-            style="width: 220px"
-            @change="handleViewChange"
-          >
-            <el-option
-              v-for="v in views"
-              :key="v.id"
-              :label="v.name"
-              :value="v.id"
-            />
-          </el-select>
-          <el-button :icon="Plus" @click="openCreateView">新建视图</el-button>
-          <el-button
-            :icon="Edit"
-            :disabled="!currentViewId"
-            @click="openRenameView"
-            >重命名</el-button
-          >
-          <el-button
-            :icon="Delete"
-            type="danger"
-            plain
-            :disabled="!currentViewId"
-            @click="handleDeleteView"
-            >删除视图</el-button
-          >
-          <el-button :icon="Refresh" @click="reloadGraph">刷新</el-button>
-        </div>
+  <ScreenPage title="拓扑维护" gap="8px" class="topo-edit">
+    <template #header-extra>
+      <div class="view-toolbar">
+        <el-select
+          v-model="currentViewId"
+          placeholder="请选择视图"
+          size="small"
+          style="width: 200px"
+          @change="handleViewChange"
+        >
+          <el-option
+            v-for="v in views"
+            :key="v.id"
+            :label="v.name"
+            :value="v.id"
+          />
+        </el-select>
+        <el-button size="small" :icon="Plus" @click="openCreateView">新建</el-button>
+        <el-button size="small" :icon="Edit" :disabled="!currentViewId" @click="openRenameView">重命名</el-button>
+        <el-button size="small" :icon="Delete" type="danger" plain :disabled="!currentViewId" @click="handleDeleteView">删除</el-button>
+        <el-button size="small" :icon="Refresh" @click="reloadGraph">刷新</el-button>
       </div>
-    </SectionCard>
+    </template>
 
     <!-- 统计 -->
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="12" :sm="6">
-        <StatCard icon="Share" label="节点总数" :value="nodeCount" color="#409eff" />
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <StatCard icon="CircleCheck" label="健康" :value="g.healthy ?? 0" color="#67c23a" />
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <StatCard icon="Warning" label="警告" :value="g.warning ?? 0" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="12" :sm="6">
-        <StatCard icon="CircleClose" label="严重" :value="g.critical ?? 0" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Share" label="节点总数" :value="nodeCount" color="#409eff" />
+      <StatCard dense icon="CircleCheck" label="健康" :value="g.healthy ?? 0" color="#67c23a" />
+      <StatCard dense icon="Warning" label="警告" :value="g.warning ?? 0" color="#e6a23c" />
+      <StatCard dense icon="CircleClose" label="严重" :value="g.critical ?? 0" color="#f56c6c" />
+    </CardGrid>
 
-    <!-- 画布 -->
-    <SectionCard title="拓扑画布" icon="Connection">
+    <!-- 画布：填满剩余高度 -->
+    <SectionCard dense title="拓扑画布" icon="Connection" class="canvas-card fill" bodyClass="canvas-body">
       <template #extra>
         <span v-if="selectedNode">已选节点：{{ selectedNode.name }}</span>
         <span v-else-if="selectedEdge">已选连线：{{ selectedEdge.relation }}</span>
         <span v-else>可拖拽节点，点击节点查看详情</span>
       </template>
       <div class="edit-toolbar">
-        <el-button :icon="Monitor" :disabled="!currentViewId" @click="openAddDeviceNode"
-          >从设备添加节点</el-button
-        >
-        <el-button :icon="Box" :disabled="!currentViewId" @click="openAddVirtualNode"
-          >添加虚拟节点</el-button
-        >
-        <el-button :icon="Connection" :disabled="!currentViewId" @click="openAddEdge"
-          >添加连线</el-button
-        >
-        <el-button :icon="Grid" :disabled="!currentViewId || !nodeCount" @click="autoLayout"
-          >自动布局</el-button
-        >
-        <el-button type="primary" :icon="Finished" :disabled="!currentViewId" @click="saveLayout"
-          >保存布局</el-button
-        >
-        <el-button
-          type="primary"
-          plain
-          :icon="DocumentChecked"
-          :disabled="!currentViewId"
-          @click="saveTopoGraphAll"
-          >保存整图</el-button
-        >
-        <el-button
-          type="danger"
-          plain
-          :icon="Delete"
-          :disabled="!selectedNode && !selectedEdge"
-          @click="deleteSelected"
-          >删除选中</el-button
-        >
-        <el-button
-          :icon="Download"
-          :disabled="!currentViewId"
-          @click="exportJson"
-          >导出JSON</el-button
-        >
-        <el-button :icon="Upload" :loading="importing" @click="triggerImport"
-          >导入JSON</el-button
-        >
+        <el-button size="small" :icon="Monitor" :disabled="!currentViewId" @click="openAddDeviceNode">从设备添加节点</el-button>
+        <el-button size="small" :icon="Box" :disabled="!currentViewId" @click="openAddVirtualNode">添加虚拟节点</el-button>
+        <el-button size="small" :icon="Connection" :disabled="!currentViewId" @click="openAddEdge">添加连线</el-button>
+        <el-button size="small" :icon="Grid" :disabled="!currentViewId || !nodeCount" @click="autoLayout">自动布局</el-button>
+        <el-button size="small" type="primary" :icon="Finished" :disabled="!currentViewId" @click="saveLayout">保存布局</el-button>
+        <el-button size="small" type="primary" plain :icon="DocumentChecked" :disabled="!currentViewId" @click="saveTopoGraphAll">保存整图</el-button>
+        <el-button size="small" type="danger" plain :icon="Delete" :disabled="!selectedNode && !selectedEdge" @click="deleteSelected">删除选中</el-button>
+        <el-button size="small" :icon="Download" :disabled="!currentViewId" @click="exportJson">导出JSON</el-button>
+        <el-button size="small" :icon="Upload" :loading="importing" @click="triggerImport">导入JSON</el-button>
         <input
           ref="importInputRef"
           type="file"
@@ -113,8 +56,10 @@
           @change="handleImportFile"
         />
       </div>
-      <el-empty v-if="!currentViewId" description="请先选择或新建视图" />
-      <div v-show="currentViewId" ref="chartRef" class="topo-chart"></div>
+      <div class="canvas-area">
+        <el-empty v-if="!currentViewId" description="请先选择或新建视图" />
+        <div v-show="currentViewId" ref="chartRef" class="topo-chart"></div>
+      </div>
     </SectionCard>
 
     <!-- 新建 / 重命名视图对话框 -->
@@ -298,7 +243,7 @@
         </div>
       </div>
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -319,6 +264,8 @@ import {
   Upload,
   Grid,
 } from "@element-plus/icons-vue";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
@@ -1133,35 +1080,44 @@ onBeforeUnmount(() => {
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-.page-container {
-  padding: @space-lg;
+.row-stats {
+  flex-shrink: 0;
 }
-.stat-row {
-  margin-bottom: @space-xs;
+
+.view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: @space-sm;
 }
-.stat-row .el-col {
-  margin-bottom: @space-md;
+
+// 画布卡片填满 ScreenPage 剩余高度，正文为纵向 flex
+.canvas-card {
+  min-height: 0;
 }
-.toolbar {
-  &__group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: @space-sm;
-  }
-  &__label {
-    font-size: 13px;
-    color: var(--cm-text-regular);
-  }
+.canvas-card :deep(.canvas-body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
+
 .edit-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: @space-sm;
-  margin-bottom: @space-md;
+  gap: 6px;
+  margin-bottom: @space-sm;
+  flex-shrink: 0;
+}
+
+// 画布容器占满卡片剩余空间
+.canvas-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }
 .topo-chart {
-  height: 560px;
+  height: 100%;
+  min-height: @chart-h-md;
   width: 100%;
 }
 

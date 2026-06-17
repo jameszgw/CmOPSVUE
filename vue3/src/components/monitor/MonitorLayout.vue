@@ -512,11 +512,11 @@ onBeforeUnmount(clearTimer);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 8px 12px;
     background: var(--cm-bg-card);
     border: 1px solid var(--cm-border-light);
     border-radius: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   &__title {

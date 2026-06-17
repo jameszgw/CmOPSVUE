@@ -1,52 +1,33 @@
 <template>
-  <div v-loading="loading" class="page-container">
+  <ScreenPage v-loading="loading" title="AI 推理监控" gap="8px">
     <!-- ① 统计磁贴 -->
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="Cpu" label="服务数" :value="num(ov.serviceCount)"
-          :sub="`在线 ${num(ov.onlineServices)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="MagicStick" label="模型数" :value="num(ov.modelCount)" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="Histogram" label="GPU卡数" :value="num(ov.gpuCards)"
-          :sub="`利用率 ${num(ov.gpuUtilAvg)}%`" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="ChatDotRound" label="活跃会话" :value="num(ov.activeSessions)" color="#9b59b6" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="DataLine" label="Token吞吐" :value="num(ov.tokensPerSec)" :sub="'/s'" color="#13c2c2" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="TrendCharts" label="QPS" :value="num(ov.qps)" color="#2f54eb" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="Timer" label="P99延迟" :value="num(ov.p99LatencyMs)" :sub="'ms'" color="#fa8c16" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :md="8" :lg="6">
-        <StatCard icon="Bell" label="24h事件" :value="num(ov.events24h)" color="#f56c6c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Cpu" label="服务数" :value="num(ov.serviceCount)"
+        :sub="`在线 ${num(ov.onlineServices)}`" color="#409eff" />
+      <StatCard dense icon="MagicStick" label="模型数" :value="num(ov.modelCount)" color="#67c23a" />
+      <StatCard dense icon="Histogram" label="GPU卡数" :value="num(ov.gpuCards)"
+        :sub="`利用率 ${num(ov.gpuUtilAvg)}%`" color="#e6a23c" />
+      <StatCard dense icon="ChatDotRound" label="活跃会话" :value="num(ov.activeSessions)" color="#9b59b6" />
+      <StatCard dense icon="DataLine" label="Token吞吐" :value="num(ov.tokensPerSec)" :sub="'/s'" color="#13c2c2" />
+      <StatCard dense icon="TrendCharts" label="QPS" :value="num(ov.qps)" color="#2f54eb" />
+      <StatCard dense icon="Timer" label="P99延迟" :value="num(ov.p99LatencyMs)" :sub="'ms'" color="#fa8c16" />
+      <StatCard dense icon="Bell" label="24h事件" :value="num(ov.events24h)" color="#f56c6c" />
+    </CardGrid>
 
     <!-- ② 趋势图 -->
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="Token 吞吐趋势" icon="DataLine">
-          <div ref="tokenRef" class="ai-chart"></div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="QPS 趋势" icon="TrendCharts">
-          <div ref="qpsRef" class="ai-chart"></div>
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="320px" gap="8px" class="row-charts">
+      <SectionCard dense title="Token 吞吐趋势" icon="DataLine">
+        <div ref="tokenRef" class="ai-chart"></div>
+      </SectionCard>
+      <SectionCard dense title="QPS 趋势" icon="TrendCharts">
+        <div ref="qpsRef" class="ai-chart"></div>
+      </SectionCard>
+    </CardGrid>
 
-    <!-- ③ AI 推理服务 -->
-    <SectionCard title="AI 推理服务" icon="Cpu">
-      <el-table :data="services" size="small" stripe>
+    <!-- ③ AI 推理服务 + 事件 + 会话：并排内部滚动 -->
+    <CardGrid min="340px" gap="8px" class="row-tables fill">
+      <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="AI 推理服务" icon="Cpu">
+        <el-table class="dense-table" height="100%" :data="services" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="engine" label="引擎" width="110" />
         <el-table-column prop="model" label="模型" min-width="150" show-overflow-tooltip />
@@ -78,13 +59,15 @@
             </el-tag>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无服务" :image-size="60" />
+        </template>
       </el-table>
-      <el-empty v-if="!services.length" description="暂无服务" :image-size="80" />
-    </SectionCard>
+      </SectionCard>
 
-    <!-- ④ AI 事件 -->
-    <SectionCard title="AI 事件" icon="Bell">
-      <el-table :data="events" size="small" stripe>
+      <!-- ④ AI 事件 -->
+      <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="AI 事件" icon="Bell">
+        <el-table class="dense-table" height="100%" :data="events" size="small" stripe>
         <el-table-column prop="type" label="类型" width="130" />
         <el-table-column label="级别" width="90" align="center">
           <template #default="{ row }">
@@ -94,13 +77,15 @@
         <el-table-column prop="target" label="对象" min-width="150" show-overflow-tooltip />
         <el-table-column prop="message" label="描述" min-width="240" show-overflow-tooltip />
         <el-table-column prop="timeAgo" label="时间" width="120" align="right" />
+        <template #empty>
+          <el-empty description="暂无事件" :image-size="60" />
+        </template>
       </el-table>
-      <el-empty v-if="!events.length" description="暂无事件" :image-size="80" />
-    </SectionCard>
+      </SectionCard>
 
-    <!-- ⑤ AI 会话 -->
-    <SectionCard title="AI 会话" icon="ChatDotRound">
-      <el-table :data="sessions" size="small" stripe>
+      <!-- ⑤ AI 会话 -->
+      <SectionCard dense scrollable bodyClass="dense-table fill" class="fill" title="AI 会话" icon="ChatDotRound">
+        <el-table class="dense-table" height="100%" :data="sessions" size="small" stripe>
         <el-table-column prop="id" label="会话ID" width="130" show-overflow-tooltip />
         <el-table-column prop="client" label="来源" min-width="120" show-overflow-tooltip />
         <el-table-column prop="scene" label="场景" min-width="120" show-overflow-tooltip />
@@ -126,10 +111,13 @@
             <el-tag :type="sessionTag(row.status)" size="small">{{ sessionText(row.status) }}</el-tag>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无会话" :image-size="60" />
+        </template>
       </el-table>
-      <el-empty v-if="!sessions.length" description="暂无会话" :image-size="80" />
-    </SectionCard>
-  </div>
+      </SectionCard>
+    </CardGrid>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -137,6 +125,8 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
@@ -271,17 +261,19 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
+
+.row-stats,
+.row-charts {
+  flex-shrink: 0;
 }
-.stat-row {
-  margin-bottom: 4px;
+
+.row-tables {
+  flex: 1;
+  min-height: 0;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
-}
+
 .ai-chart {
-  height: 280px;
+  height: @chart-h-sm;
   width: 100%;
 }
 </style>

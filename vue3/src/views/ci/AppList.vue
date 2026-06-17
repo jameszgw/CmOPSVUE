@@ -1,81 +1,91 @@
 <template>
-  <div class="page-container app-list-page">
-    <h2 class="page-title">应用中心</h2>
-    <el-card>
-      <el-form inline class="filter-form">
-        <el-form-item label="应用名称">
-          <el-input
-            v-model="filterForm.appName"
-            placeholder="请输入应用名称"
-            style="width: 140px"
-            clearable
+  <ScreenPage title="应用中心" gap="8px">
+    <template #header-extra>
+      <div class="head-tools">
+        <el-input
+          v-model="filterForm.appName"
+          size="small"
+          placeholder="应用名称"
+          clearable
+          class="head-tools__sm"
+        />
+        <el-select
+          v-model="filterForm.department"
+          size="small"
+          placeholder="部门"
+          clearable
+          class="head-tools__sm"
+        >
+          <el-option
+            v-for="option in departments"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
           />
-        </el-form-item>
-        <el-form-item label="部门">
-          <el-select
-            v-model="filterForm.department"
-            placeholder="请选择部门"
-            style="width: 140px"
-            clearable
-          >
-            <el-option
-              v-for="option in departments"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开发语言">
-          <el-select
-            v-model="filterForm.language"
-            placeholder="请选择开发语言"
-            style="width: 140px"
-            clearable
-          >
-            <el-option label="Java" value="java" />
-            <el-option label="Python" value="python" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="toolbar">
-        <el-button type="primary" @click="createAppDrawerVisible = true">创建应用</el-button>
+        </el-select>
+        <el-select
+          v-model="filterForm.language"
+          size="small"
+          placeholder="开发语言"
+          clearable
+          class="head-tools__sm"
+        >
+          <el-option label="Java" value="java" />
+          <el-option label="Python" value="python" />
+        </el-select>
+        <el-button size="small" type="primary" @click="handleSearch">查询</el-button>
+        <el-button size="small" @click="handleReset">重置</el-button>
+        <el-button size="small" type="primary" @click="createAppDrawerVisible = true">创建应用</el-button>
       </div>
+    </template>
 
-      <el-table :data="appPage.items" row-key="appId" v-loading="loading">
-        <el-table-column label="应用名称" prop="appName">
+    <SectionCard
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      class="fill"
+      title="应用"
+      icon="Grid"
+    >
+      <el-table
+        class="dense-table"
+        height="100%"
+        :data="appPage.items"
+        row-key="appId"
+        size="small"
+        stripe
+        v-loading="loading"
+      >
+        <el-table-column label="应用名称" prop="appName" min-width="140">
           <template #default="{ row }">
             <el-link type="primary" @click="handleView(row)">{{ row.appName }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="仓库" prop="repo" width="200" show-overflow-tooltip />
-        <el-table-column label="默认分支" prop="defaultBranch" />
-        <el-table-column label="部门" prop="department" />
-        <el-table-column label="开发语言" prop="language" />
-        <el-table-column label="描述" prop="description" show-overflow-tooltip />
-        <el-table-column label="开发模式" prop="developMode" />
-        <el-table-column label="状态">
+        <el-table-column label="仓库" prop="repo" min-width="200" show-overflow-tooltip />
+        <el-table-column label="默认分支" prop="defaultBranch" min-width="120" />
+        <el-table-column label="部门" prop="department" min-width="100" />
+        <el-table-column label="开发语言" prop="language" min-width="100" />
+        <el-table-column label="描述" prop="description" min-width="140" show-overflow-tooltip />
+        <el-table-column label="开发模式" prop="developMode" min-width="100" />
+        <el-table-column label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.status === '0' ? 'success' : 'danger'">
+            <el-tag :type="row.status === '0' ? 'success' : 'danger'" size="small">
               {{ row.status === "0" ? "正常" : "停用" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-link type="primary" @click="handleView(row)">查看</el-link>
           </template>
         </el-table-column>
       </el-table>
+    </SectionCard>
 
+    <div class="pager">
       <el-pagination
-        class="pagination"
         background
+        small
         layout="total, sizes, prev, pager, next"
         :total="appPage.total"
         v-model:current-page="pagination.pageNo"
@@ -83,7 +93,7 @@
         @current-change="getAppList"
         @size-change="handleSizeChange"
       />
-    </el-card>
+    </div>
 
     <CreateAppDrawer
       :open="createAppDrawerVisible"
@@ -91,13 +101,15 @@
       @close="createAppDrawerVisible = false"
       @created="getAppList"
     />
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { pageAppList, getDepartments as fetchDepartments } from "@/api/app";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateAppDrawer from "./components/CreateAppDrawer.vue";
 
 const router = useRouter();
@@ -160,21 +172,22 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.app-list-page {
-  .page-title {
-    margin: 0 0 16px;
-    font-size: 18px;
-    font-weight: 600;
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+  flex-wrap: wrap;
+
+  &__sm {
+    width: 140px;
   }
-  .filter-form {
-    margin-bottom: 8px;
-  }
-  .toolbar {
-    margin-bottom: 16px;
-  }
-  .pagination {
-    margin-top: 16px;
-    justify-content: flex-end;
-  }
+}
+
+.pager {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

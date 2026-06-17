@@ -1,37 +1,42 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">主机秘钥</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.prevent>
+  <ScreenPage title="主机秘钥" gap="8px">
+    <template #header-extra>
+      <el-form inline :model="searchForm" class="toolbar-form" @submit.prevent>
         <el-form-item label="用户名">
-          <el-input v-model="searchForm.displayName" placeholder="请输入用户名" clearable />
+          <el-input v-model="searchForm.displayName" placeholder="用户名" clearable size="small" style="width: 150px" />
         </el-form-item>
         <el-form-item label="活跃状态">
           <el-select
             v-model="searchForm.active"
-            placeholder="请选择活跃状态"
+            placeholder="活跃状态"
             clearable
-            style="width: 150px"
+            size="small"
+            style="width: 130px"
           >
             <el-option value="1" label="活 跃" />
             <el-option value="0" label="不活跃" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">查询</el-button>
-          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="onSearch">查询</el-button>
+          <el-button size="small" @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="handleAddKey">新增秘钥</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <div class="toolbar">
-        <el-button type="primary" @click="handleAddKey">新增秘钥</el-button>
-      </div>
-
-      <el-table :data="serverKeys.items" row-key="id" style="width: 100%">
+    <SectionCard
+      dense
+      bodyClass="dense-table fill table-pane"
+      class="fill"
+      title="秘钥列表"
+      icon="Key"
+    >
+      <el-table class="dense-table fill" height="100%" :data="serverKeys.items" row-key="id" size="small" stripe>
         <el-table-column prop="displayName" label="显示名称" />
         <el-table-column label="账户类型">
           <template #default="{ row }">
-            <el-tag :type="row.accountType === 1 ? 'danger' : 'primary'">
+            <el-tag :type="row.accountType === 1 ? 'danger' : 'primary'" size="small">
               {{ row.accountType === 1 ? "管理员" : "普通账户" }}
             </el-tag>
           </template>
@@ -39,7 +44,7 @@
         <el-table-column prop="protocol" label="协议" />
         <el-table-column label="活跃状态">
           <template #default="{ row }">
-            <el-tag :type="row.active === '1' ? 'success' : 'info'">
+            <el-tag :type="row.active === '1' ? 'success' : 'info'" size="small">
               {{ row.active === "1" ? "活跃" : "不活跃" }}
             </el-tag>
           </template>
@@ -55,6 +60,7 @@
       <el-pagination
         class="pagination"
         background
+        small
         layout="total, sizes, prev, pager, next"
         :total="serverKeys.total"
         :current-page="pagination.pageNo"
@@ -62,7 +68,7 @@
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
       />
-    </el-card>
+    </SectionCard>
 
     <!-- 添加或编辑服务器秘钥的抽屉 -->
     <el-drawer
@@ -78,12 +84,14 @@
         @cancel="handleCloseDrawer"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateServerKeyForm from "./components/CreateServerKeyForm.vue";
 import {
   queryServerKeys,
@@ -175,20 +183,27 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(121, 242, 154);
+@import (reference) "@/styles/variables.less";
+
+.toolbar-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+    margin-right: @space-md;
+  }
 }
 
-.page-title {
-  margin: 0 0 16px;
-}
-
-.toolbar {
-  margin-bottom: 16px;
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 </style>

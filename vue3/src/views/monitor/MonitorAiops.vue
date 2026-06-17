@@ -1,25 +1,19 @@
 <template>
-  <div class="page-container">
-    <el-tabs v-model="activeTab" class="aiops-tabs">
+  <ScreenPage title="智能运维" gap="8px" class="aiops">
+    <el-tabs v-model="activeTab" class="aiops-tabs fill">
       <!-- 异常检测 -->
       <el-tab-pane label="异常检测" name="anomaly">
         <div v-loading="anomalyLoading" class="tab-pane">
-          <el-row :gutter="12" class="stat-row">
-            <el-col :xs="24" :sm="8">
-              <StatCard icon="Warning" label="异常总数" :value="num0(an.total)" color="#409eff" />
-            </el-col>
-            <el-col :xs="24" :sm="8">
-              <StatCard icon="CircleClose" label="严重" :value="num0(an.critical)" color="#f56c6c" />
-            </el-col>
-            <el-col :xs="24" :sm="8">
-              <StatCard icon="WarningFilled" label="警告" :value="num0(an.warning)" color="#e6a23c" />
-            </el-col>
-          </el-row>
+          <CardGrid min="200px" gap="8px" class="row-stats">
+            <StatCard dense icon="Warning" label="异常总数" :value="num0(an.total)" color="#409eff" />
+            <StatCard dense icon="CircleClose" label="严重" :value="num0(an.critical)" color="#f56c6c" />
+            <StatCard dense icon="WarningFilled" label="警告" :value="num0(an.warning)" color="#e6a23c" />
+          </CardGrid>
 
-          <SectionCard title="异常检测列表" icon="DataAnalysis">
+          <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+            title="异常检测列表" icon="DataAnalysis">
             <template #extra>共 {{ anomalies.length }} 条</template>
-            <el-empty v-if="!anomalies.length" description="暂无异常" />
-            <el-table v-else :data="anomalies" size="small" stripe>
+            <el-table class="dense-table" height="100%" :data="anomalies" size="small" stripe>
               <el-table-column prop="deviceName" label="设备" min-width="140" />
               <el-table-column label="类型" width="110">
                 <template #default="{ row }">{{ typeLabel(row.deviceType) }}</template>
@@ -45,6 +39,9 @@
               </el-table-column>
               <el-table-column prop="detectedTime" label="检测时间" width="180" />
               <el-table-column prop="method" label="方法" min-width="120" />
+              <template #empty>
+                <el-empty description="暂无异常" :image-size="60" />
+              </template>
             </el-table>
           </SectionCard>
         </div>
@@ -53,46 +50,38 @@
       <!-- 成本优化 -->
       <el-tab-pane label="成本优化" name="cost">
         <div v-loading="costLoading" class="tab-pane">
-          <el-row :gutter="12" class="stat-row">
-            <el-col :xs="24" :sm="12" :lg="6">
-              <StatCard icon="Money" label="月度成本" :value="cost.totalMonthlyCost || '-'" color="#409eff" />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-              <StatCard icon="Wallet" label="可节省" :value="cost.potentialSavings || '-'" color="#67c23a" />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-              <StatCard icon="PieChart" label="节省占比" :value="`${num1(cost.savingsPct)}%`" color="#e6a23c" />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-              <StatCard icon="Box" label="闲置项" :value="num0(cost.idleCount)" color="#909399" />
-            </el-col>
-          </el-row>
+          <CardGrid min="180px" gap="8px" class="row-stats">
+            <StatCard dense icon="Money" label="月度成本" :value="cost.totalMonthlyCost || '-'" color="#409eff" />
+            <StatCard dense icon="Wallet" label="可节省" :value="cost.potentialSavings || '-'" color="#67c23a" />
+            <StatCard dense icon="PieChart" label="节省占比" :value="`${num1(cost.savingsPct)}%`" color="#e6a23c" />
+            <StatCard dense icon="Box" label="闲置项" :value="num0(cost.idleCount)" color="#909399" />
+          </CardGrid>
 
-          <SectionCard title="资源利用率" icon="Histogram">
-            <el-empty v-if="!utilization.length" description="暂无数据" />
-            <el-row v-else :gutter="12">
-              <el-col v-for="(u, i) in utilization" :key="i" :xs="24" :sm="12" :lg="8">
-                <div class="util-item">
+          <CardGrid min="320px" gap="8px" class="row-cost">
+            <SectionCard dense title="资源利用率" icon="Histogram">
+              <el-empty v-if="!utilization.length" description="暂无数据" :image-size="60" />
+              <div v-else class="util-grid">
+                <div v-for="(u, i) in utilization" :key="i" class="util-item">
                   <div class="util-item__head">
                     <span class="util-item__type">{{ typeLabel(u.type) }}</span>
                     <span class="util-item__waste">浪费 {{ u.wasteCost || '-' }}</span>
                   </div>
-                  <el-progress :percentage="clamp(u.avgUtil)" :stroke-width="10"
+                  <el-progress :percentage="clamp(u.avgUtil)" :stroke-width="8"
                     :color="utilColor(u.avgUtil)" />
                 </div>
-              </el-col>
-            </el-row>
-          </SectionCard>
+              </div>
+            </SectionCard>
 
-          <SectionCard title="容量预测" icon="TrendCharts">
-            <template #extra>{{ forecastNote }}</template>
-            <div ref="chartRef" class="forecast-chart"></div>
-          </SectionCard>
+            <SectionCard dense title="容量预测" icon="TrendCharts">
+              <template #extra>{{ forecastNote }}</template>
+              <div ref="chartRef" class="forecast-chart"></div>
+            </SectionCard>
+          </CardGrid>
 
-          <SectionCard title="闲置资源" icon="Delete">
+          <SectionCard dense scrollable bodyClass="dense-table fill" class="fill"
+            title="闲置资源" icon="Delete">
             <template #extra>共 {{ idleResources.length }} 项</template>
-            <el-empty v-if="!idleResources.length" description="暂无闲置资源" />
-            <el-table v-else :data="idleResources" size="small" stripe>
+            <el-table class="dense-table" height="100%" :data="idleResources" size="small" stripe>
               <el-table-column prop="deviceName" label="设备" min-width="140" />
               <el-table-column label="类型" width="110">
                 <template #default="{ row }">{{ typeLabel(row.type) }}</template>
@@ -106,12 +95,15 @@
                 </template>
               </el-table-column>
               <el-table-column prop="recommendation" label="建议" min-width="200" />
+              <template #empty>
+                <el-empty description="暂无闲置资源" :image-size="60" />
+              </template>
             </el-table>
           </SectionCard>
         </div>
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -120,6 +112,8 @@ import * as echarts from "echarts";
 import { applyChartTheme, currentChartTheme } from "@/styles/chart-theme";
 import { useChartSkin } from "@/composables/useChartSkin";
 applyChartTheme(echarts);
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import { getAiopsAnomalies, getAiopsCost } from "@/api/monitor-aiops";
@@ -243,35 +237,63 @@ onBeforeUnmount(() => {
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.page-container {
-  padding: 16px;
-}
+
+// el-tabs 填满 ScreenPage 主体，tab 内容成为可用空间
 .aiops-tabs {
-  background: var(--cm-bg-card);
-  border: 1px solid var(--cm-border-light);
-  border-radius: 8px;
-  padding: 0 16px 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :deep(.el-tabs__header) {
+    margin: 0 0 8px;
+    flex-shrink: 0;
+  }
+
+  :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :deep(.el-tab-pane) {
+    height: 100%;
+  }
 }
-.stat-row {
-  margin-bottom: 4px;
+
+// 每个 tab 内部为纵向 flex：统计/图表行固定，表格行填满并内部滚动
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+  min-height: 0;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+
+.row-stats,
+.row-cost {
+  flex-shrink: 0;
 }
+
 .forecast-chart {
-  height: 300px;
+  height: @chart-h-sm;
   width: 100%;
 }
+
+.util-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: @space-sm @space-md;
+}
+
 .util-item {
   border: 1px solid var(--cm-border-light);
-  border-radius: 6px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  border-radius: @radius-base;
+  padding: @space-sm @space-md;
 
   &__head {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   &__type {
     font-size: 13px;

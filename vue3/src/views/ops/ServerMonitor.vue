@@ -1,21 +1,28 @@
 <template>
-  <div class="page-container">
-    <h2 class="page-title">主机监控</h2>
-    <el-card shadow="never">
-      <el-form inline :model="searchForm" @submit.prevent>
+  <ScreenPage title="主机监控" gap="8px">
+    <template #header-extra>
+      <el-form inline :model="searchForm" class="toolbar-form" @submit.prevent>
         <el-form-item label="实例名称">
-          <el-input v-model="searchForm.name" placeholder="请输入实例名称" clearable />
+          <el-input v-model="searchForm.name" placeholder="实例名称" clearable size="small" style="width: 160px" />
         </el-form-item>
         <el-form-item label="主机名称">
-          <el-input v-model="searchForm.hostName" placeholder="请输入主机名称" clearable />
+          <el-input v-model="searchForm.hostName" placeholder="主机名称" clearable size="small" style="width: 160px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">查询</el-button>
-          <el-button @click="onReset">重置</el-button>
+          <el-button type="primary" size="small" @click="onSearch">查询</el-button>
+          <el-button size="small" @click="onReset">重置</el-button>
         </el-form-item>
       </el-form>
+    </template>
 
-      <el-table :data="hosts.items" row-key="hostId" style="width: 100%">
+    <SectionCard
+      dense
+      bodyClass="dense-table fill table-pane"
+      class="fill"
+      title="主机列表"
+      icon="Monitor"
+    >
+      <el-table class="dense-table fill" height="100%" :data="hosts.items" row-key="hostId" size="small" stripe>
         <el-table-column label="实例名称">
           <template #default="{ row }">
             <span class="copyable" title="点击复制" @click="copyText(row.host?.name)">
@@ -35,7 +42,7 @@
         </el-table-column>
         <el-table-column label="插件状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="monitorStatusType(row.monitorStatus)">
+            <el-tag :type="monitorStatusType(row.monitorStatus)" size="small">
               {{ monitorStatusText(row.monitorStatus) }}
             </el-tag>
           </template>
@@ -45,7 +52,7 @@
         <el-table-column prop="agentVersion" label="agent版本" width="90" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.host?.status === '0' ? 'success' : 'danger'">
+            <el-tag :type="row.host?.status === '0' ? 'success' : 'danger'" size="small">
               {{ row.host?.status === "0" ? "正常" : "停用" }}
             </el-tag>
           </template>
@@ -66,6 +73,7 @@
       <el-pagination
         class="pagination"
         background
+        small
         layout="total, sizes, prev, pager, next"
         :total="hosts.total"
         :current-page="pagination.pageNo"
@@ -73,7 +81,7 @@
         @current-change="handlePageChange"
         @size-change="handleSizeChange"
       />
-    </el-card>
+    </SectionCard>
 
     <!-- 编辑插件的抽屉 -->
     <el-drawer
@@ -115,13 +123,15 @@
         :basic-metric-v-o="basicMetricVO"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import HostMonitorConfigForm from "./components/HostMonitorConfigForm.vue";
 import AlarmConfigureForm from "./components/AlarmConfigureForm.vue";
 import TopProgressTable from "./components/TopProgressTable.vue";
@@ -338,17 +348,28 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.title {
-  background: rgb(242, 219, 121);
+@import (reference) "@/styles/variables.less";
+
+.toolbar-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+    margin-right: @space-md;
+  }
 }
 
-.page-title {
-  margin: 0 0 16px;
+:deep(.table-pane) {
+  display: flex;
+  flex-direction: column;
 }
 
 .pagination {
-  margin-top: 16px;
+  margin-top: @space-sm;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .copyable {

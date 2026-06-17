@@ -1,9 +1,8 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <SectionCard title="实例列表" icon="Grid">
+  <div v-loading="loading" class="tab-screen">
+    <SectionCard dense scrollable bodyClass="dense-table fill" class="row-tables fill" title="实例列表" icon="Grid">
       <template #extra>展示 {{ d.shown ?? items.length }} / 共 {{ d.total ?? items.length }}</template>
-      <el-empty v-if="!items.length" description="暂无数据" />
-      <el-table v-else :data="items" size="small" stripe>
+      <el-table :data="items" size="small" stripe class="dense-table" height="100%">
         <el-table-column prop="name" label="名称" min-width="140" fixed>
           <template #default="{ row }">{{ row.name || row.id || "-" }}</template>
         </el-table-column>
@@ -44,6 +43,9 @@
             <el-tag :type="adbType(row.adb)" size="small" effect="dark">{{ adbText(row.adb) }}</el-tag>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无数据" :image-size="60" />
+        </template>
       </el-table>
     </SectionCard>
   </div>
@@ -103,4 +105,16 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.row-tables {
+  flex: 1;
+  min-height: 0;
+}
 </style>

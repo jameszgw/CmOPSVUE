@@ -1,18 +1,12 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Bell" label="事件总数" :value="d.total ?? '-'" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="WarningFilled" label="警告" :value="d.warningCount ?? '-'" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="CircleCheckFilled" label="正常" :value="d.normalCount ?? '-'" color="#67c23a" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Bell" label="事件总数" :value="d.total ?? '-'" color="#409eff" />
+      <StatCard dense icon="WarningFilled" label="警告" :value="d.warningCount ?? '-'" color="#e6a23c" />
+      <StatCard dense icon="CircleCheckFilled" label="正常" :value="d.normalCount ?? '-'" color="#67c23a" />
+    </CardGrid>
 
-    <SectionCard title="事件列表" icon="List">
+    <SectionCard dense title="事件列表" icon="List" class="fill" scrollable bodyClass="dense-table fill">
       <template #extra>
         <el-select v-model="filterType" size="small" style="width: 120px">
           <el-option label="全部" value="" />
@@ -20,7 +14,7 @@
           <el-option label="Normal" value="Normal" />
         </el-select>
       </template>
-      <el-table v-if="filteredEvents.length" :data="filteredEvents" size="small" stripe>
+      <el-table v-if="filteredEvents.length" class="dense-table" height="100%" :data="filteredEvents" size="small" stripe>
         <el-table-column label="类型" width="100">
           <template #default="{ row }">
             <el-tag size="small" :type="row.type === 'Warning' ? 'warning' : 'info'" effect="plain">
@@ -35,7 +29,7 @@
         <el-table-column prop="count" label="次数" width="80" />
         <el-table-column prop="lastTime" label="最近时间" width="180" />
       </el-table>
-      <el-empty v-else description="暂无事件" />
+      <el-empty v-else description="暂无事件" :image-size="60" />
     </SectionCard>
   </div>
 </template>
@@ -44,6 +38,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getK8sEvents } from "@/api/monitor-k8s";
 
 const props = defineProps({
@@ -79,10 +74,14 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
 }
 </style>

@@ -1,59 +1,64 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="page-title">WebHook列表</div>
-      <el-form inline @submit.prevent="handleSearch">
-        <el-form-item label="名称">
-          <el-input
-            v-model="searchForm.name"
-            placeholder="请输入名称"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="toolbar">
-        <el-button type="primary" @click="handleAddWebHook">
-          新增WebHook
-        </el-button>
+  <ScreenPage title="WebHook列表" gap="8px">
+    <template #header-extra>
+      <div class="head-tools">
+        <el-input
+          v-model="searchForm.name"
+          size="small"
+          placeholder="请输入名称"
+          clearable
+          class="head-tools__input"
+          @keyup.enter="handleSearch"
+        />
+        <el-button size="small" type="primary" @click="handleSearch">查询</el-button>
+        <el-button size="small" @click="handleReset">重置</el-button>
+        <el-button size="small" type="primary" @click="handleAddWebHook">新增WebHook</el-button>
       </div>
+    </template>
 
-      <el-table :data="webhookPage.items" row-key="id">
-        <el-table-column prop="webhookName" label="名称" />
-        <el-table-column prop="webhookUrl" label="URL" />
-        <el-table-column label="类型" width="100">
+    <SectionCard
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      class="fill"
+      title="WebHook"
+      icon="Link"
+    >
+      <el-table class="dense-table" height="100%" :data="webhookPage.items" row-key="id" size="small" stripe>
+        <el-table-column prop="webhookName" label="名称" min-width="160" />
+        <el-table-column prop="webhookUrl" label="URL" min-width="220" show-overflow-tooltip />
+        <el-table-column label="类型" width="90">
           <template #default="{ row }">
             <el-tooltip v-if="row.webhookType === '10'" content="钉钉">
               <el-icon :size="18" color="#1683e9"><ChatDotRound /></el-icon>
             </el-tooltip>
-            <el-tag v-else type="info">未知</el-tag>
+            <el-tag v-else type="info" size="small">未知</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">
+            <el-button type="primary" link size="small" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button type="primary" link @click="handleDelete(row.id)">
+            <el-button type="primary" link size="small" @click="handleDelete(row.id)">
               删除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
+    </SectionCard>
 
+    <div class="pager">
       <el-pagination
-        class="pagination"
+        background
+        small
         layout="total, prev, pager, next"
         :total="webhookPage.total"
         :current-page="pagination.pageNo"
         :page-size="pagination.pageSize"
         @current-change="handlePageChange"
       />
-    </el-card>
+    </div>
 
     <el-drawer
       v-model="drawerVisible"
@@ -68,7 +73,7 @@
         @cancel="handleCloseDrawer"
       />
     </el-drawer>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -80,6 +85,8 @@ import {
   updateWebhook,
   deleteWebhook,
 } from "@/api/webhook";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import CreateWebhookForm from "./components/CreateWebhookForm.vue";
 
 const pagination = reactive({ pageNo: 1, pageSize: 10 });
@@ -166,22 +173,21 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+
+  &__input {
+    width: 180px;
+  }
 }
 
-.toolbar {
-  margin: 16px 0;
-}
-
-.pagination {
-  margin-top: 16px;
+.pager {
+  flex-shrink: 0;
+  display: flex;
   justify-content: flex-end;
-}
-
-.title {
-  background: rgb(242, 121, 144);
 }
 </style>

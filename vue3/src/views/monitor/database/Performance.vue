@@ -1,53 +1,44 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
-          :percent="hitRate" sub="缓存命中率" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="TrendCharts" label="事务提交" :value="kfmt(d.commits)"
-          sub="累计提交事务数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="RefreshLeft" label="事务回滚" :value="kfmt(d.rollbacks)"
-          sub="累计回滚事务数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Odometer" label="缓存命中率" :value="`${num(hitRate)}%`"
+        :percent="hitRate" sub="缓存命中率" color="#67c23a" />
+      <StatCard dense icon="TrendCharts" label="事务提交" :value="kfmt(d.commits)"
+        sub="累计提交事务数" color="#409eff" />
+      <StatCard dense icon="RefreshLeft" label="事务回滚" :value="kfmt(d.rollbacks)"
+        sub="累计回滚事务数" color="#e6a23c" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="事务统计" icon="DataLine">
-          <InfoTable :rows="txRows" />
-          <div class="progress-row">
-            <span class="progress-row__label">提交率</span>
-            <el-progress :percentage="clamp(tx.commitRate)" :stroke-width="10"
-              color="#e6a23c" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(tx.commitRate) }}%</span>
-          </div>
-          <div class="progress-row">
-            <span class="progress-row__label">缓存命中率</span>
-            <el-progress :percentage="clamp(tx.hitRate)" :stroke-width="10"
-              color="#67c23a" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(tx.hitRate) }}%</span>
-          </div>
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="元组操作" icon="Histogram">
-          <InfoTable :rows="tupleRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="性能指标说明" icon="TrendCharts">
-      <div class="note-grid">
-        <div v-for="n in notes" :key="n.title" class="note-item">
-          <div class="note-item__title">{{ n.title }}</div>
-          <div class="note-item__desc">{{ n.desc }}</div>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="事务统计" icon="DataLine">
+        <InfoTable :rows="txRows" />
+        <div class="progress-row">
+          <span class="progress-row__label">提交率</span>
+          <el-progress :percentage="clamp(tx.commitRate)" :stroke-width="10"
+            color="#e6a23c" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(tx.commitRate) }}%</span>
         </div>
-      </div>
-    </SectionCard>
+        <div class="progress-row">
+          <span class="progress-row__label">缓存命中率</span>
+          <el-progress :percentage="clamp(tx.hitRate)" :stroke-width="10"
+            color="#67c23a" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(tx.hitRate) }}%</span>
+        </div>
+      </SectionCard>
+
+      <SectionCard dense title="元组操作" icon="Histogram">
+        <InfoTable :rows="tupleRows" />
+      </SectionCard>
+
+      <SectionCard dense title="性能指标说明" icon="TrendCharts" class="span-all">
+        <div class="note-grid">
+          <div v-for="n in notes" :key="n.title" class="note-item">
+            <div class="note-item__title">{{ n.title }}</div>
+            <div class="note-item__desc">{{ n.desc }}</div>
+          </div>
+        </div>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -56,6 +47,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getDatabasePerformance } from "@/api/monitor-database";
 
 const props = defineProps({
@@ -126,16 +118,29 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .progress-row {
   display: flex;
   align-items: center;
-  margin: 12px 0;
+  margin: 8px 0;
   &__label {
     font-size: 13px;
     color: var(--cm-text-regular);
@@ -155,12 +160,12 @@ onMounted(load);
 .note-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .note-item {
   background: var(--cm-bg-muted);
   border-radius: 6px;
-  padding: 12px 14px;
+  padding: 10px;
   &__title {
     font-size: 13px;
     font-weight: 600;

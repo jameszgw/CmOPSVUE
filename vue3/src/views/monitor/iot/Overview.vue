@@ -1,35 +1,21 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Cpu" label="传感器总数" :value="d.sensorTotal ?? 0" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleCheck" label="在线" :value="d.online ?? 0" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="CircleClose" label="离线" :value="d.offline ?? 0"
-          :color="(d.offline || 0) > 0 ? '#f56c6c' : '#909399'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="平均信号" :value="`${num(d.avgRssi)} dBm`" color="#e6a23c" />
-      </el-col>
-      <el-col v-if="d.iotType === 'INFRARED'" :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Warning" label="今日入侵" :value="d.intrusionToday ?? 0"
-          :sub="`布防 ${d.armed ? '是' : '否'}`"
-          :color="(d.intrusionToday || 0) > 0 ? '#f56c6c' : '#67c23a'" />
-      </el-col>
+  <div v-loading="loading" class="tab-screen">
+    <CardGrid min="160px" gap="8px" class="row-stats">
+      <StatCard dense icon="Cpu" label="传感器总数" :value="d.sensorTotal ?? 0" color="#409eff" />
+      <StatCard dense icon="CircleCheck" label="在线" :value="d.online ?? 0" color="#67c23a" />
+      <StatCard dense icon="CircleClose" label="离线" :value="d.offline ?? 0"
+        :color="(d.offline || 0) > 0 ? '#f56c6c' : '#909399'" />
+      <StatCard dense icon="Connection" label="平均信号" :value="`${num(d.avgRssi)} dBm`" color="#e6a23c" />
+      <StatCard v-if="d.iotType === 'INFRARED'" dense icon="Warning" label="今日入侵" :value="d.intrusionToday ?? 0"
+        :sub="`布防 ${d.armed ? '是' : '否'}`"
+        :color="(d.intrusionToday || 0) > 0 ? '#f56c6c' : '#67c23a'" />
       <template v-else-if="d.iotType === 'ENV'">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Sunny" label="温度" :value="`${num(d.temperature)} °C`" color="#e6a23c" />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard icon="Drizzling" label="湿度" :value="`${num(d.humidity)}%`" color="#409eff" />
-        </el-col>
+        <StatCard dense icon="Sunny" label="温度" :value="`${num(d.temperature)} °C`" color="#e6a23c" />
+        <StatCard dense icon="Drizzling" label="湿度" :value="`${num(d.humidity)}%`" color="#409eff" />
       </template>
-    </el-row>
+    </CardGrid>
 
-    <SectionCard title="基础信息" icon="InfoFilled">
+    <SectionCard dense title="基础信息" icon="InfoFilled" class="row-mid">
       <template #extra>
         <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
           {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
@@ -45,6 +31,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getIotOverview } from "@/api/monitor-iot";
 
 const props = defineProps({
@@ -95,10 +82,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.row-stats {
+  flex-shrink: 0;
+}
+.row-mid {
+  flex-shrink: 0;
 }
 </style>

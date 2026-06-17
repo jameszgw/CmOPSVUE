@@ -1,25 +1,16 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Share" label="总连接数" :value="d.total ?? '-'" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Share" label="最大连接数" :value="d.max ?? '-'" color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="活动连接" :value="d.active ?? '-'"
-          sub="实时活动连接数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="User" label="空闲连接" :value="d.idle ?? '-'"
-          sub="当前空闲连接数" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Share" label="总连接数" :value="d.total ?? '-'" color="#409eff" />
+      <StatCard dense icon="Share" label="最大连接数" :value="d.max ?? '-'" color="#9254de" />
+      <StatCard dense icon="TrendCharts" label="活动连接" :value="d.active ?? '-'"
+        sub="实时活动连接数" color="#67c23a" />
+      <StatCard dense icon="User" label="空闲连接" :value="d.idle ?? '-'"
+        sub="当前空闲连接数" color="#e6a23c" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接 pool 状态" icon="Connection">
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="连接 pool 状态" icon="Connection">
           <div class="progress-row">
             <span class="progress-row__label">连接使用率</span>
             <el-tag size="small" type="success" effect="plain" class="progress-row__state">
@@ -58,28 +49,26 @@
               :color="usageColor(capacityPercent)" :show-text="false" class="capacity__bar" />
           </div>
         </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接详细信息" icon="Document">
-          <InfoTable :rows="detailRows" />
-          <div class="progress-row">
-            <span class="progress-row__label">连接使用率</span>
-            <el-progress :percentage="clamp(detail.usage)" :stroke-width="10"
-              :color="usageColor(detail.usage)" class="progress-row__bar" />
-            <span class="progress-row__num">{{ num(detail.usage) }}%</span>
-          </div>
-        </SectionCard>
-      </el-col>
-    </el-row>
 
-    <SectionCard title="连接说明" icon="TrendCharts">
-      <div class="note-grid">
-        <div v-for="n in notes" :key="n.title" class="note-item">
-          <div class="note-item__title">{{ n.title }}</div>
-          <div class="note-item__desc">{{ n.desc }}</div>
+      <SectionCard dense title="连接详细信息" icon="Document">
+        <InfoTable :rows="detailRows" />
+        <div class="progress-row">
+          <span class="progress-row__label">连接使用率</span>
+          <el-progress :percentage="clamp(detail.usage)" :stroke-width="10"
+            :color="usageColor(detail.usage)" class="progress-row__bar" />
+          <span class="progress-row__num">{{ num(detail.usage) }}%</span>
         </div>
-      </div>
-    </SectionCard>
+      </SectionCard>
+
+      <SectionCard dense title="连接说明" icon="TrendCharts" class="span-all">
+        <div class="note-grid">
+          <div v-for="n in notes" :key="n.title" class="note-item">
+            <div class="note-item__title">{{ n.title }}</div>
+            <div class="note-item__desc">{{ n.desc }}</div>
+          </div>
+        </div>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -88,6 +77,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getDatabaseConnection } from "@/api/monitor-database";
 
 const props = defineProps({
@@ -155,16 +145,29 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .progress-row {
   display: flex;
   align-items: center;
-  margin: 12px 0;
+  margin: 8px 0;
   &__label {
     font-size: 13px;
     color: var(--cm-text-regular);
@@ -188,11 +191,11 @@ onMounted(load);
   margin-bottom: 8px;
 }
 .dist {
-  margin-top: 18px;
+  margin-top: 12px;
   &__title {
     font-size: 13px;
     color: var(--cm-text-regular);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   &__item {
     display: flex;
@@ -217,7 +220,7 @@ onMounted(load);
   }
 }
 .capacity {
-  margin-top: 20px;
+  margin-top: 12px;
   &__head {
     display: flex;
     align-items: center;
@@ -242,12 +245,12 @@ onMounted(load);
 .note-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .note-item {
   background: var(--cm-bg-muted);
   border-radius: 6px;
-  padding: 12px 14px;
+  padding: 10px;
   &__title {
     font-size: 13px;
     font-weight: 600;

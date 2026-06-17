@@ -1,60 +1,40 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="MagicStick" label="每秒操作数" :value="fmt(d.opsPerSec)"
-          sub="OPS" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="TrendCharts" label="缓存命中率" :value="`${num(d.hitRate)}%`"
-          :percent="d.hitRate" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="总命令数" :value="fmt(d.totalCommands)"
-          sub="累计执行" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="总连接数" :value="fmt(d.totalConnections)"
-          sub="累计连接" color="#909399" />
-      </el-col>
-    </el-row>
+    <CardGrid min="220px" gap="8px" class="stat-grid">
+      <StatCard dense icon="MagicStick" label="每秒操作数" :value="fmt(d.opsPerSec)"
+        sub="OPS" color="#409eff" />
+      <StatCard dense icon="TrendCharts" label="缓存命中率" :value="`${num(d.hitRate)}%`"
+        :percent="d.hitRate" color="#67c23a" />
+      <StatCard dense icon="DataLine" label="总命令数" :value="fmt(d.totalCommands)"
+        sub="累计执行" color="#e6a23c" />
+      <StatCard dense icon="Connection" label="总连接数" :value="fmt(d.totalConnections)"
+        sub="累计连接" color="#909399" />
+    </CardGrid>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="命令统计" icon="DataLine">
-          <InfoTable :rows="cmdRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="连接统计" icon="Connection">
-          <InfoTable :rows="connRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="键操作统计" icon="Key">
-          <InfoTable :rows="keyOpsRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="同步统计" icon="Refresh">
-          <InfoTable :rows="syncRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="指标说明" icon="InfoFilled">
-      <el-row :gutter="12">
-        <el-col v-for="m in metricDocs" :key="m.key" :xs="24" :sm="12" :lg="8">
-          <div class="metric-doc">
-            <div class="metric-doc__title">{{ m.key }}</div>
-            <div class="metric-doc__text">{{ m.text }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="命令统计" icon="DataLine">
+        <InfoTable :rows="cmdRows" />
+      </SectionCard>
+      <SectionCard dense title="连接统计" icon="Connection">
+        <InfoTable :rows="connRows" />
+      </SectionCard>
+      <SectionCard dense title="键操作统计" icon="Key">
+        <InfoTable :rows="keyOpsRows" />
+      </SectionCard>
+      <SectionCard dense title="同步统计" icon="Refresh">
+        <InfoTable :rows="syncRows" />
+      </SectionCard>
+      <SectionCard dense title="指标说明" icon="InfoFilled" class="span-all">
+        <el-row :gutter="8">
+          <el-col v-for="m in metricDocs" :key="m.key" :xs="24" :sm="12" :lg="8">
+            <div class="metric-doc">
+              <div class="metric-doc__title">{{ m.key }}</div>
+              <div class="metric-doc__text">{{ m.text }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -63,6 +43,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getRedisStatistics } from "@/api/monitor-redis";
 
 const props = defineProps({
@@ -153,11 +134,24 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .metric-doc {
   border: 1px solid var(--cm-bg-page);

@@ -1,28 +1,31 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Share" label="BGP 邻居" :value="bgp.total ?? 0"
-          :sub="`已建立 ${bgp.established ?? 0} / Down ${bgp.down ?? 0}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="OSPF 邻居" :value="ospf.neighbors ?? 0"
-          :sub="`区域 ${ospf.areas ?? 0} / 状态 ${ospf.state ?? '-'}`" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Link" label="链路聚合" :value="lag.total ?? 0"
-          :sub="`降级 ${lag.degraded ?? 0}`" :color="(lag.degraded ?? 0) > 0 ? '#e6a23c' : '#9254de'" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Position" label="LLDP 邻居" :value="lldp.neighbors ?? 0"
-          :sub="`发现设备 ${lldp.discoveredDevices ?? 0}`" color="#e6a23c" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Share" label="BGP 邻居" :value="bgp.total ?? 0"
+        :sub="`已建立 ${bgp.established ?? 0} / Down ${bgp.down ?? 0}`" color="#409eff" dense />
+      <StatCard icon="Connection" label="OSPF 邻居" :value="ospf.neighbors ?? 0"
+        :sub="`区域 ${ospf.areas ?? 0} / 状态 ${ospf.state ?? '-'}`" color="#67c23a" dense />
+      <StatCard icon="Link" label="链路聚合" :value="lag.total ?? 0"
+        :sub="`降级 ${lag.degraded ?? 0}`" :color="(lag.degraded ?? 0) > 0 ? '#e6a23c' : '#9254de'" dense />
+      <StatCard icon="Position" label="LLDP 邻居" :value="lldp.neighbors ?? 0"
+        :sub="`发现设备 ${lldp.discoveredDevices ?? 0}`" color="#e6a23c" dense />
+    </CardGrid>
 
-    <SectionCard title="BGP 邻居" icon="Share">
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="OSPF" icon="Connection" dense>
+        <InfoTable :rows="ospfRows" />
+      </SectionCard>
+      <SectionCard title="LLDP" icon="Position" dense>
+        <InfoTable :rows="lldpRows" />
+      </SectionCard>
+    </CardGrid>
+
+    <CardGrid min="320px" gap="8px" class="fill grow-grid">
+    <SectionCard title="BGP 邻居" icon="Share" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (bgp.neighbors || []).length }} 个邻居</template>
       <el-empty v-if="!(bgp.neighbors || []).length" description="暂无数据" />
-      <el-table v-else :data="bgp.neighbors || []" size="small" stripe>
+      <el-table v-else :data="bgp.neighbors || []" size="small" stripe
+        class="dense-table" height="100%">
         <el-table-column prop="neighbor" label="邻居" min-width="160">
           <template #default="{ row }">
             <span class="mono">{{ row.neighbor || "-" }}</span>
@@ -48,23 +51,11 @@
       </el-table>
     </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="OSPF" icon="Connection">
-          <InfoTable :rows="ospfRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="LLDP" icon="Position">
-          <InfoTable :rows="lldpRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
-
-    <SectionCard title="链路聚合 (LAG)" icon="Link">
+    <SectionCard title="链路聚合 (LAG)" icon="Link" dense scrollable bodyClass="dense-table fill" class="fill">
       <template #extra>共 {{ (lag.channels || []).length }} 个聚合组</template>
       <el-empty v-if="!(lag.channels || []).length" description="暂无数据" />
-      <el-table v-else :data="lag.channels || []" size="small" stripe>
+      <el-table v-else :data="lag.channels || []" size="small" stripe
+        class="dense-table" height="100%">
         <el-table-column prop="name" label="聚合组" min-width="160">
           <template #default="{ row }">
             <span class="mono">{{ row.name || "-" }}</span>
@@ -89,11 +80,13 @@
         </el-table-column>
       </el-table>
     </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -154,11 +147,18 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.grow-grid {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
 }
 .mono {
   font-family: monospace;

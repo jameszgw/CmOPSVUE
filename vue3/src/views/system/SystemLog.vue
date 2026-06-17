@@ -1,82 +1,82 @@
 <template>
-  <div class="page-container">
-    <el-card>
-      <div class="page-title">系统日志</div>
-      <el-form inline @submit.prevent="handleSearch">
-        <el-form-item label="用户名">
-          <el-input
-            v-model="searchForm.userName"
-            placeholder="请输入用户名称"
-            clearable
+  <ScreenPage title="系统日志" gap="8px">
+    <template #header-extra>
+      <div class="head-tools">
+        <el-input
+          v-model="searchForm.userName"
+          size="small"
+          placeholder="用户名"
+          clearable
+          class="head-tools__sm"
+        />
+        <el-select
+          v-model="searchForm.eventClassify"
+          size="small"
+          placeholder="事件分类"
+          clearable
+          class="head-tools__sm"
+          @change="handleClassifyChange"
+        >
+          <el-option
+            v-for="(label, key) in eventClassifyList"
+            :key="key"
+            :label="label"
+            :value="key"
           />
-        </el-form-item>
-
-        <el-form-item label="事件分类">
-          <el-select
-            v-model="searchForm.eventClassify"
-            placeholder="请选择事件分类"
-            clearable
-            style="width: 150px"
-            @change="handleClassifyChange"
-          >
-            <el-option
-              v-for="(label, key) in eventClassifyList"
-              :key="key"
-              :label="label"
-              :value="key"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="操作内容">
-          <el-select
-            v-model="searchForm.eventType"
-            placeholder="请选择操作内容"
-            clearable
-            style="width: 150px"
-          >
-            <el-option
-              v-for="(label, key) in eventTypeList"
-              :key="key"
-              :label="label"
-              :value="key"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="searchForm.timeRange"
-            type="datetimerange"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
+        </el-select>
+        <el-select
+          v-model="searchForm.eventType"
+          size="small"
+          placeholder="操作内容"
+          clearable
+          class="head-tools__sm"
+        >
+          <el-option
+            v-for="(label, key) in eventTypeList"
+            :key="key"
+            :label="label"
+            :value="key"
           />
-        </el-form-item>
+        </el-select>
+        <el-date-picker
+          v-model="searchForm.timeRange"
+          size="small"
+          type="datetimerange"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          class="head-tools__range"
+        />
+        <el-button size="small" type="primary" @click="handleSearch">查询</el-button>
+        <el-button size="small" @click="handleReset">重置</el-button>
+      </div>
+    </template>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-table :data="logPage.items" row-key="id">
-        <el-table-column prop="userName" label="用户名" />
-        <el-table-column prop="eventClassifyName" label="事件分类" />
-        <el-table-column prop="eventTypeName" label="事件类型" />
-        <el-table-column label="日志时间">
+    <SectionCard
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      class="fill"
+      title="日志"
+      icon="Document"
+    >
+      <el-table class="dense-table" height="100%" :data="logPage.items" row-key="id" size="small" stripe>
+        <el-table-column prop="userName" label="用户名" min-width="120" />
+        <el-table-column prop="eventClassifyName" label="事件分类" min-width="120" />
+        <el-table-column prop="eventTypeName" label="事件类型" min-width="120" />
+        <el-table-column label="日志时间" min-width="160">
           <template #default="{ row }">
             {{ formatTime(row.gmtCreate) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作状态" width="100">
+        <el-table-column label="操作状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.execResult === 1 ? 'success' : 'danger'">
+            <el-tag :type="row.execResult === 1 ? 'success' : 'danger'" size="small">
               {{ row.execResult === 1 ? "成功" : "失败" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-popover
               placement="left"
@@ -86,29 +86,34 @@
             >
               <div v-html="row.logInfo"></div>
               <template #reference>
-                <el-button type="primary" link>查看</el-button>
+                <el-button type="primary" link size="small">查看</el-button>
               </template>
             </el-popover>
           </template>
         </el-table-column>
       </el-table>
+    </SectionCard>
 
+    <div class="pager">
       <el-pagination
-        class="pagination"
+        background
+        small
         layout="total, prev, pager, next"
         :total="logPage.total"
         :current-page="pagination.pageNo"
         :page-size="pagination.pageSize"
         @current-change="handlePageChange"
       />
-    </el-card>
-  </div>
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import dayjs from "dayjs";
 import { queryLogs, getEventClassify, getEventType } from "@/api/logs";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 
 const pagination = reactive({ pageNo: 1, pageSize: 10 });
 
@@ -199,14 +204,26 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.page-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+  flex-wrap: wrap;
+
+  &__sm {
+    width: 130px;
+  }
+
+  &__range {
+    width: 340px;
+  }
 }
 
-.pagination {
-  margin-top: 16px;
+.pager {
+  flex-shrink: 0;
+  display: flex;
   justify-content: flex-end;
 }
 </style>

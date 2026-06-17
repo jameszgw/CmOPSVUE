@@ -1,20 +1,32 @@
 <template>
-  <div class="page-container deploy-page" v-loading="loading">
-    <div class="page-header">
-      <h2 class="page-title">应用中心</h2>
-      <el-select
-        v-model="selectedEnvironment"
-        style="width: 120px"
-        placeholder="选择环境"
-      >
-        <el-option
-          v-for="env in appDetail?.appEnvList || []"
-          :key="env.envId"
-          :label="env.envName"
-          :value="env.envId"
-        />
-      </el-select>
-    </div>
+  <ScreenPage title="应用中心" gap="8px" v-loading="loading">
+    <template #header-extra>
+      <div class="head-tools">
+        <span v-if="appDetail && appEnv" class="head-tools__name">
+          {{ appDetail?.appName }}:[{{ appEnv?.envName }}({{ appEnv?.env }})]
+        </span>
+        <el-select
+          v-model="selectedEnvironment"
+          size="small"
+          style="width: 130px"
+          placeholder="选择环境"
+        >
+          <el-option
+            v-for="env in appDetail?.appEnvList || []"
+            :key="env.envId"
+            :label="env.envName"
+            :value="env.envId"
+          />
+        </el-select>
+        <el-button
+          v-if="parsedProgress?.pipeKey"
+          size="small"
+          @click="handleViewLogs(parsedProgress.pipeKey)"
+        >
+          查看日志
+        </el-button>
+      </div>
+    </template>
 
     <!-- 未找到应用 -->
     <el-result
@@ -42,19 +54,13 @@
       </template>
     </el-result>
 
-    <template v-if="appDetail && (appDetail.appEnvList || []).length > 0">
+    <div
+      v-if="appDetail && (appDetail.appEnvList || []).length > 0"
+      class="deploy-body"
+    >
       <!-- 发布进度 -->
-      <el-card class="block-card">
-        <template #header>
-          <div class="card-header">
-            <span>{{ appDetail?.appName }}:[{{ appEnv?.envName }}({{ appEnv?.env }})]</span>
-            <el-button v-if="parsedProgress?.pipeKey" @click="handleViewLogs(parsedProgress.pipeKey)">
-              查看日志
-            </el-button>
-          </div>
-        </template>
+      <SectionCard v-if="parsedProgress" dense title="发布进度" icon="Promotion" class="deploy-block">
         <el-steps
-          v-if="parsedProgress"
           :active="parsedProgress.current"
           :process-status="stepStatus"
           align-center
@@ -66,33 +72,39 @@
             :description="formatStepDescription(step)"
           />
         </el-steps>
-      </el-card>
+      </SectionCard>
 
       <!-- Pod 节点 -->
-      <el-card class="block-card">
-        <template #header>Pod节点</template>
-        <el-table :data="pods" row-key="name">
+      <SectionCard
+        dense
+        scrollable
+        bodyClass="dense-table"
+        title="Pod节点"
+        icon="Box"
+        class="deploy-block deploy-block--table"
+      >
+        <el-table class="dense-table" :data="pods" row-key="name" size="small" stripe max-height="180">
           <el-table-column label="POD名称" prop="name" min-width="220">
             <template #default="{ row }">
               {{ row.name }}
               <el-icon class="copy-icon" @click="copyText(row.name)"><CopyDocument /></el-icon>
             </template>
           </el-table-column>
-          <el-table-column label="命名空间" prop="namespace" />
-          <el-table-column label="POD IP" prop="podIp" />
-          <el-table-column label="阶段" prop="phase" />
-          <el-table-column label="节点名称" prop="nodeName" />
-          <el-table-column label="开始时间">
+          <el-table-column label="命名空间" prop="namespace" min-width="120" />
+          <el-table-column label="POD IP" prop="podIp" min-width="120" />
+          <el-table-column label="阶段" prop="phase" min-width="90" />
+          <el-table-column label="节点名称" prop="nodeName" min-width="120" />
+          <el-table-column label="开始时间" min-width="160">
             <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
           </el-table-column>
-          <el-table-column label="是否就绪">
+          <el-table-column label="是否就绪" width="90">
             <template #default="{ row }">{{ row.ready ? "是" : "否" }}</template>
           </el-table-column>
         </el-table>
-      </el-card>
+      </SectionCard>
 
       <!-- 环境配置 -->
-      <el-collapse class="block-card">
+      <el-collapse class="deploy-block deploy-collapse">
         <el-collapse-item title="资源配置" name="0">
           <EnvResourcePanel
             :resource-strategy="resourceStrategy"
@@ -117,21 +129,35 @@
       </el-collapse>
 
       <!-- 发布单 -->
-      <el-card class="block-card">
-        <template #header>
-          <div class="card-header">
-            <span>发布单</span>
-            <div>
-              <el-button :disabled="deployDisabled || !selectedRow" @click="handleRelease">
-                立即发布
-              </el-button>
-              <el-button @click="handleCreateReleaseDrawer">添加发布单</el-button>
-            </div>
-          </div>
+      <SectionCard
+        dense
+        scrollable
+        bodyClass="dense-table"
+        title="发布单"
+        icon="Tickets"
+        class="deploy-block deploy-block--table"
+      >
+        <template #extra>
+          <el-button
+            type="primary"
+            link
+            size="small"
+            :disabled="deployDisabled || !selectedRow"
+            @click="handleRelease"
+          >
+            立即发布
+          </el-button>
+          <el-button type="primary" link size="small" @click="handleCreateReleaseDrawer">
+            添加发布单
+          </el-button>
         </template>
         <el-table
+          class="dense-table"
           :data="releaseRecordPage.items"
           row-key="releaseId"
+          size="small"
+          stripe
+          max-height="220"
           highlight-current-row
           @current-change="handleCurrentChange"
         >
@@ -152,21 +178,21 @@
               <el-icon class="copy-icon" @click.stop="copyText(row.releaseNo)"><CopyDocument /></el-icon>
             </template>
           </el-table-column>
-          <el-table-column label="预计发布时间">
+          <el-table-column label="预计发布时间" min-width="160">
             <template #default="{ row }">{{ formatTime(row.releaseDate) }}</template>
           </el-table-column>
-          <el-table-column label="发布分支" prop="releaseBranch" />
-          <el-table-column label="发布版本" prop="releaseVersion" />
-          <el-table-column label="创建时间">
+          <el-table-column label="发布分支" prop="releaseBranch" min-width="120" />
+          <el-table-column label="发布版本" prop="releaseVersion" min-width="120" />
+          <el-table-column label="创建时间" min-width="160">
             <template #default="{ row }">{{ formatTime(row.gmtCreate) }}</template>
           </el-table-column>
-          <el-table-column label="更新时间">
+          <el-table-column label="更新时间" min-width="160">
             <template #default="{ row }">{{ formatTime(row.gmtModified) }}</template>
           </el-table-column>
-          <el-table-column label="发布状态">
+          <el-table-column label="发布状态" min-width="100">
             <template #default="{ row }">{{ getReleaseStatusText(row.releaseStatus) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="120">
+          <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <el-link type="primary" class="op-link" @click.stop="handleViewDetails(row)">查看</el-link>
               <el-link
@@ -180,56 +206,66 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination
-          class="pagination"
-          background
-          layout="total, sizes, prev, pager, next"
-          :total="releaseRecordPage.total"
-          v-model:current-page="pagination.pageNo"
-          v-model:page-size="pagination.pageSize"
-          @current-change="pageReleaseRecord"
-          @size-change="handleReleaseSizeChange"
-        />
-      </el-card>
+        <div class="pager">
+          <el-pagination
+            background
+            small
+            layout="total, sizes, prev, pager, next"
+            :total="releaseRecordPage.total"
+            v-model:current-page="pagination.pageNo"
+            v-model:page-size="pagination.pageSize"
+            @current-change="pageReleaseRecord"
+            @size-change="handleReleaseSizeChange"
+          />
+        </div>
+      </SectionCard>
 
       <!-- 发布历史 -->
-      <el-card class="block-card">
-        <template #header>发布历史</template>
-        <el-table :data="deployHistoryPage.items" row-key="pipeKey">
+      <SectionCard
+        dense
+        scrollable
+        bodyClass="dense-table"
+        title="发布历史"
+        icon="Clock"
+        class="deploy-block deploy-block--table"
+      >
+        <el-table class="dense-table" :data="deployHistoryPage.items" row-key="pipeKey" size="small" stripe max-height="220">
           <el-table-column label="pipeKey" prop="pipeKey" min-width="200">
             <template #default="{ row }">
               {{ row.pipeKey }}
               <el-icon class="copy-icon" @click="copyText(row.pipeKey)"><CopyDocument /></el-icon>
             </template>
           </el-table-column>
-          <el-table-column label="开始时间">
+          <el-table-column label="开始时间" min-width="160">
             <template #default="{ row }">{{ formatTime(row.startTime) }}</template>
           </el-table-column>
-          <el-table-column label="结束时间">
+          <el-table-column label="结束时间" min-width="160">
             <template #default="{ row }">{{ row.endTime ? formatTime(row.endTime) : "" }}</template>
           </el-table-column>
-          <el-table-column label="发布内容" prop="content" show-overflow-tooltip />
-          <el-table-column label="发布人" prop="creatorName" />
-          <el-table-column label="发布状态">
+          <el-table-column label="发布内容" prop="content" min-width="140" show-overflow-tooltip />
+          <el-table-column label="发布人" prop="creatorName" min-width="100" />
+          <el-table-column label="发布状态" min-width="100">
             <template #default="{ row }">{{ getDeployStatusText(row.deployStatus) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column label="操作" width="100" fixed="right">
             <template #default="{ row }">
               <el-link type="primary" @click="handleViewHistoryLog(row.pipeKey)">查看日志</el-link>
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination
-          class="pagination"
-          background
-          layout="total, sizes, prev, pager, next"
-          :total="deployHistoryPage.total"
-          v-model:current-page="historyPagination.pageNo"
-          v-model:page-size="historyPagination.pageSize"
-          @current-change="pageDeployHistoryRecord"
-          @size-change="handleHistorySizeChange"
-        />
-      </el-card>
+        <div class="pager">
+          <el-pagination
+            background
+            small
+            layout="total, sizes, prev, pager, next"
+            :total="deployHistoryPage.total"
+            v-model:current-page="historyPagination.pageNo"
+            v-model:page-size="historyPagination.pageSize"
+            @current-change="pageDeployHistoryRecord"
+            @size-change="handleHistorySizeChange"
+          />
+        </div>
+      </SectionCard>
 
       <CreateReleaseDrawer
         :visible="drawerVisible"
@@ -256,8 +292,8 @@
         :pipe-key="pipeKey"
         @close="logDrawerVisible = false"
       />
-    </template>
-  </div>
+    </div>
+  </ScreenPage>
 </template>
 
 <script setup>
@@ -285,6 +321,8 @@ import {
   getDeployStatusText,
   copyToClipboard,
 } from "@/utils/release-utils";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import SectionCard from "@/components/monitor/SectionCard.vue";
 import DeployLogDrawer from "./components/DeployLogDrawer.vue";
 import EnvVarsPanel from "./components/EnvVarsPanel.vue";
 import ConfigMapPanel from "./components/ConfigMapPanel.vue";
@@ -565,46 +603,62 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="less" scoped>
-.deploy-page {
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    .page-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
+@import (reference) "@/styles/variables.less";
+
+.head-tools {
+  display: flex;
+  align-items: center;
+  gap: @space-sm;
+
+  &__name {
+    font-size: 13px;
+    color: var(--cm-text-regular);
+    margin-right: @space-sm;
   }
-  .block-card {
-    margin-bottom: 12px;
-  }
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .copy-icon {
-    margin-left: 4px;
-    cursor: pointer;
-    color: var(--el-color-primary);
-    vertical-align: middle;
-  }
-  .op-link {
-    margin-right: 12px;
-  }
-  .row-radio {
-    :deep(.el-radio__label) {
-      display: none;
-    }
-  }
-  .pagination {
-    margin-top: 16px;
-    justify-content: flex-end;
-  }
+}
+
+.deploy-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: @space-sm;
+}
+
+.deploy-block {
+  flex-shrink: 0;
+}
+
+.deploy-collapse {
+  border-radius: @radius-lg;
+  overflow: hidden;
+
   :deep(.el-collapse-item__content) {
-    padding: 16px;
+    padding: @dense-card-pad;
   }
+}
+
+.copy-icon {
+  margin-left: 4px;
+  cursor: pointer;
+  color: var(--el-color-primary);
+  vertical-align: middle;
+}
+
+.op-link {
+  margin-right: 12px;
+}
+
+.row-radio {
+  :deep(.el-radio__label) {
+    display: none;
+  }
+}
+
+.pager {
+  margin-top: @space-sm;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

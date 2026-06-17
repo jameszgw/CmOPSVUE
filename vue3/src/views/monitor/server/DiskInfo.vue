@@ -2,84 +2,77 @@
   <div v-loading="loading" class="tab-pane">
     <el-empty v-if="d.noData" :description="d.message || '已禁用模拟数据，暂无真实采集数据'" />
     <template v-else>
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Download" label="读取速度" :value="d.readSpeed || '-'"
-          sub="当前磁盘读取" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Upload" label="写入速度" :value="d.writeSpeed || '-'"
-          sub="当前磁盘写入" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Files" label="总容量" :value="d.totalCapacity || '-'"
-          sub="所有分区总容量" color="#e6a23c" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="DataLine" label="总写入" :value="d.totalWritten || '-'"
-          sub="累计写入数据" color="#909399" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Timer" label="磁盘最大 await" :value="`${num(d.maxAwait)} ms`"
-          sub="分区最大 IO 时延" color="#e6a23c" />
-      </el-col>
-    </el-row>
+    <CardGrid min="180px" gap="8px">
+      <StatCard dense icon="Download" label="读取速度" :value="d.readSpeed || '-'"
+        sub="当前磁盘读取" color="#409eff" />
+      <StatCard dense icon="Upload" label="写入速度" :value="d.writeSpeed || '-'"
+        sub="当前磁盘写入" color="#67c23a" />
+      <StatCard dense icon="Files" label="总容量" :value="d.totalCapacity || '-'"
+        sub="所有分区总容量" color="#e6a23c" />
+      <StatCard dense icon="DataLine" label="总写入" :value="d.totalWritten || '-'"
+        sub="累计写入数据" color="#909399" />
+      <StatCard dense icon="Timer" label="磁盘最大 await" :value="`${num(d.maxAwait)} ms`"
+        sub="分区最大 IO 时延" color="#e6a23c" />
+    </CardGrid>
 
-    <SectionCard v-for="(p, i) in d.partitions || []" :key="i" :title="p.mount || `分区 ${i + 1}`"
-      icon="Coin">
-      <template #extra>
-        <el-tag v-if="i === 0" size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-          {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
-        </el-tag>
-        <el-tag v-if="p.slow" size="small" type="danger" effect="dark" class="part-slow-tag">慢盘</el-tag>
-        {{ p.used || '-' }} / {{ p.total || '-' }}
-      </template>
-      <div class="part-usage">
-        <span class="part-usage__label">磁盘空间</span>
-        <el-progress :percentage="clamp(p.usage)" :stroke-width="12"
-          :color="usageColor(p.usage)" class="part-usage__bar" />
-      </div>
-      <div v-if="p.inodeUsage !== undefined && p.inodeUsage !== null" class="part-usage">
-        <span class="part-usage__label">inode 使用率</span>
-        <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="12"
-          :color="usageColor(p.inodeUsage)" class="part-usage__bar" />
-      </div>
-      <InfoTable :rows="partitionRows(p)" :columns="2" />
-    </SectionCard>
+    <CardGrid min="340px" gap="8px">
+      <SectionCard dense v-for="(p, i) in d.partitions || []" :key="i" :title="p.mount || `分区 ${i + 1}`"
+        icon="Coin">
+        <template #extra>
+          <el-tag v-if="i === 0" size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
+            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          </el-tag>
+          <el-tag v-if="p.slow" size="small" type="danger" effect="dark" class="part-slow-tag">慢盘</el-tag>
+          {{ p.used || '-' }} / {{ p.total || '-' }}
+        </template>
+        <div class="part-usage">
+          <span class="part-usage__label">磁盘空间</span>
+          <el-progress :percentage="clamp(p.usage)" :stroke-width="10"
+            :color="usageColor(p.usage)" class="part-usage__bar" />
+        </div>
+        <div v-if="p.inodeUsage !== undefined && p.inodeUsage !== null" class="part-usage">
+          <span class="part-usage__label">inode 使用率</span>
+          <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="10"
+            :color="usageColor(p.inodeUsage)" class="part-usage__bar" />
+        </div>
+        <InfoTable :rows="partitionRows(p)" :columns="2" />
+      </SectionCard>
+    </CardGrid>
 
-    <SectionCard title="磁盘 IO 统计" icon="DataAnalysis">
-      <el-row :gutter="12">
-        <el-col :xs="24" :lg="12">
-          <div class="io-block">
-            <div class="io-block__head">读取统计</div>
-            <InfoTable :rows="readRows" />
-          </div>
-        </el-col>
-        <el-col :xs="24" :lg="12">
-          <div class="io-block">
-            <div class="io-block__head">写入统计</div>
-            <InfoTable :rows="writeRows" />
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
-
-    <SectionCard title="实时磁盘 IO" icon="Histogram">
-      <el-row :gutter="12">
-        <el-col :xs="24" :sm="12">
-          <div class="grid-metric">
-            <div class="grid-metric__label">读取速度</div>
-            <div class="grid-metric__value" style="color: #409eff">{{ d.realtime?.readSpeed || '-' }}</div>
-          </div>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <div class="grid-metric">
-            <div class="grid-metric__label">写入速度</div>
-            <div class="grid-metric__value" style="color: #67c23a">{{ d.realtime?.writeSpeed || '-' }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </SectionCard>
+    <CardGrid min="320px" gap="8px">
+      <SectionCard dense title="磁盘 IO 统计" icon="DataAnalysis">
+        <el-row :gutter="12">
+          <el-col :xs="24" :sm="12">
+            <div class="io-block">
+              <div class="io-block__head">读取统计</div>
+              <InfoTable :rows="readRows" />
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <div class="io-block">
+              <div class="io-block__head">写入统计</div>
+              <InfoTable :rows="writeRows" />
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+      <SectionCard dense title="实时磁盘 IO" icon="Histogram">
+        <el-row :gutter="8">
+          <el-col :xs="24" :sm="12">
+            <div class="grid-metric">
+              <div class="grid-metric__label">读取速度</div>
+              <div class="grid-metric__value" style="color: #409eff">{{ d.realtime?.readSpeed || '-' }}</div>
+            </div>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <div class="grid-metric">
+              <div class="grid-metric__label">写入速度</div>
+              <div class="grid-metric__value" style="color: #67c23a">{{ d.realtime?.writeSpeed || '-' }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </SectionCard>
+    </CardGrid>
     </template>
   </div>
 </template>
@@ -89,6 +82,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getServerDisk } from "@/api/monitor-server";
 
 const props = defineProps({
@@ -160,45 +154,42 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: @dense-gap;
 }
 .part-slow-tag {
   margin-right: 8px;
 }
 .part-usage {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   &__label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--cm-text-regular);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 }
 .io-block {
-  margin-bottom: 12px;
   &__head {
     font-size: 13px;
     font-weight: 600;
     color: var(--cm-text-primary);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 }
 .grid-metric {
   border: 1px solid var(--cm-bg-page);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 8px 10px;
   &__label {
     font-size: 12px;
     color: var(--cm-text-secondary);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   &__value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--cm-text-primary);
   }

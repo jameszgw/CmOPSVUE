@@ -1,21 +1,24 @@
 <template>
-  <div class="page-container">
-    <!-- A) 网络扫描 -->
-    <SectionCard title="网络扫描" icon="Search">
+  <ScreenPage title="网络发现" gap="8px">
+    <!-- 扫描表单：作为顶部工具栏 -->
+    <template #header-extra>
       <div class="scan-form">
         <el-input
           v-model="cidr"
+          size="small"
           placeholder="如 192.168.1.0/24"
           clearable
           class="scan-form__cidr"
         />
         <el-input
           v-model="name"
+          size="small"
           placeholder="任务名称(可选)"
           clearable
           class="scan-form__name"
         />
         <el-button
+          size="small"
           type="primary"
           :loading="scanning"
           :disabled="!cidr"
@@ -24,6 +27,7 @@
           开始扫描
         </el-button>
         <el-button
+          size="small"
           type="success"
           :loading="autoLoading"
           @click="onAutoDiscovery"
@@ -31,52 +35,48 @@
           一键自动发现本机网段
         </el-button>
       </div>
-      <div v-if="localSubnets.length" class="local-subnets">
-        <span class="local-subnets__label">本机网段：</span>
+    </template>
+
+    <!-- 本机网段 + 进度（紧凑，按需显示）-->
+    <CardGrid
+      v-if="localSubnets.length || autoJob.status || task"
+      min="320px"
+      gap="8px"
+      class="row-meta"
+    >
+      <SectionCard v-if="localSubnets.length" dense title="本机网段" icon="Connection">
         <el-space wrap>
           <el-tag v-for="(sn, i) in localSubnets" :key="i" size="small" type="info">
             {{ sn.cidr || sn }}
           </el-tag>
         </el-space>
-      </div>
-    </SectionCard>
+      </SectionCard>
 
-    <!-- 自动发现进度 -->
-    <SectionCard v-if="autoJob.status" title="自动发现进度" icon="MagicStick">
-      <template #extra>
-        <el-tag
-          :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
-          size="small"
-        >
-          {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
-        </el-tag>
-      </template>
-      <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
-      <el-progress
-        :percentage="autoJob.progress || 0"
-        :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : ''"
-        :stroke-width="14"
-      />
-      <div
-        v-if="autoJob.found != null || autoJob.currentTarget"
-        class="auto-job__live"
-      >
-        <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
-        <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
-      </div>
-      <div v-if="autoJob.subnets && autoJob.subnets.length" class="auto-job__subnets">
-        <span class="local-subnets__label">网段：</span>
-        <el-space wrap>
-          <el-tag v-for="(sn, i) in autoJob.subnets" :key="i" size="small" type="info">
-            {{ sn.cidr || sn }}
+      <SectionCard v-if="autoJob.status" dense title="自动发现进度" icon="MagicStick">
+        <template #extra>
+          <el-tag
+            :type="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'danger' : 'warning'"
+            size="small"
+          >
+            {{ autoJob.status === 'done' ? '完成' : autoJob.status === 'failed' ? '失败' : '运行中' }}
           </el-tag>
-        </el-space>
-      </div>
-    </SectionCard>
+        </template>
+        <div v-if="autoJob.phase" class="auto-job__phase">{{ autoJob.phase }}</div>
+        <el-progress
+          :percentage="autoJob.progress || 0"
+          :status="autoJob.status === 'done' ? 'success' : autoJob.status === 'failed' ? 'exception' : ''"
+          :stroke-width="12"
+        />
+        <div
+          v-if="autoJob.found != null || autoJob.currentTarget"
+          class="auto-job__live"
+        >
+          <span v-if="autoJob.found != null">已发现 {{ autoJob.found }}</span>
+          <span v-if="autoJob.currentTarget"> · 最近 IP {{ autoJob.currentTarget }}</span>
+        </div>
+      </SectionCard>
 
-    <!-- B) 当前任务 -->
-    <template v-if="task">
-      <SectionCard title="扫描进度" icon="Loading">
+      <SectionCard v-if="task" dense title="扫描进度" icon="Loading">
         <template #extra>
           <el-tag :type="task.status === 'done' ? 'success' : 'warning'" size="small">
             {{ task.status === 'done' ? '完成' : '扫描中' }}
@@ -85,143 +85,126 @@
         <el-progress
           :percentage="pct"
           :status="task.status === 'done' ? 'success' : ''"
-          :stroke-width="14"
+          :stroke-width="12"
         />
-        <div v-if="subnets.length" class="task-subnets">
-          <span class="task-subnets__label">子网：</span>
-          <el-space wrap>
-            <el-tag v-for="(sn, i) in subnets" :key="i" size="small" type="info">{{ sn }}</el-tag>
-          </el-space>
+        <div class="task-meta">
+          <span>已探测 {{ task.progress || 0 }}/{{ task.total || 0 }}</span>
+          <span>发现 {{ task.found || 0 }}</span>
+          <span>网关 {{ task.gatewayIp || '-' }}</span>
+          <span>子网 {{ subnets.length }}</span>
         </div>
+        <div v-if="task.currentTarget" class="task-meta__cur">正在扫描: {{ task.currentTarget }}</div>
       </SectionCard>
+    </CardGrid>
 
-      <el-row :gutter="12" class="stat-row">
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard
-            icon="Odometer"
-            label="已探测"
-            :value="`${task.progress || 0}/${task.total || 0}`"
-            :sub="`正在扫描: ${task.currentTarget || '—'}`"
-            color="#409eff"
+    <!-- 发现结果（当前任务，内部滚动）-->
+    <SectionCard
+      v-if="task"
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      class="row-result fill"
+      title="发现结果"
+      icon="List"
+    >
+      <template #extra>
+        <el-space>
+          <span
+            v-if="unconfirmedCount > 0 && !showUnconfirmed"
+            class="discovery-hint"
+          >
+            共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
+          </span>
+          <el-switch
+            v-model="showUnconfirmed"
+            size="small"
+            :active-text="`显示未确认IP (${unconfirmedCount})`"
+            :disabled="unconfirmedCount === 0"
           />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard
-            icon="Cpu"
-            label="发现节点"
-            :value="task.found || 0"
-            color="#67c23a"
-          />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard
-            icon="Connection"
-            label="网关"
-            :value="task.gatewayIp || '-'"
-            color="#e6a23c"
-          />
-        </el-col>
-        <el-col :xs="24" :sm="12" :lg="6">
-          <StatCard
-            icon="Grid"
-            label="子网数"
-            :value="subnets.length"
-            color="#909399"
-          />
-        </el-col>
-      </el-row>
-
-      <!-- 发现结果 -->
-      <SectionCard title="发现结果" icon="List">
-        <template #extra>
-          <el-space>
-            <span
-              v-if="unconfirmedCount > 0 && !showUnconfirmed"
-              class="discovery-hint"
-            >
-              共 {{ visibleNodes.length }} 台（另有 {{ unconfirmedCount }} 个未确认IP已隐藏）
-            </span>
-            <el-switch
-              v-model="showUnconfirmed"
-              :active-text="`显示未确认IP (${unconfirmedCount})`"
-              :disabled="unconfirmedCount === 0"
-            />
-            <el-switch v-model="buildTopology" active-text="构建拓扑" />
-            <el-button
-              size="small"
-              :disabled="!selectedRows.length"
-              @click="doImport(false)"
-            >
-              导入选中
-            </el-button>
-            <el-button size="small" type="primary" @click="doImport(true)">
-              导入全部
-            </el-button>
-          </el-space>
-        </template>
-        <el-empty v-if="!visibleNodes.length" description="暂无节点" />
-        <el-table
-          v-else
-          ref="resultTable"
-          :data="visibleNodes"
-          size="small"
-          stripe
-          @selection-change="onSelectionChange"
-        >
-          <el-table-column
-            type="selection"
-            width="48"
-            :selectable="(row) => !row.imported"
-          />
-          <el-table-column prop="ip" label="IP" min-width="130">
-            <template #default="{ row }">{{ row.ip || '-' }}</template>
-          </el-table-column>
-          <el-table-column prop="mac" label="MAC" min-width="150">
-            <template #default="{ row }">{{ row.mac || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="确认" width="140">
-            <template #default="{ row }">
-              <el-space :size="4" wrap>
-                <el-tag size="small" :type="row.exists ? 'success' : 'info'">
-                  {{ row.exists ? '设备' : '未确认' }}
-                </el-tag>
-                <el-tag v-if="row.imported" size="small" type="warning">
-                  已导入
-                </el-tag>
-              </el-space>
-            </template>
-          </el-table-column>
-          <el-table-column prop="hostname" label="主机名" min-width="140">
-            <template #default="{ row }">{{ row.hostname || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="类型" width="110">
-            <template #default="{ row }">
-              <el-tag v-if="row.deviceClass" :type="classTagType(row.deviceClass)" size="small">
-                {{ row.deviceClass }}
+          <el-switch v-model="buildTopology" size="small" active-text="构建拓扑" />
+          <el-button
+            size="small"
+            :disabled="!selectedRows.length"
+            @click="doImport(false)"
+          >
+            导入选中
+          </el-button>
+          <el-button size="small" type="primary" @click="doImport(true)">
+            导入全部
+          </el-button>
+        </el-space>
+      </template>
+      <el-empty v-if="!visibleNodes.length" description="暂无节点" :image-size="60" />
+      <el-table
+        v-else
+        ref="resultTable"
+        class="dense-table"
+        height="100%"
+        :data="visibleNodes"
+        size="small"
+        stripe
+        @selection-change="onSelectionChange"
+      >
+        <el-table-column
+          type="selection"
+          width="48"
+          :selectable="(row) => !row.imported"
+        />
+        <el-table-column prop="ip" label="IP" min-width="130">
+          <template #default="{ row }">{{ row.ip || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="mac" label="MAC" min-width="150">
+          <template #default="{ row }">{{ row.mac || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="确认" width="140">
+          <template #default="{ row }">
+            <el-space :size="4" wrap>
+              <el-tag size="small" :type="row.exists ? 'success' : 'info'">
+                {{ row.exists ? '设备' : '未确认' }}
               </el-tag>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="os" label="操作系统" min-width="120">
-            <template #default="{ row }">{{ row.os || '-' }}</template>
-          </el-table-column>
-          <el-table-column prop="vendor" label="厂商" min-width="110">
-            <template #default="{ row }">{{ row.vendor || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="开放端口" min-width="140">
-            <template #default="{ row }">{{ (row.openPorts || []).join(', ') || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="时延" width="90" align="right">
-            <template #default="{ row }">{{ row.rttMs != null ? `${row.rttMs} ms` : '-' }}</template>
-          </el-table-column>
-        </el-table>
-      </SectionCard>
-    </template>
+              <el-tag v-if="row.imported" size="small" type="warning">
+                已导入
+              </el-tag>
+            </el-space>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hostname" label="主机名" min-width="140">
+          <template #default="{ row }">{{ row.hostname || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="类型" width="110">
+          <template #default="{ row }">
+            <el-tag v-if="row.deviceClass" :type="classTagType(row.deviceClass)" size="small">
+              {{ row.deviceClass }}
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="os" label="操作系统" min-width="120">
+          <template #default="{ row }">{{ row.os || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="vendor" label="厂商" min-width="110">
+          <template #default="{ row }">{{ row.vendor || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="开放端口" min-width="140">
+          <template #default="{ row }">{{ (row.openPorts || []).join(', ') || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="时延" width="90" align="right">
+          <template #default="{ row }">{{ row.rttMs != null ? `${row.rttMs} ms` : '-' }}</template>
+        </el-table-column>
+      </el-table>
+    </SectionCard>
 
-    <!-- C) 最近任务 -->
-    <SectionCard title="最近任务" icon="Clock">
-      <el-empty v-if="!recentTasks.length" description="暂无任务" />
-      <el-table v-else :data="recentTasks" size="small" stripe>
+    <!-- 最近任务（内部滚动）-->
+    <SectionCard
+      dense
+      scrollable
+      bodyClass="dense-table fill"
+      :class="['row-recent', { fill: !task }]"
+      title="最近任务"
+      icon="Clock"
+    >
+      <el-empty v-if="!recentTasks.length" description="暂无任务" :image-size="60" />
+      <el-table v-else class="dense-table" height="100%" :data="recentTasks" size="small" stripe>
         <el-table-column prop="name" label="名称" min-width="140">
           <template #default="{ row }">{{ row.name || '-' }}</template>
         </el-table-column>
@@ -251,13 +234,14 @@
         </el-table-column>
       </el-table>
     </SectionCard>
-  </div>
+  </ScreenPage>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage } from "element-plus";
-import StatCard from "@/components/monitor/StatCard.vue";
+import ScreenPage from "@/components/monitor/ScreenPage.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import {
   startDiscoveryScan,
@@ -526,82 +510,68 @@ onBeforeUnmount(() => {
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
 
-/* 独立页（无 MonitorLayout）：用 page-container 自然高度，由 layout-main 滚动，
-   避免堆叠的 SectionCard(height:100%) 在固定高容器内被拉伸留白 */
-
 .scan-form {
   display: flex;
   align-items: center;
-  gap: @space-md;
+  gap: @space-sm;
   flex-wrap: wrap;
 
   &__cidr {
-    width: 220px;
+    width: 200px;
   }
 
   &__name {
-    width: 180px;
+    width: 160px;
   }
 }
 
-.stat-row {
-  margin-bottom: 4px;
-
-  .el-col {
-    margin-bottom: @space-lg;
-  }
+.row-meta {
+  flex-shrink: 0;
 }
 
-.local-subnets {
+// 有当前任务时：结果表占据剩余空间内部滚动；最近任务给一个有上限的紧凑高度
+.row-result {
+  flex: 1;
+  min-height: 0;
+}
+.row-recent {
+  flex-shrink: 0;
+  max-height: 220px;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: @space-sm;
-  margin-top: @space-md;
-
-  &__label {
-    color: var(--cm-text-secondary);
-    font-size: 13px;
-  }
+  flex-direction: column;
 }
-
-.empty-text {
-  color: var(--cm-text-secondary);
-  font-size: 13px;
-}
-
-.task-subnets {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: @space-sm;
-  margin-top: @space-md;
-
-  &__label {
-    color: var(--cm-text-secondary);
-    font-size: 13px;
-  }
+// 无当前任务时，最近任务占满剩余空间（由模板 :class fill 控制）
+.row-recent.fill {
+  flex: 1;
+  max-height: none;
 }
 
 .auto-job__phase {
   margin-bottom: @space-sm;
   color: var(--cm-text-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .auto-job__live {
   margin-top: @space-sm;
   color: var(--cm-text-secondary);
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.auto-job__subnets {
+.task-meta {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: @space-sm;
-  margin-top: @space-md;
+  gap: @space-md;
+  margin-top: @space-sm;
+  font-size: 12px;
+  color: var(--cm-text-regular);
+
+  &__cur {
+    margin-top: @space-xs;
+    font-size: 12px;
+    color: var(--cm-text-secondary);
+  }
 }
 
 .discovery-hint {

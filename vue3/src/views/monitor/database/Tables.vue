@@ -1,22 +1,17 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Grid" label="表数量" :value="d.tableCount ?? '-'"
-          sub="数据库表总数" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Tickets" label="总行数" :value="kfmt(d.totalRows)"
-          sub="所有表行数合计" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="8">
-        <StatCard icon="Coin" label="总大小" :value="d.totalSize || '-'"
-          sub="所有表大小合计" color="#9254de" />
-      </el-col>
-    </el-row>
+    <CardGrid min="240px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Grid" label="表数量" :value="d.tableCount ?? '-'"
+        sub="数据库表总数" color="#409eff" />
+      <StatCard dense icon="Tickets" label="总行数" :value="kfmt(d.totalRows)"
+        sub="所有表行数合计" color="#67c23a" />
+      <StatCard dense icon="Coin" label="总大小" :value="d.totalSize || '-'"
+        sub="所有表大小合计" color="#9254de" />
+    </CardGrid>
 
-    <SectionCard title="Top 10 最大的表" icon="Sort">
-      <el-table :data="d.topTables || []" size="small" stripe>
+    <CardGrid min="320px" gap="8px" class="body-grid">
+      <SectionCard dense title="Top 10 最大的表" icon="Sort" class="span-all fill" scrollable bodyClass="dense-table fill">
+        <el-table class="dense-table" height="100%" :data="d.topTables || []" size="small" stripe>
         <el-table-column label="排名" width="80" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="rankType(row.rank)" effect="plain">{{ row.rank }}</el-tag>
@@ -40,13 +35,13 @@
             <span class="size-text">{{ row.size || "-" }}</span>
           </template>
         </el-table-column>
-      </el-table>
-    </SectionCard>
+        </el-table>
+      </SectionCard>
 
-    <SectionCard title="所有表详情" icon="List">
-      <template #extra>共 {{ (d.allTables || []).length }} 张表</template>
-      <el-empty v-if="!(d.allTables || []).length" description="暂无数据" />
-      <div v-else class="table-grid">
+      <SectionCard dense title="所有表详情" icon="List" class="span-all fill" scrollable bodyClass="fill">
+        <template #extra>共 {{ (d.allTables || []).length }} 张表</template>
+        <el-empty v-if="!(d.allTables || []).length" description="暂无数据" :image-size="60" />
+        <div v-else class="table-grid">
         <div v-for="(t, i) in d.allTables || []" :key="t.schema + '.' + t.name + '-' + i" class="table-card">
           <div class="table-card__head">
             <span class="table-card__schema">{{ t.schema || "-" }}</span>
@@ -79,8 +74,9 @@
             </div>
           </div>
         </div>
-      </div>
-    </SectionCard>
+        </div>
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
@@ -88,6 +84,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getDatabaseTables } from "@/api/monitor-database";
 
 const props = defineProps({
@@ -133,11 +130,24 @@ onMounted(load);
 
 <style lang="less" scoped>
 @import (reference) "@/styles/variables.less";
-.stat-row {
-  margin-bottom: 4px;
+.tab-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
-.stat-row .el-col {
-  margin-bottom: 12px;
+.stat-grid {
+  flex-shrink: 0;
+}
+.body-grid {
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  overflow: auto;
+}
+.span-all {
+  grid-column: 1 / -1;
 }
 .schema-text {
   color: var(--cm-text-secondary);
@@ -154,7 +164,7 @@ onMounted(load);
 .table-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 .table-card {
   border: 1px solid var(--cm-border-light);
@@ -162,7 +172,7 @@ onMounted(load);
   overflow: hidden;
 
   &__head {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--cm-bg-page);
     background: var(--cm-bg-muted);
     display: flex;
@@ -181,14 +191,14 @@ onMounted(load);
     margin-top: 2px;
   }
   &__body {
-    padding: 12px;
+    padding: 10px;
   }
 }
 .metric {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: 4px 0;
   font-size: 13px;
 
   &__label {

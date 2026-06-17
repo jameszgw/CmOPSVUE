@@ -1,45 +1,34 @@
 <template>
-  <div v-loading="loading" class="tab-pane">
-    <el-row :gutter="12" class="stat-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Connection" label="活动连接" :value="conn.active ?? '-'"
-          sub="当前活动连接数" color="#67c23a" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Top" label="已接受连接" :value="fmt(conn.accepted)"
-          :sub="`已处理 ${fmt(conn.handled)}`" color="#409eff" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Lock" label="SSL 握手" :value="`${num(ssl.handshakeMs)} ms`"
-          :sub="`${num(ssl.handshakesPerSec)} 次/秒`" color="#9254de" />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard icon="Ticket" label="证书剩余天数" :value="`${certDaysLeft} 天`"
-          sub="SSL 证书有效期" :color="certColor" />
-      </el-col>
-    </el-row>
+  <div v-loading="loading" class="screen-tab">
+    <CardGrid min="220px" gap="8px">
+      <StatCard icon="Connection" label="活动连接" :value="conn.active ?? '-'"
+        sub="当前活动连接数" color="#67c23a" dense />
+      <StatCard icon="Top" label="已接受连接" :value="fmt(conn.accepted)"
+        :sub="`已处理 ${fmt(conn.handled)}`" color="#409eff" dense />
+      <StatCard icon="Lock" label="SSL 握手" :value="`${num(ssl.handshakeMs)} ms`"
+        :sub="`${num(ssl.handshakesPerSec)} 次/秒`" color="#9254de" dense />
+      <StatCard icon="Ticket" label="证书剩余天数" :value="`${certDaysLeft} 天`"
+        sub="SSL 证书有效期" :color="certColor" dense />
+    </CardGrid>
 
-    <SectionCard title="连接状态" icon="Connection">
+    <SectionCard title="连接状态" icon="Connection" dense>
       <InfoTable :rows="connRows" :columns="2" />
     </SectionCard>
 
-    <el-row :gutter="12">
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="SSL / TLS" icon="Lock">
-          <InfoTable :rows="sslRows" />
-        </SectionCard>
-      </el-col>
-      <el-col :xs="24" :lg="12">
-        <SectionCard title="安全防护" icon="Shield">
-          <InfoTable :rows="securityRows" />
-        </SectionCard>
-      </el-col>
-    </el-row>
+    <CardGrid min="300px" gap="8px">
+      <SectionCard title="SSL / TLS" icon="Lock" dense>
+        <InfoTable :rows="sslRows" />
+      </SectionCard>
+      <SectionCard title="安全防护" icon="Shield" dense>
+        <InfoTable :rows="securityRows" />
+      </SectionCard>
+    </CardGrid>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import CardGrid from "@/components/monitor/CardGrid.vue";
 import StatCard from "@/components/monitor/StatCard.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
@@ -122,10 +111,13 @@ onMounted(load);
 </script>
 
 <style lang="less" scoped>
-.stat-row {
-  margin-bottom: 4px;
-}
-.stat-row .el-col {
-  margin-bottom: 12px;
+@import (reference) "@/styles/variables.less";
+.screen-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>
