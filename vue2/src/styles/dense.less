@@ -1,0 +1,54 @@
+// =============================================================
+// 全局紧凑（"一屏看完"）辅助类
+// 在 global.less 中引入一次（@import "./dense.less";）。
+// 仅在显式添加这些 class 时生效，不影响既有页面。
+// 选择器针对 Element UI 2.x 的 el-table DOM：td/th 均带 .el-table__cell。
+// =============================================================
+@import (reference) "./variables.less";
+
+// 让元素在 flex 容器中占满剩余空间并允许内部滚动子项收缩。
+// 常配合 SectionCard 的 bodyClass="fill" 或包裹内部滚动表格。
+.fill {
+  flex: 1;
+  min-height: 0;
+}
+
+// 紧凑 el-table：更矮的行高与更小的单元格内边距。
+// 这是全局（非 scoped）样式，直接用后代选择器穿透到 el-table 内部 DOM。
+// 用法：<el-table class="dense-table" ...>，或包裹元素加 .dense-table，
+// 或 SectionCard bodyClass="dense-table"（包裹层）。
+.dense-table {
+  // 包裹层 .dense-table 内的 el-table（td 与 th 都带 el-table__cell）
+  .el-table td.el-table__cell {
+    padding: 4px 0;
+  }
+
+  .el-table th.el-table__cell {
+    padding: 4px 0;
+  }
+
+  .el-table .cell {
+    line-height: @table-row-dense - 6px;
+    font-size: 13px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+// 当 .dense-table 直接加在 el-table 上时（el-table 自身即根节点）。
+.el-table.dense-table {
+  td.el-table__cell {
+    padding: 4px 0;
+  }
+
+  th.el-table__cell {
+    padding: 4px 0;
+  }
+
+  .cell {
+    line-height: @table-row-dense - 6px;
+    font-size: 13px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
