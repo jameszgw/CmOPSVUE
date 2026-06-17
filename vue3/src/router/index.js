@@ -53,6 +53,7 @@ const routes = [
       { path: "/devops/system/webhook-config", component: () => import("@/views/system/WebhookConfig.vue") },
       { path: "/devops/system/script-template", component: () => import("@/views/system/ScriptTemplate.vue") },
       { path: "/devops/system/security-config", component: () => import("@/views/system/SecurityConfig.vue") },
+      { path: "/devops/system/monitor-config", component: () => import("@/views/system/MonitorConfig.vue") },
       { path: "/devops/system/ip-config", component: () => import("@/views/system/IpConfig.vue") },
       { path: "/devops/system/system-log", component: () => import("@/views/system/SystemLog.vue") },
       { path: "/devops/system/system-analysis", component: () => import("@/views/system/SystemAnalysis.vue") },
