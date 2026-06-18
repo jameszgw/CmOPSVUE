@@ -52,3 +52,28 @@
     padding-right: 8px;
   }
 }
+
+// =============================================================
+// 设备监控 tab 内容"占满一屏"：让 MonitorLayout 主体内的 tab 页填满高度，
+// 主网格(最后一个 card-grid)占满剩余高度、各行随之拉伸铺满，避免页面底部留大片空白。
+// 内容超出时主体仍可滚动（monitor-layout__body 为 overflow:auto）。
+// =============================================================
+.monitor-layout__body {
+  > .tab-pane,
+  > .tab-screen,
+  > .screen-tab {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    > .card-grid {
+      flex: 0 0 auto;
+    }
+    > .card-grid:last-child {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-content: stretch;
+    }
+  }
+}
