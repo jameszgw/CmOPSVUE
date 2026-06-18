@@ -31,16 +31,20 @@ export default {
 
 <style lang="less" scoped>
 .card-grid {
-  display: grid;
-  /* auto-fit（非 auto-fill）：空轨道塌缩，现有卡片拉伸铺满整行宽度，
-     避免右侧出现成片空白；列数随屏宽自适应（流式/响应式） */
-  grid-template-columns: repeat(auto-fit, minmax(var(--min), 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--gap);
-  /* 卡片按内容高度、顶端对齐——不再被同行最高卡片拉伸出大片空白 */
-  align-items: start;
+  align-content: flex-start;
 }
-/* 显式要求填满高度的卡片（如主表格）仍可铺满整格 */
-.card-grid > .fill {
-  align-self: stretch;
+/* 每张卡片以 min 为基准，并按 grow 平分整行剩余宽度——所有行(含最后一行)都铺满，无右侧空白 */
+.card-grid > * {
+  flex: 1 1 var(--min);
+  min-width: min(100%, var(--min));
+}
+/* 主内容网格：填满剩余高度，行随高度拉伸、卡片 height:100% 占满一屏 */
+.card-grid.fill {
+  flex: 1;
+  min-height: 0;
+  align-content: stretch;
 }
 </style>
