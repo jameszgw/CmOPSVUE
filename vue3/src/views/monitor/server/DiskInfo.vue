@@ -19,8 +19,8 @@
       <SectionCard dense v-for="(p, i) in d.partitions || []" :key="i" :title="p.mount || `分区 ${i + 1}`"
         icon="Coin">
         <template #extra>
-          <el-tag v-if="i === 0" size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          <el-tag v-if="i === 0" size="small" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
           </el-tag>
           <el-tag v-if="p.slow" size="small" type="danger" effect="dark" class="part-slow-tag">慢盘</el-tag>
           {{ p.used || '-' }} / {{ p.total || '-' }}
@@ -99,23 +99,43 @@ const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 const usageColor = (v) => (v > 85 ? "#f56c6c" : v > 60 ? "#e6a23c" : "#409eff");
 
-const partitionRows = (p) => [
-  { label: "设备", value: p.device },
-  { label: "挂载点", value: p.mount, color: "#409eff" },
-  { label: "文件系统", value: p.fs },
-  { label: "总容量", value: p.total },
-  { label: "已使用", value: p.used },
-  { label: "可用空间", value: p.free, color: "#67c23a" },
-  { label: "inode 总数", value: p.inodeTotal },
-  {
-    label: "await",
-    value: `${num(p.await)} ms`,
-    color: p.slow ? "#f56c6c" : undefined,
-    tag: p.slow ? "慢盘" : undefined,
-  },
-  { label: "平均队列", value: num(p.avgQueue) },
-  { label: "利用率", value: `${num(p.util)}%`, color: usageColor(p.util) },
-];
+const has = (v) => v !== undefined && v !== null;
+
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
+
+const partitionRows = (p) => {
+  const rows = [
+    { label: "设备", value: p.device },
+    { label: "挂载点", value: p.mount, color: "#409eff" },
+    { label: "文件系统", value: p.fs },
+    { label: "总容量", value: p.total },
+    { label: "已使用", value: p.used },
+    { label: "可用空间", value: p.free, color: "#67c23a" },
+  ];
+  // 真实采集分区可能缺失以下模拟字段，缺失则不展示对应行
+  if (has(p.inodeUsage)) {
+    rows.push({ label: "inode 使用率", value: `${num(p.inodeUsage)}%` });
+  }
+  if (has(p.inodeTotal)) {
+    rows.push({ label: "inode 总数", value: p.inodeTotal });
+  }
+  if (has(p.await)) {
+    rows.push({
+      label: "await",
+      value: `${num(p.await)} ms`,
+      color: p.slow ? "#f56c6c" : undefined,
+      tag: p.slow ? "慢盘" : undefined,
+    });
+  }
+  if (has(p.avgQueue)) {
+    rows.push({ label: "平均队列", value: num(p.avgQueue) });
+  }
+  if (has(p.util)) {
+    rows.push({ label: "利用率", value: `${num(p.util)}%`, color: usageColor(p.util) });
+  }
+  return rows;
+};
 
 const readRows = computed(() => {
   const r = d.value.ioStats?.read || {};

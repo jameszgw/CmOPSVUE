@@ -13,6 +13,11 @@
 
     <CardGrid min="300px" gap="8px">
       <SectionCard dense title="基本信息" icon="InfoFilled">
+        <template #extra>
+          <el-tag size="small" :type="isRealSource ? 'success' : 'info'">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
+        </template>
         <InfoTable :rows="basicRows" />
       </SectionCard>
       <SectionCard dense title="频率信息" icon="Odometer">
@@ -96,6 +101,9 @@ const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 const fmt = (v) =>
   typeof v === "number" && Math.abs(v) >= 1000 ? v.toLocaleString() : v;
 const coreColor = (v) => (v > 80 ? "#f56c6c" : v > 50 ? "#e6a23c" : "#409eff");
+
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
 
 const basicRows = computed(() => {
   const b = d.value.basic || {};

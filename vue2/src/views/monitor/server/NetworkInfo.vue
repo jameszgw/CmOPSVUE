@@ -20,7 +20,12 @@
     <CardGrid min="320px" gap="8px" class="section-grid">
       <SectionCard v-for="(itf, i) in interfaces" :key="i" dense
         :title="itf.name || '网卡'" icon="el-icon-connection">
-        <template #extra>{{ itf.status || '-' }} · {{ itf.speed || '-' }}</template>
+        <template #extra>
+          <el-tag v-if="i === 0" size="mini" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
+          {{ itf.status || '-' }} · {{ itf.speed || '-' }}
+        </template>
         <InfoTable :rows="interfaceRows(itf)" :columns="2" />
       </SectionCard>
 
@@ -78,6 +83,9 @@ export default {
     return { loading: false, d: {} };
   },
   computed: {
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
+    },
     interfaces() {
       return this.d.interfaces || [];
     },

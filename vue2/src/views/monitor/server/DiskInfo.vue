@@ -18,17 +18,19 @@
     <CardGrid min="320px" gap="8px" class="section-grid">
       <SectionCard v-for="(p, i) in partitions" :key="i" dense :title="p.mount || p.device || '分区'" icon="el-icon-folder-opened">
         <template #extra>
-          <el-tag v-if="i === 0" size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          <el-tag v-if="i === 0" size="mini" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
           </el-tag>
           {{ p.used || '-' }} / {{ p.total || '-' }} · {{ num(p.usage) }}%
         </template>
         <div class="part-sub">磁盘空间</div>
         <el-progress :percentage="clamp(p.usage)" :stroke-width="10"
           :color="usageColor(p.usage)" class="block-progress" />
-        <div class="part-sub">inode 使用率</div>
-        <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="10"
-          :color="usageColor(p.inodeUsage)" class="block-progress" />
+        <template v-if="p.inodeUsage != null">
+          <div class="part-sub">inode 使用率</div>
+          <el-progress :percentage="clamp(p.inodeUsage)" :stroke-width="10"
+            :color="usageColor(p.inodeUsage)" class="block-progress" />
+        </template>
         <InfoTable :rows="partitionRows(p)" :columns="2" />
       </SectionCard>
 
@@ -111,6 +113,9 @@ export default {
     realtimeWrite() {
       return (this.d.realtime && this.d.realtime.writeSpeed) || "-";
     },
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
+    },
   },
   watch: {
     deviceId() {
@@ -137,7 +142,8 @@ export default {
       return v > 80 ? "#f56c6c" : v > 50 ? "#e6a23c" : "#409eff";
     },
     partitionRows(p) {
-      return [
+      const has = (v) => v !== undefined && v !== null;
+      const rows = [
         { label: "设备", value: p.device },
         { label: "挂载点", value: p.mount },
         { label: "文件系统", value: p.fs },
@@ -145,17 +151,29 @@ export default {
         { label: "总容量", value: p.total },
         { label: "已使用", value: p.used, color: "#e6a23c" },
         { label: "可用空间", value: p.free, color: "#67c23a" },
-        { label: "inode 使用率", value: `${this.num(p.inodeUsage)}%`, color: "#67c23a" },
-        { label: "inode 总数", value: this.fmt(p.inodeTotal) },
-        {
+      ];
+      // 真实采集分区可能缺失以下模拟字段，缺失则不展示对应行
+      if (has(p.inodeUsage)) {
+        rows.push({ label: "inode 使用率", value: `${this.num(p.inodeUsage)}%`, color: "#67c23a" });
+      }
+      if (has(p.inodeTotal)) {
+        rows.push({ label: "inode 总数", value: this.fmt(p.inodeTotal) });
+      }
+      if (has(p.await)) {
+        rows.push({
           label: "await",
-          value: p.await == null ? "-" : `${p.await} ms`,
+          value: `${p.await} ms`,
           color: p.slow ? "#f56c6c" : "#303133",
           tag: p.slow ? "慢盘" : "",
-        },
-        { label: "平均队列", value: p.avgQueue == null ? "-" : p.avgQueue },
-        { label: "利用率", value: `${this.num(p.util)}%`, color: "#e6a23c" },
-      ];
+        });
+      }
+      if (has(p.avgQueue)) {
+        rows.push({ label: "平均队列", value: p.avgQueue });
+      }
+      if (has(p.util)) {
+        rows.push({ label: "利用率", value: `${this.num(p.util)}%`, color: "#e6a23c" });
+      }
+      return rows;
     },
     async load() {
       if (!this.deviceId) return;

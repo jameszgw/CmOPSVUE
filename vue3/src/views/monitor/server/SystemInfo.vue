@@ -16,8 +16,8 @@
     <CardGrid min="320px" gap="8px">
       <SectionCard dense title="基本信息" icon="InfoFilled">
         <template #extra>
-          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          <el-tag size="small" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
           </el-tag>
         </template>
         <InfoTable :rows="basicRows" />
@@ -37,6 +37,7 @@
         <el-table class="dense-table" height="100%" :data="d.topProcess || []" size="small" stripe>
           <el-table-column prop="pid" label="PID" width="80" />
           <el-table-column prop="name" label="进程名" min-width="120" />
+          <el-table-column prop="user" label="用户" width="100" show-overflow-tooltip />
           <el-table-column label="CPU %" width="90">
             <template #default="{ row }">
               <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
@@ -52,7 +53,9 @@
               <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" min-width="160" />
+          <el-table-column label="创建时间/运行时长" min-width="160">
+            <template #default="{ row }">{{ row.createTime || row.runtime || "-" }}</template>
+          </el-table-column>
         </el-table>
       </SectionCard>
     </CardGrid>
@@ -85,6 +88,9 @@ let chart = null;
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
+
 const OS_LABEL = { LINUX: "Linux", UNIX: "Unix", WINDOWS: "Windows", MACOS: "macOS" };
 const MODE_LABEL = { AGENT: "含 Agent", AGENTLESS: "无 Agent" };
 
@@ -96,6 +102,7 @@ const basicRows = computed(() => {
     { label: "操作系统", value: b.osName },
     { label: "内核版本", value: b.kernel },
     { label: "运行时间", value: b.uptime },
+    { label: "开机时间", value: b.bootTime },
     { label: "系统版本", value: b.platformVersion },
   ];
 });

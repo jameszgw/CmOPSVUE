@@ -17,8 +17,8 @@
       <div class="top-grid">
         <SectionCard dense title="基本信息" icon="el-icon-info">
           <template #extra>
-            <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-              {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+            <el-tag size="mini" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+              获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
             </el-tag>
           </template>
           <InfoTable :rows="basicRows" />
@@ -37,6 +37,7 @@
         <el-table class="dense-table" :data="d.topProcess || []" height="100%" size="small" stripe>
           <el-table-column prop="pid" label="PID" width="80" />
           <el-table-column prop="name" label="进程名" />
+          <el-table-column prop="user" label="用户" width="100" show-overflow-tooltip />
           <el-table-column label="CPU %" width="90">
             <template slot-scope="{ row }">
               <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
@@ -52,7 +53,9 @@
               <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="170" />
+          <el-table-column label="创建时间/运行时长" width="170">
+            <template slot-scope="{ row }">{{ row.createTime || row.runtime || "-" }}</template>
+          </el-table-column>
         </el-table>
       </SectionCard>
     </div>
@@ -106,8 +109,12 @@ export default {
         { label: "操作系统", value: b.osName },
         { label: "内核版本", value: b.kernel },
         { label: "运行时间", value: b.uptime },
+        { label: "开机时间", value: b.bootTime },
         { label: "系统版本", value: b.platformVersion },
       ];
+    },
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
     },
     statusRows() {
       const s = this.d.status || {};

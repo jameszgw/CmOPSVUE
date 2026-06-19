@@ -21,6 +21,9 @@
       <SectionCard dense v-for="(itf, i) in d.interfaces || []" :key="i" :title="itf.name || `接口 ${i + 1}`"
         icon="Connection">
         <template #extra>
+          <el-tag v-if="i === 0" size="small" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
           <el-tag size="small" :type="statusType(itf.status)" effect="plain">{{ itf.status || '-' }}</el-tag>
         </template>
         <InfoTable :rows="interfaceRows(itf)" :columns="2" />
@@ -96,6 +99,9 @@ const data = ref({});
 const d = computed(() => data.value || {});
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
+
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
 
 const statusType = (s) => {
   const v = String(s || "").toLowerCase();

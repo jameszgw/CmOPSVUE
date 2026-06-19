@@ -26,6 +26,15 @@
         <div class="monitor-layout__title">
           <el-icon><Monitor /></el-icon>
           <span>{{ currentTabLabel }}</span>
+          <el-tag
+            v-if="currentDevice?.collectVia"
+            :type="currentDevice.collectVia && currentDevice.collectVia !== 'NONE' ? 'success' : 'info'"
+            size="small"
+            effect="light"
+            class="monitor-layout__collect-tag"
+          >
+            获取方式：{{ COLLECT_VIA_LABEL[currentDevice.collectVia] || currentDevice.collectVia }}
+          </el-tag>
         </div>
         <div class="monitor-layout__ops">
           <el-select
@@ -213,6 +222,16 @@ let timer = null;
 
 // 默认采集端口（与 AddDeviceDialog 一致：SSH 22 / SNMP 161 / WinRM 5985）
 const COLLECT_DEFAULT_PORT = { SSH: 22, SNMP: 161, WINRM: 5985 };
+
+// 获取方式（采集方式）标签映射，用于头部展示设备配置的采集方式
+const COLLECT_VIA_LABEL = {
+  NONE: "模拟数据",
+  AGENT: "Agent 探针",
+  SSH: "SSH（无探针）",
+  SNMP: "SNMP（无探针）",
+  WINRM: "WinRM（无探针）",
+  DIRECT: "直连采集",
+};
 
 // 批量设置采集
 const batchVisible = ref(false);
@@ -530,6 +549,10 @@ onBeforeUnmount(clearTimer);
     .el-icon {
       color: #409eff;
     }
+  }
+
+  &__collect-tag {
+    margin-left: 8px;
   }
 
   &__ops {

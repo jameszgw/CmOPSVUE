@@ -19,9 +19,15 @@
     <div class="proc-body">
       <SectionCard dense title="Top 进程（按CPU使用率排序）" icon="List" scrollable
         bodyClass="dense-table fill" class="fill proc-card">
+        <template #extra>
+          <el-tag size="small" :type="isRealSource ? 'success' : 'info'">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
+        </template>
         <el-table class="dense-table" height="100%" :data="d.topProcess || []" size="small" stripe>
           <el-table-column prop="pid" label="PID" width="80" />
-          <el-table-column prop="name" label="进程名" min-width="140" />
+          <el-table-column prop="name" label="应用/进程名" min-width="140" />
+          <el-table-column prop="user" label="用户" width="100" show-overflow-tooltip />
           <el-table-column label="CPU %" width="90">
             <template #default="{ row }">
               <span style="color: #67c23a">{{ num(row.cpu) }}%</span>
@@ -37,7 +43,9 @@
               <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" min-width="160" />
+          <el-table-column label="创建时间/运行时长" min-width="160">
+            <template #default="{ row }">{{ row.createTime || row.runtime || "-" }}</template>
+          </el-table-column>
         </el-table>
       </SectionCard>
 
@@ -60,6 +68,10 @@
               <span class="rank-item__rank">{{ item.rank }}</span>
               <span class="rank-item__name">{{ item.name }}</span>
               <span class="rank-item__pid">PID: {{ item.pid }}</span>
+            </div>
+            <div v-if="item.user || item.status" class="rank-item__meta">
+              <span v-if="item.user">用户: {{ item.user }}</span>
+              <span v-if="item.status">状态: {{ item.status }}</span>
             </div>
             <div class="rank-item__metric">
               <span class="rank-item__metric-label">CPU:</span>
@@ -95,6 +107,9 @@ const data = ref({});
 const d = computed(() => data.value || {});
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
+
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
 
 const statusRows = computed(() => {
   const s = d.value.statusDist || {};
@@ -226,6 +241,13 @@ onMounted(load);
     margin-left: auto;
     font-size: 12px;
     color: var(--cm-text-secondary);
+  }
+  &__meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--cm-text-secondary);
+    margin-bottom: 4px;
   }
   &__metric {
     display: flex;
