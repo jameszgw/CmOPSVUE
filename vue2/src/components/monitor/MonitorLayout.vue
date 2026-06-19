@@ -121,6 +121,15 @@
         <el-checkbox v-for="d in devices" :key="d.id" :label="d.id" class="monitor-layout__batch-item">
           <span>{{ d.name }}</span>
           <span class="monitor-layout__device-sub">{{ d.ip }}</span>
+          <el-tag
+            v-if="d.collectVia && d.collectVia !== 'NONE'"
+            size="mini"
+            type="success"
+            effect="light"
+            class="monitor-layout__batch-via"
+          >
+            {{ COLLECT_VIA_LABEL[d.collectVia] || d.collectVia }}
+          </el-tag>
         </el-checkbox>
       </el-checkbox-group>
 
@@ -529,6 +538,10 @@ export default {
   }
 
   &__collect-tag {
+    margin-left: 8px;
+  }
+
+  &__batch-via {
     margin-left: 8px;
   }
 
