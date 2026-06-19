@@ -268,8 +268,8 @@
       <el-form-item label="采集方式" prop="collectVia">
         <el-select v-model="form.collectVia" placeholder="请选择">
           <el-option label="模拟数据" value="NONE" />
-          <template v-if="deviceType === 'REDIS'">
-            <el-option label="直连采集(INFO)" value="DIRECT" />
+          <template v-if="directProfile.label">
+            <el-option :label="directProfile.label" value="DIRECT" />
           </template>
           <template v-else>
             <el-option label="Agent探针" value="AGENT" />
@@ -310,16 +310,20 @@
         <el-form-item label="端口" prop="collectPort">
           <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
         </el-form-item>
-        <el-form-item label="用户名" prop="collectUser">
-          <el-input v-model="form.collectUser" placeholder="Redis 6+ ACL 用户名；留空走默认用户/仅密码" />
+        <el-form-item v-if="directProfile.showUser" label="用户名" prop="collectUser">
+          <el-input v-model="form.collectUser" :placeholder="directProfile.userPh" />
         </el-form-item>
-        <el-form-item label="密码" prop="collectSecret">
-          <el-input v-model="form.collectSecret" type="password" show-password placeholder="Redis 访问密码(requirepass 或 ACL 密码)" />
+        <el-form-item v-if="directProfile.showPass" label="密码" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="password" show-password :placeholder="directProfile.passPh" />
+        </el-form-item>
+        <el-form-item v-if="directProfile.showToken" label="Token" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="textarea" :rows="2" :placeholder="directProfile.passPh" />
+        </el-form-item>
+        <el-form-item v-if="directProfile.showPath" label="状态页路径" prop="collectUser">
+          <el-input v-model="form.collectUser" :placeholder="directProfile.userPh" />
         </el-form-item>
         <el-form-item label=" ">
-          <span style="color: #909399; font-size: 12px; line-height: 1.5">
-            直连目标 Redis 端口执行 INFO 只读采集；集群/哨兵填任一可达节点，凭据(同一 ACL)对各节点通用
-          </span>
+          <span style="color: #909399; font-size: 12px; line-height: 1.5">{{ directProfile.hint }}</span>
         </el-form-item>
       </template>
     </el-form>
@@ -356,6 +360,9 @@ const TYPE_LABEL = {
 };
 const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
 
+// 当前设备类型的「直连采集」凭据档案（无则为空对象，采集方式回落 Agent/SSH/SNMP/WinRM）
+const directProfile = computed(() => DIRECT_PROFILE[props.deviceType] || {});
+
 // 编辑状态：打开时根据 editDevice 是否存在确定
 const isEdit = ref(false);
 const editId = ref(null);
@@ -367,6 +374,39 @@ const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
   MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
   POWER: 502, ESS: 502, IOT: 1883, SBC: 22, ANDROID: 5555,
+};
+
+// 「直连采集」凭据档案：按设备类型驱动采集方式标签、默认端口与所需凭据字段
+// （统一复用 collectUser/collectSecret/collectPort，后端门控为 collectVia 非 NONE/AGENT）。
+const DIRECT_PROFILE = {
+  REDIS: {
+    label: "直连采集(INFO)", port: 6379, showUser: true, showPass: true,
+    userPh: "Redis 6+ ACL 用户名；留空走默认用户/仅密码",
+    passPh: "Redis 访问密码(requirepass 或 ACL 密码)",
+    hint: "直连目标 Redis 端口执行 INFO 只读采集；集群/哨兵填任一可达节点，凭据(同一 ACL)对各节点通用",
+  },
+  DATABASE: {
+    label: "直连采集(JDBC)", port: 3306, showUser: true, showPass: true,
+    userPh: "数据库账号(只读权限即可)",
+    passPh: "数据库密码",
+    hint: "通过 JDBC 直连执行只读统计查询；库名取上方「数据库名」。当前支持 MySQL/MariaDB、PostgreSQL，其余类型回落模拟",
+  },
+  MQ: {
+    label: "直连采集", port: 15672, showUser: true, showPass: true,
+    userPh: "RabbitMQ 管理用户(Kafka 可留空)",
+    passPh: "RabbitMQ 管理密码(Kafka 可留空)",
+    hint: "RabbitMQ 走管理 API(默认15672)需账号密码；Kafka 走 AdminClient(默认9092)无需账号密码，端口改填 9092 即可",
+  },
+  K8S: {
+    label: "直连采集(apiserver)", port: 6443, showToken: true,
+    passPh: "ServiceAccount Bearer Token",
+    hint: "以 ServiceAccount Bearer Token 直连 apiserver(默认6443)只读采集节点/Pod；建议为其绑定只读 ClusterRole",
+  },
+  LB: {
+    label: "直连采集(状态页)", port: 80, showPath: true,
+    userPh: "状态页路径(选填，如 /nginx_status)",
+    hint: "抓取 Nginx stub_status / HAProxy CSV 状态页(默认80)；Nginx 可用「状态页路径」覆盖默认探测路径",
+  },
 };
 
 const formRef = ref();
@@ -488,7 +528,13 @@ watch(
       form.collectPort = 161;
       if (!form.collectSecret) form.collectSecret = "public";
     } else if (via === "DIRECT") {
-      form.collectPort = form.port || DEFAULT_PORT[props.deviceType] || 6379;
+      const prof = DIRECT_PROFILE[props.deviceType];
+      let p = prof ? prof.port : form.port || DEFAULT_PORT[props.deviceType] || 6379;
+      // MQ：Kafka 用 9092，RabbitMQ 用管理端口 15672
+      if (props.deviceType === "MQ") {
+        p = String(form.mqType || "").toUpperCase().includes("KAFKA") ? 9092 : 15672;
+      }
+      form.collectPort = p;
     }
   }
 );
