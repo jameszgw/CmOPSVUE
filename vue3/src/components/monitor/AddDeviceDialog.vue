@@ -268,10 +268,15 @@
       <el-form-item label="采集方式" prop="collectVia">
         <el-select v-model="form.collectVia" placeholder="请选择">
           <el-option label="模拟数据" value="NONE" />
-          <el-option label="Agent探针" value="AGENT" />
-          <el-option label="SSH(无探针)" value="SSH" />
-          <el-option label="SNMP(无探针)" value="SNMP" />
-          <el-option label="WinRM(无探针)" value="WINRM" />
+          <template v-if="deviceType === 'REDIS'">
+            <el-option label="直连采集(INFO)" value="DIRECT" />
+          </template>
+          <template v-else>
+            <el-option label="Agent探针" value="AGENT" />
+            <el-option label="SSH(无探针)" value="SSH" />
+            <el-option label="SNMP(无探针)" value="SNMP" />
+            <el-option label="WinRM(无探针)" value="WINRM" />
+          </template>
         </el-select>
       </el-form-item>
       <template v-if="form.collectVia === 'SSH' || form.collectVia === 'WINRM'">
@@ -299,6 +304,22 @@
         </el-form-item>
         <el-form-item label="Community" prop="collectSecret">
           <el-input v-model="form.collectSecret" placeholder="如 public" />
+        </el-form-item>
+      </template>
+      <template v-else-if="form.collectVia === 'DIRECT'">
+        <el-form-item label="端口" prop="collectPort">
+          <el-input-number v-model="form.collectPort" :min="1" :max="65535" controls-position="right" />
+        </el-form-item>
+        <el-form-item label="用户名" prop="collectUser">
+          <el-input v-model="form.collectUser" placeholder="Redis 6+ ACL 用户名；留空走默认用户/仅密码" />
+        </el-form-item>
+        <el-form-item label="密码" prop="collectSecret">
+          <el-input v-model="form.collectSecret" type="password" show-password placeholder="Redis 访问密码(requirepass 或 ACL 密码)" />
+        </el-form-item>
+        <el-form-item label=" ">
+          <span style="color: #909399; font-size: 12px; line-height: 1.5">
+            直连目标 Redis 端口执行 INFO 只读采集；集群/哨兵填任一可达节点，凭据(同一 ACL)对各节点通用
+          </span>
         </el-form-item>
       </template>
     </el-form>
@@ -466,6 +487,8 @@ watch(
     } else if (via === "SNMP") {
       form.collectPort = 161;
       if (!form.collectSecret) form.collectSecret = "public";
+    } else if (via === "DIRECT") {
+      form.collectPort = form.port || DEFAULT_PORT[props.deviceType] || 6379;
     }
   }
 );
@@ -487,6 +510,10 @@ const submit = () => {
         payload.collectSecret = form.collectSecret;
       } else if (form.collectVia === "SNMP") {
         payload.collectPort = form.collectPort;
+        payload.collectSecret = form.collectSecret;
+      } else if (form.collectVia === "DIRECT") {
+        payload.collectPort = form.collectPort;
+        payload.collectUser = form.collectUser;
         payload.collectSecret = form.collectSecret;
       }
       if (props.deviceType === "SERVER") {
