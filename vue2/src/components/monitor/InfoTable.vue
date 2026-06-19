@@ -4,7 +4,7 @@
       <tr v-for="(row, ri) in groupedRows" :key="ri">
         <template v-for="(cell, ci) in row">
           <td class="info-table__label" :key="'l' + ci">{{ cell.label }}</td>
-          <td class="info-table__value" :key="'v' + ci">
+          <td class="info-table__value" :key="'v' + ci" :title="cellTitle(cell)">
             <span :style="cell.color ? { color: cell.color } : null">{{ cell.value }}</span>
             <span v-if="cell.tag" class="info-table__tag">{{ cell.tag }}</span>
           </td>
@@ -37,6 +37,13 @@ export default {
       return out;
     },
   },
+  methods: {
+    // 鼠标悬停显示完整值（值被省略号截断时仍可读到全文，如 IP/版本号）
+    cellTitle(cell) {
+      const v = cell.value == null ? "" : String(cell.value);
+      return cell.tag ? v + " " + cell.tag : v;
+    },
+  },
 };
 </script>
 
@@ -63,9 +70,12 @@ export default {
 
   &__value {
     color: var(--cm-text-primary);
-    /* 仅在必要时换行，且按词/分隔处断行，不再逐字符堆叠 */
-    word-break: normal;
-    overflow-wrap: anywhere;
+    /* 单行 + 省略号：长值(IP/版本号/cluster)在窄列里既不逐字符竖排堆叠，也不溢出，
+       完整内容通过 title 悬停查看；max-width:0 配合表格让值列吃满剩余宽度后再省略 */
+    max-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__tag {

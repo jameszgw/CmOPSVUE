@@ -18,7 +18,7 @@
             {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
           </el-tag>
         </template>
-        <InfoTable :rows="basicRows" :columns="2" />
+        <InfoTable :rows="basicRows" :columns="1" />
       </SectionCard>
 
       <SectionCard dense title="内存信息" icon="Coin">
