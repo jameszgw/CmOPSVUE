@@ -60,3 +60,10 @@ export const testCollect = (deviceId) =>
     method: "GET",
     params: { deviceId },
   });
+
+/** 检测重复主机（同一物理主机的多个 IP 设备归并分组） */
+export function getDuplicateHosts() {
+  return request("/api/devops/monitor/device/duplicate-hosts", {
+    method: "GET",
+  });
+}
