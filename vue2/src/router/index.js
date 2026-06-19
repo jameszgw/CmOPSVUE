@@ -37,6 +37,7 @@ const routes = [
       { path: "/devops/monitor/resilience", component: () => import("@/views/monitor/MonitorResilience.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
       { path: "/devops/monitor/metric-dict", component: () => import("@/views/monitor/MetricDictionary.vue") },
+      { path: "/devops/monitor/device-manage", component: () => import("@/views/monitor/DeviceManage.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },
       { path: "/devops/ops/host-detail/:id", component: () => import("@/views/ops/HostDetail.vue") },
