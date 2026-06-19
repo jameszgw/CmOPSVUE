@@ -16,3 +16,4 @@ export const getServerNetwork = (deviceId) => get("network", deviceId);
 export const getServerProcess = (deviceId) => get("process", deviceId);
 
 export const getServerHardware = (deviceId) => get("hardware", deviceId);
+export const getServerVirtualization = (deviceId) => get("virtualization", deviceId);
