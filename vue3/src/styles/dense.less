@@ -12,6 +12,15 @@
   min-height: 0;
 }
 
+// CardGrid 已由 CSS grid 改为 flexbox 流式布局，旧的 .span-all(grid-column:1/-1) 在 flex 容器中失效，
+// 导致原本"整行占满"的卡片(如 数据库 表统计/Top SQL、Redis/MQ/K8s 的大表)错误地并排成两列。
+// 这里全局补偿：流式 CardGrid 内的 .span-all 强制占满整行(flex-basis:100%)，恢复整行布局。
+// 用 !important 压过 CardGrid 自身的 .card-grid > *{flex:1 1 var(--min)}（同特异性但其 scoped 样式后注入会胜出）
+.card-grid > .span-all {
+  flex-basis: 100% !important;
+  width: 100%;
+}
+
 // 紧凑 el-table：更矮的行高与更小的单元格内边距。
 // 这是全局（非 scoped）样式，直接用后代选择器穿透到 el-table 内部 DOM。
 // 用法：<el-table class="dense-table" ...>，或包裹元素加 .dense-table，
