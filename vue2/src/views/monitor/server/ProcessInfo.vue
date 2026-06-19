@@ -19,9 +19,15 @@
     <div class="body-grid">
       <SectionCard dense title="Top 进程（按CPU使用率排序）" icon="el-icon-s-order"
         class="fill proc-card" body-class="dense-table fill" scrollable>
+        <template #extra>
+          <el-tag size="mini" :type="isRealSource ? 'success' : 'info'">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
+        </template>
         <el-table class="dense-table" :data="d.topProcess || []" height="100%" size="small" stripe>
           <el-table-column prop="pid" label="PID" width="90" />
-          <el-table-column prop="name" label="进程名" />
+          <el-table-column prop="name" label="应用/进程名" />
+          <el-table-column prop="user" label="用户" width="100" show-overflow-tooltip />
           <el-table-column label="CPU %" width="100">
             <template slot-scope="{ row }">
               <span style="color: #67c23a">{{ pct(row.cpu) }}</span>
@@ -37,7 +43,9 @@
               <el-tag size="small" type="info" effect="plain">{{ row.status }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="180" />
+          <el-table-column label="创建时间/运行时长" width="180">
+            <template slot-scope="{ row }">{{ row.createTime || row.runtime || "-" }}</template>
+          </el-table-column>
         </el-table>
       </SectionCard>
 
@@ -61,6 +69,10 @@
               <span class="rank-item__badge" :class="'rank-item__badge--' + item.rank">{{ item.rank }}</span>
               <span class="rank-item__name">{{ item.name }}</span>
               <span class="rank-item__pid">PID: {{ item.pid }}</span>
+            </div>
+            <div v-if="item.user || item.status" class="rank-item__meta">
+              <span v-if="item.user">用户: {{ item.user }}</span>
+              <span v-if="item.status">状态: {{ item.status }}</span>
             </div>
             <div class="rank-item__metric">
               <span class="rank-item__metric-label">CPU:</span>
@@ -98,6 +110,9 @@ export default {
     return { loading: false, d: {} };
   },
   computed: {
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
+    },
     limited() {
       return !!this.d.limited;
     },
@@ -286,6 +301,13 @@ export default {
     margin-left: auto;
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
+  }
+  &__meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--cm-text-secondary, @text-secondary);
+    margin-bottom: 4px;
   }
   &__metric {
     display: flex;

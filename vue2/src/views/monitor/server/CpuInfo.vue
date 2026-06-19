@@ -13,6 +13,11 @@
 
     <CardGrid min="300px" gap="8px" class="section-grid">
       <SectionCard dense title="基本信息" icon="el-icon-info">
+        <template #extra>
+          <el-tag size="mini" :type="isRealSource ? 'success' : 'info'">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
+          </el-tag>
+        </template>
         <InfoTable :rows="basicRows" />
       </SectionCard>
       <SectionCard dense title="频率信息" icon="el-icon-odometer">
@@ -113,6 +118,9 @@ export default {
     },
     load15() {
       return (this.d.load && this.d.load.load15) == null ? "-" : this.d.load.load15;
+    },
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
     },
   },
   watch: {

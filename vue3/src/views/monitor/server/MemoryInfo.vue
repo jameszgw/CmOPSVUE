@@ -16,8 +16,8 @@
     <CardGrid min="320px" gap="8px">
       <SectionCard dense title="虚拟内存（RAM）" icon="Coin">
         <template #extra>
-          <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          <el-tag size="small" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
           </el-tag>
           使用率 {{ num(d.ram?.usage) }}%
         </template>
@@ -84,6 +84,9 @@ const d = computed(() => data.value || {});
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 const usageColor = (v) => (v > 85 ? "#f56c6c" : v > 60 ? "#e6a23c" : "#409eff");
+
+// 真实采集来源（非模拟/无数据）则徽标用 success
+const isRealSource = computed(() => !["simulated", "none"].includes(d.value.source));
 
 const ramRows = computed(() => {
   const r = d.value.ram || {};

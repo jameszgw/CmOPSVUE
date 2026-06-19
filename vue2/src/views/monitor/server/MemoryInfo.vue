@@ -16,8 +16,8 @@
     <CardGrid min="320px" gap="8px" class="section-grid">
       <SectionCard dense title="虚拟内存 (RAM)" icon="el-icon-coin">
         <template #extra>
-          <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
-            {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
+          <el-tag size="mini" :type="isRealSource ? 'success' : 'info'" style="margin-right: 6px">
+            获取方式：{{ d.collectViaLabel || "-" }} · 来源：{{ d.sourceLabel || "-" }}
           </el-tag>
           {{ num(ramUsage) }}%
         </template>
@@ -85,6 +85,9 @@ export default {
     },
     swapUsage() {
       return (this.d.swap && this.d.swap.usage) || 0;
+    },
+    isRealSource() {
+      return !["simulated", "none"].includes(this.d.source);
     },
     ramRows() {
       const r = this.d.ram || {};
