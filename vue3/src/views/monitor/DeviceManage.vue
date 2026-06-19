@@ -71,6 +71,14 @@
           >
             批量设置采集
           </el-button>
+          <el-button
+            size="small"
+            :icon="CopyDocument"
+            :loading="dupLoading"
+            @click="openDuplicate"
+          >
+            检测重复主机
+          </el-button>
           <el-button size="small" :icon="RefreshRight" @click="load">刷新</el-button>
         </div>
       </template>
@@ -188,17 +196,72 @@
         <el-button type="primary" :loading="batchSubmitting" @click="submitBatch">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 重复主机检测 -->
+    <el-dialog v-model="dupVisible" title="重复主机检测" width="640px">
+      <p class="dm-dup-hint">
+        同一物理主机若有多个 IP（如 KVM 宿主的网桥与物理网卡），会被登记成多台设备；此处按主机身份(machineId/IP)归并，可删除重复项仅保留主设备。需设备已配置
+        Agent 且开启真实采集才能识别。
+      </p>
+      <el-empty
+        v-if="!dupGroups.length"
+        description="未检测到重复主机（同一物理主机的多个 IP 设备）"
+        :image-size="80"
+      />
+      <div
+        v-for="(g, gi) in dupGroups"
+        :key="g.machineId || g.hostName || gi"
+        class="dm-dup-group"
+      >
+        <div class="dm-dup-group__head">
+          <span class="dm-dup-group__title">
+            主机 {{ groupTitle(g) }} · 共 {{ g.deviceCount }} 台
+          </span>
+          <el-button
+            type="danger"
+            size="small"
+            plain
+            :loading="dupDeleting === gi"
+            @click="removeGroupDuplicates(g, gi)"
+          >
+            删除重复设备
+          </el-button>
+        </div>
+        <el-table :data="g.devices || []" size="small" border class="dense-table">
+          <el-table-column label="名称" min-width="140" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.name }}</template>
+          </el-table-column>
+          <el-table-column label="地址" min-width="130">
+            <template #default="{ row }">{{ row.ip }}</template>
+          </el-table-column>
+          <el-table-column label="采集方式" width="120">
+            <template #default="{ row }">
+              {{ COLLECT_VIA_LABEL[row.collectVia] || row.collectVia || "模拟数据" }}
+            </template>
+          </el-table-column>
+          <el-table-column label="角色" width="120">
+            <template #default="{ row }">
+              <el-tag v-if="row.primary" size="small" type="success">主设备(保留)</el-tag>
+              <el-tag v-else size="small" type="warning">重复(可删除)</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <template #footer>
+        <el-button @click="dupVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </ScreenPage>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { Search, Plus, Setting, RefreshRight, ArrowDown } from "@element-plus/icons-vue";
+import { Search, Plus, Setting, RefreshRight, ArrowDown, CopyDocument } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import AddDeviceDialog from "@/components/monitor/AddDeviceDialog.vue";
-import { listDevices, deleteDevice, batchCollect, testCollect } from "@/api/monitor-device";
+import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts } from "@/api/monitor-device";
 
 // 设备类型代码顺序（与监控侧栏/新增弹窗口径一致）
 const DEVICE_TYPES = [
@@ -257,6 +320,12 @@ const tableRef = ref(null);
 const addVisible = ref(false);
 const addType = ref("SERVER");
 const editingDevice = ref(null);
+
+// 重复主机检测
+const dupVisible = ref(false);
+const dupLoading = ref(false);
+const dupDeleting = ref(-1);
+const dupGroups = ref([]);
 
 // 批量设置采集
 const batchVisible = ref(false);
@@ -371,6 +440,46 @@ const removeRow = async (row) => {
   }
 };
 
+// 重复主机检测
+const groupTitle = (g) => g.hostName || (g.machineId ? g.machineId.slice(0, 12) : "未知主机");
+
+const loadDuplicates = async () => {
+  const res = await getDuplicateHosts();
+  dupGroups.value = (res && res.content) || [];
+};
+
+const openDuplicate = async () => {
+  dupLoading.value = true;
+  try {
+    await loadDuplicates();
+    dupVisible.value = true;
+  } finally {
+    dupLoading.value = false;
+  }
+};
+
+const removeGroupDuplicates = async (group, index) => {
+  const dups = (group.devices || []).filter((d) => d.primary === false);
+  if (!dups.length) {
+    ElMessage.info("该组没有可删除的重复设备");
+    return;
+  }
+  dupDeleting.value = index;
+  try {
+    for (const d of dups) {
+      await deleteDevice(d.id);
+    }
+    ElMessage.success(`已删除 ${dups.length} 台重复设备`);
+    await loadDuplicates();
+    load();
+    if (!dupGroups.value.length) {
+      dupVisible.value = false;
+    }
+  } finally {
+    dupDeleting.value = -1;
+  }
+};
+
 const openBatch = () => {
   batchForm.collectVia = "NONE";
   batchForm.collectPort = 22;
@@ -467,5 +576,36 @@ onMounted(load);
 
 .dm-table {
   width: 100%;
+}
+
+.dm-dup-hint {
+  margin: 0 0 @space-md;
+  padding: 8px 10px;
+  background: var(--el-fill-color-light, #f5f7fa);
+  border-radius: 4px;
+  color: @text-secondary;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dm-dup-group {
+  margin-bottom: @space-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: @text-primary;
+  }
 }
 </style>
