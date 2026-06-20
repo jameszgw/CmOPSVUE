@@ -56,26 +56,47 @@ defineProps({
   &__head {
     display: flex;
     align-items: center;
+    /* 头部允许换行：超长的 #extra（如"获取方式·来源"徽标）换到下一行，而非顶破卡片右边界 */
+    flex-wrap: wrap;
+    row-gap: 2px;
     padding: @space-md @space-lg;
     border-bottom: 1px solid var(--cm-bg-page);
     flex-shrink: 0;
+    overflow: hidden;
   }
 
   &__icon {
     color: var(--cm-color-primary);
     margin-right: @space-sm;
+    flex-shrink: 0;
   }
 
   &__title {
     font-size: 14px;
     font-weight: 600;
     color: var(--cm-text-primary);
+    /* 标题保持单行，绝不被 #extra 挤成逐字竖排（如"基本信息"→基/本/信/息） */
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   &__extra {
     margin-left: auto;
+    min-width: 0;
     font-size: 12px;
     color: var(--cm-text-secondary);
+    text-align: right;
+
+    /* #extra 内的徽标/标签超长时内部换行，不撑破卡片 */
+    :deep(.el-tag) {
+      white-space: normal;
+      height: auto;
+      max-width: 100%;
+    }
+    :deep(span) {
+      white-space: normal;
+      word-break: break-word;
+    }
   }
 
   &__body {
