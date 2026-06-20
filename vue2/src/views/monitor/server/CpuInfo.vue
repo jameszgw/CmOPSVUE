@@ -54,7 +54,7 @@
       <SectionCard dense title="CPU 时间统计" icon="el-icon-time" scrollable>
         <div class="metric-grid">
           <div v-for="(v, k) in d.times || {}" :key="k" class="grid-metric">
-            <div class="grid-metric__label">{{ k }}</div>
+            <div class="grid-metric__label">{{ cpuKeyLabel(k) }}<span class="grid-metric__en">{{ k }}</span></div>
             <div class="grid-metric__value">{{ fmt(v) }}</div>
           </div>
         </div>
@@ -63,7 +63,7 @@
       <SectionCard dense title="CPU 统计信息" icon="el-icon-data-line" scrollable>
         <div class="metric-grid">
           <div v-for="(v, k) in d.stats || {}" :key="k" class="grid-metric">
-            <div class="grid-metric__label">{{ k }}</div>
+            <div class="grid-metric__label">{{ cpuKeyLabel(k) }}<span class="grid-metric__en">{{ k }}</span></div>
             <div class="grid-metric__value">{{ fmt(v) }}</div>
           </div>
         </div>
@@ -144,6 +144,15 @@ export default {
     fmt(v) {
       return typeof v === "number" && Math.abs(v) >= 1000 ? v.toLocaleString() : v;
     },
+    cpuKeyLabel(k) {
+      const m = {
+        user: "用户态", nice: "低优先级用户态", system: "内核态", idle: "空闲",
+        iowait: "IO 等待", irq: "硬中断", softirq: "软中断", steal: "被抢占",
+        guest: "客户机", guestNice: "客户机(低优先级)",
+        ctxSwitches: "上下文切换", interrupts: "中断数", softInterrupts: "软中断数", syscalls: "系统调用",
+      };
+      return m[k] || k;
+    },
     coreColor(v) {
       return v > 80 ? "#f56c6c" : v > 50 ? "#e6a23c" : "#409eff";
     },
@@ -205,6 +214,11 @@ export default {
     font-size: 12px;
     color: var(--cm-text-secondary, @text-secondary);
     margin-bottom: 4px;
+  }
+  &__en {
+    margin-left: 4px;
+    font-size: 11px;
+    color: var(--cm-text-placeholder, #c0c4cc);
   }
   &__value {
     font-size: 15px;
