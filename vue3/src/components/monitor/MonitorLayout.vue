@@ -87,6 +87,19 @@
               {{ autoRefresh ? "自动刷新中" : "已暂停" }}
             </el-button>
           </el-tooltip>
+          <el-select
+            v-model="refreshMs"
+            size="small"
+            class="monitor-layout__interval"
+            @change="onRefreshMsChange"
+          >
+            <el-option
+              v-for="opt in REFRESH_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
           <el-button :icon="RefreshRight" circle size="small" @click="refreshNow" />
           <el-tag :type="currentDevice?.connected ? 'success' : 'info'" size="small" effect="light">
             {{ currentDevice?.connected ? "已连接" : "未连接" }}
@@ -199,6 +212,40 @@ const props = defineProps({
 
 const route = useRoute();
 
+// 自动刷新间隔可选项（每设备可单独配置）
+const REFRESH_OPTIONS = [
+  { label: "3 秒", value: 3000 },
+  { label: "5 秒", value: 5000 },
+  { label: "10 秒", value: 10000 },
+  { label: "30 秒", value: 30000 },
+  { label: "60 秒", value: 60000 },
+];
+
+// 刷新间隔持久化：按设备维度存储，回落全局默认，再回落 interval prop
+const REFRESH_KEY_DEFAULT = "cmops:refreshMs:default";
+const refreshKey = (id) => `cmops:refreshMs:${id}`;
+const readRefreshMs = (id) => {
+  try {
+    const perDevice = id ? localStorage.getItem(refreshKey(id)) : null;
+    if (perDevice) return Number(perDevice);
+    const global = localStorage.getItem(REFRESH_KEY_DEFAULT);
+    if (global) return Number(global);
+  } catch (e) {
+    /* ignore */
+  }
+  return props.interval;
+};
+const persistRefreshMs = (id, ms) => {
+  try {
+    if (id) {
+      localStorage.setItem(refreshKey(id), String(ms));
+    }
+    localStorage.setItem(REFRESH_KEY_DEFAULT, String(ms));
+  } catch (e) {
+    /* ignore */
+  }
+};
+
 // 记住上次选择的设备（按设备类型区分）
 const storageKey = computed(() => `cm-last-device-${props.deviceType}`);
 const readLastDevice = () => {
@@ -223,6 +270,7 @@ const devices = ref([]);
 const currentDeviceId = ref("");
 const activeKey = ref(props.tabs[0]?.key || "");
 const autoRefresh = ref(true);
+const refreshMs = ref(props.interval);
 const refreshToken = ref(0);
 const loadingDevices = ref(false);
 const addVisible = ref(false);
@@ -326,6 +374,8 @@ const loadDevices = async (preferId) => {
     }
     currentDeviceId.value = target;
     persistDevice(target);
+    // 载入该设备保存的刷新间隔
+    refreshMs.value = readRefreshMs(target);
   } finally {
     loadingDevices.value = false;
   }
@@ -337,7 +387,14 @@ const refreshNow = () => {
 
 const onDeviceChange = () => {
   persistDevice(currentDeviceId.value);
+  // 切换设备时载入该设备的刷新间隔
+  refreshMs.value = readRefreshMs(currentDeviceId.value);
   refreshNow();
+};
+
+// 修改刷新间隔：持久化到当前设备 + 全局默认，并重新计时
+const onRefreshMsChange = (ms) => {
+  persistRefreshMs(currentDeviceId.value, ms);
 };
 
 // 同页面下路由 query.deviceId 变化（全局搜索跳转到同类型设备）时更新选中
@@ -347,6 +404,7 @@ watch(
     if (id && id !== currentDeviceId.value && devices.value.some((d) => d.id === id)) {
       currentDeviceId.value = id;
       persistDevice(id);
+      refreshMs.value = readRefreshMs(id);
       refreshNow();
     }
   }
@@ -456,7 +514,7 @@ const submitBatch = async () => {
 const setupTimer = () => {
   clearTimer();
   if (autoRefresh.value) {
-    timer = setInterval(refreshNow, props.interval);
+    timer = setInterval(refreshNow, refreshMs.value);
   }
 };
 const clearTimer = () => {
@@ -466,7 +524,9 @@ const clearTimer = () => {
   }
 };
 
+// 自动刷新开关或刷新间隔变化时重新计时
 watch(autoRefresh, setupTimer);
+watch(refreshMs, setupTimer);
 
 onMounted(async () => {
   await loadDevices();
@@ -576,6 +636,10 @@ onBeforeUnmount(clearTimer);
 
   &__device {
     width: 220px;
+  }
+
+  &__interval {
+    width: 96px;
   }
 
   &__device-sub {

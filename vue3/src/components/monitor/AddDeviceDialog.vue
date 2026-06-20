@@ -17,8 +17,15 @@
         <el-input-number v-model="form.port" :min="1" :max="65535" controls-position="right" />
       </el-form-item>
 
+      <!-- 编辑模式：允许修改设备类型（纠正创建时选错的类型） -->
+      <el-form-item v-if="isEdit" label="设备类型" prop="type">
+        <el-select v-model="currentType" placeholder="请选择设备类型">
+          <el-option v-for="(label, k) in TYPE_LABEL" :key="k" :label="label" :value="k" />
+        </el-select>
+      </el-form-item>
+
       <!-- 服务器专有 -->
-      <template v-if="deviceType === 'SERVER'">
+      <template v-if="currentType === 'SERVER'">
         <el-form-item label="服务器类别" prop="category">
           <el-radio-group v-model="form.category">
             <el-radio-button label="PHYSICAL">物理服务器</el-radio-button>
@@ -52,7 +59,7 @@
       </template>
 
       <!-- Redis 专有 -->
-      <template v-if="deviceType === 'REDIS'">
+      <template v-if="currentType === 'REDIS'">
         <el-form-item label="Redis 版本" prop="redisVersion">
           <el-input v-model="form.redisVersion" placeholder="如 7.2.4" />
         </el-form-item>
@@ -72,10 +79,10 @@
       </template>
 
       <!-- 数据库专有 -->
-      <template v-if="deviceType === 'DATABASE'">
+      <template v-if="currentType === 'DATABASE'">
         <el-form-item label="数据库类型" prop="dbType">
           <el-select v-model="form.dbType">
-            <el-option v-for="t in options.dbTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.dbTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="数据库名" prop="dbName">
@@ -87,23 +94,23 @@
       </template>
 
       <!-- K8s 集群专有 -->
-      <template v-if="deviceType === 'K8S'">
+      <template v-if="currentType === 'K8S'">
         <el-form-item label="集群版本" prop="k8sVersion">
           <el-input v-model="form.k8sVersion" placeholder="如 v1.29.3" />
         </el-form-item>
         <el-form-item label="发行版" prop="k8sDistro">
           <el-select v-model="form.k8sDistro">
-            <el-option v-for="t in options.k8sDistros" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.k8sDistros" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="容器运行时" prop="k8sRuntime">
           <el-select v-model="form.k8sRuntime">
-            <el-option v-for="t in options.k8sRuntimes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.k8sRuntimes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="CNI 插件" prop="k8sCni">
           <el-select v-model="form.k8sCni">
-            <el-option v-for="t in options.k8sCnis" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.k8sCnis" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="节点数" prop="nodeCount">
@@ -112,10 +119,10 @@
       </template>
 
       <!-- 消息中间件专有 -->
-      <template v-if="deviceType === 'MQ'">
+      <template v-if="currentType === 'MQ'">
         <el-form-item label="类型" prop="mqType">
           <el-select v-model="form.mqType">
-            <el-option v-for="t in options.mqTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.mqTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="版本" prop="mqVersion">
@@ -127,10 +134,10 @@
       </template>
 
       <!-- 负载均衡专有 -->
-      <template v-if="deviceType === 'LB'">
+      <template v-if="currentType === 'LB'">
         <el-form-item label="类型" prop="lbType">
           <el-select v-model="form.lbType">
-            <el-option v-for="t in options.lbTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.lbTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="版本" prop="lbVersion">
@@ -139,10 +146,10 @@
       </template>
 
       <!-- 存储专有 -->
-      <template v-if="deviceType === 'STORAGE'">
+      <template v-if="currentType === 'STORAGE'">
         <el-form-item label="类型" prop="storageType">
           <el-select v-model="form.storageType">
-            <el-option v-for="t in options.storageTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.storageTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="厂商/型号" prop="storageVendor">
@@ -151,10 +158,10 @@
       </template>
 
       <!-- 网络设备专有 -->
-      <template v-if="deviceType === 'NETDEV'">
+      <template v-if="currentType === 'NETDEV'">
         <el-form-item label="类型" prop="netDevType">
           <el-select v-model="form.netDevType">
-            <el-option v-for="t in options.netDevTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.netDevTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="厂商" prop="netDevVendor">
@@ -166,10 +173,10 @@
       </template>
 
       <!-- GPU 专有 -->
-      <template v-if="deviceType === 'GPU'">
+      <template v-if="currentType === 'GPU'">
         <el-form-item label="厂商" prop="gpuVendor">
           <el-select v-model="form.gpuVendor">
-            <el-option v-for="t in options.gpuVendors" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.gpuVendors" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="型号" prop="gpuModel">
@@ -181,10 +188,10 @@
       </template>
 
       <!-- 电能专有 -->
-      <template v-if="deviceType === 'POWER'">
+      <template v-if="currentType === 'POWER'">
         <el-form-item label="电能类型" prop="powerType">
           <el-select v-model="form.powerType">
-            <el-option v-for="t in options.powerTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.powerTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="厂商" prop="powerVendor">
@@ -196,10 +203,10 @@
       </template>
 
       <!-- 储能专有 -->
-      <template v-if="deviceType === 'ESS'">
+      <template v-if="currentType === 'ESS'">
         <el-form-item label="储能类型" prop="essType">
           <el-select v-model="form.essType">
-            <el-option v-for="t in options.essTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.essTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="厂商" prop="essVendor">
@@ -211,15 +218,15 @@
       </template>
 
       <!-- 物联专有 -->
-      <template v-if="deviceType === 'IOT'">
+      <template v-if="currentType === 'IOT'">
         <el-form-item label="物联类型" prop="iotType">
           <el-select v-model="form.iotType">
-            <el-option v-for="t in options.iotTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.iotTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="协议" prop="iotProtocol">
           <el-select v-model="form.iotProtocol">
-            <el-option v-for="t in options.iotProtocols" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.iotProtocols" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="频段" prop="iotBand">
@@ -230,7 +237,7 @@
       </template>
 
       <!-- 单板机专有 -->
-      <template v-if="deviceType === 'SBC'">
+      <template v-if="currentType === 'SBC'">
         <el-form-item label="板卡型号" prop="boardModel">
           <el-select v-model="form.boardModel" placeholder="请选择">
             <el-option v-for="t in options.boardModels" :key="t" :label="t" :value="t" />
@@ -247,10 +254,10 @@
       </template>
 
       <!-- 安卓多开专有 -->
-      <template v-if="deviceType === 'ANDROID'">
+      <template v-if="currentType === 'ANDROID'">
         <el-form-item label="安卓类型" prop="androidType">
           <el-select v-model="form.androidType" placeholder="请选择">
-            <el-option v-for="t in options.androidTypes" :key="t" :label="t" :value="t" />
+            <el-option v-for="t in options.androidTypes" :key="t" :label="optLabel(t)" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="安卓版本" prop="androidVersion">
@@ -358,10 +365,42 @@ const TYPE_LABEL = {
   MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
   POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开",
 };
-const typeLabel = computed(() => TYPE_LABEL[props.deviceType] || "");
+
+// 枚举下拉项的中文标签映射：非专业用户难以辨识 SWITCH/FIREWALL 等原始枚举值
+const OPT_LABEL = {
+  // 网络设备
+  SWITCH: "交换机", FIREWALL: "防火墙", ROUTER: "路由器",
+  // 消息中间件 / 负载均衡（技术名保留原写法）
+  KAFKA: "Kafka", ROCKETMQ: "RocketMQ", RABBITMQ: "RabbitMQ",
+  NGINX: "Nginx", HAPROXY: "HAProxy", ALB: "应用型负载均衡(ALB)", F5: "F5 硬件负载均衡",
+  // 存储
+  CEPH: "Ceph 分布式存储", SAN: "SAN 块存储", NAS: "NAS 文件存储", MINIO: "MinIO 对象存储",
+  // GPU 厂商
+  NVIDIA: "英伟达 NVIDIA", AMD: "AMD", HUAWEI: "华为昇腾",
+  // 电能
+  UPS: "UPS 不间断电源", PDU: "PDU 机柜配电", METER: "电力计量表",
+  // 储能
+  LFP: "磷酸铁锂 LFP", NCM: "三元锂 NCM", LTO: "钛酸锂 LTO",
+  // 物联类型/协议
+  INFRARED: "红外感知", ENV: "环境监测", RF_GW: "射频网关", CAMERA: "摄像头",
+  LORA: "LoRa", ZIGBEE: "ZigBee", MQTT: "MQTT", MODBUS: "Modbus", NB_IOT: "NB-IoT",
+  // K8s 发行版/运行时/CNI
+  VANILLA: "原生 Kubernetes", OPENSHIFT: "OpenShift", RANCHER: "Rancher", EKS: "AWS EKS", AKS: "Azure AKS", GKE: "Google GKE", K3S: "K3s",
+  CONTAINERD: "containerd", DOCKER: "Docker", CRIO: "CRI-O",
+  CALICO: "Calico", FLANNEL: "Flannel", CILIUM: "Cilium", WEAVE: "Weave",
+  // 数据库
+  MYSQL: "MySQL", MARIADB: "MariaDB", POSTGRESQL: "PostgreSQL", ORACLE: "Oracle", SQLSERVER: "SQL Server", DM: "达梦 DM", KINGBASE: "人大金仓 KingbaseES", GAUSSDB: "华为 GaussDB", OPENGAUSS: "openGauss", TIDB: "TiDB", MONGODB: "MongoDB", CLICKHOUSE: "ClickHouse",
+  // 安卓多开
+  CLOUD_PHONE: "云手机", EMULATOR: "模拟器", REAL_FARM: "真机农场",
+};
+const optLabel = (t) => OPT_LABEL[t] || t;
+
+// 当前设备类型：新增模式取自 props.deviceType；编辑模式取自 editDevice.type，且允许在编辑时修改
+const currentType = ref(props.deviceType);
+const typeLabel = computed(() => TYPE_LABEL[currentType.value] || "");
 
 // 当前设备类型的「直连采集」凭据档案（无则为空对象，采集方式回落 Agent/SSH/SNMP/WinRM）
-const directProfile = computed(() => DIRECT_PROFILE[props.deviceType] || {});
+const directProfile = computed(() => DIRECT_PROFILE[currentType.value] || {});
 
 // 编辑状态：打开时根据 editDevice 是否存在确定
 const isEdit = ref(false);
@@ -482,6 +521,8 @@ const onOpen = async () => {
   if (props.editDevice) {
     isEdit.value = true;
     editId.value = props.editDevice.id;
+    // 编辑模式：类型取自设备本身，允许后续修改纠正
+    currentType.value = props.editDevice.type || props.deviceType;
     // 用已有设备数据回填表单（含采集配置字段）
     Object.keys(form).forEach((k) => {
       if (props.editDevice[k] !== undefined && props.editDevice[k] !== null) {
@@ -491,6 +532,7 @@ const onOpen = async () => {
   } else {
     isEdit.value = false;
     editId.value = null;
+    currentType.value = props.deviceType;
     form.port = DEFAULT_PORT[props.deviceType] || 22;
   }
   if (!options.value.osTypes) {
@@ -513,6 +555,10 @@ const onClosed = () => {
 watch(
   () => props.deviceType,
   () => {
+    // 新增模式下外部类型变化时同步当前类型与默认端口（编辑模式由 onOpen 接管）
+    if (!isEdit.value) {
+      currentType.value = props.deviceType;
+    }
     form.port = DEFAULT_PORT[props.deviceType] || 22;
   }
 );
@@ -528,10 +574,10 @@ watch(
       form.collectPort = 161;
       if (!form.collectSecret) form.collectSecret = "public";
     } else if (via === "DIRECT") {
-      const prof = DIRECT_PROFILE[props.deviceType];
-      let p = prof ? prof.port : form.port || DEFAULT_PORT[props.deviceType] || 6379;
+      const prof = DIRECT_PROFILE[currentType.value];
+      let p = prof ? prof.port : form.port || DEFAULT_PORT[currentType.value] || 6379;
       // MQ：Kafka 用 9092，RabbitMQ 用管理端口 15672
-      if (props.deviceType === "MQ") {
+      if (currentType.value === "MQ") {
         p = String(form.mqType || "").toUpperCase().includes("KAFKA") ? 9092 : 15672;
       }
       form.collectPort = p;
@@ -544,7 +590,7 @@ const submit = () => {
     if (!ok) return;
     submitting.value = true;
     try {
-      const payload = { name: form.name, ip: form.ip, port: form.port, type: props.deviceType };
+      const payload = { name: form.name, ip: form.ip, port: form.port, type: currentType.value };
       if (isEdit.value && editId.value != null) {
         payload.id = editId.value;
       }
@@ -562,7 +608,7 @@ const submit = () => {
         payload.collectUser = form.collectUser;
         payload.collectSecret = form.collectSecret;
       }
-      if (props.deviceType === "SERVER") {
+      if (currentType.value === "SERVER") {
         Object.assign(payload, {
           category: form.category,
           vmType: form.category === "VM" ? form.vmType : "NONE",
@@ -570,19 +616,19 @@ const submit = () => {
           osName: form.osName,
           collectMode: form.collectMode,
         });
-      } else if (props.deviceType === "REDIS") {
+      } else if (currentType.value === "REDIS") {
         Object.assign(payload, {
           redisVersion: form.redisVersion,
           redisMode: form.redisMode,
           redisRole: form.redisRole,
         });
-      } else if (props.deviceType === "DATABASE") {
+      } else if (currentType.value === "DATABASE") {
         Object.assign(payload, {
           dbType: form.dbType,
           dbName: form.dbName,
           dbVersion: form.dbVersion,
         });
-      } else if (props.deviceType === "K8S") {
+      } else if (currentType.value === "K8S") {
         Object.assign(payload, {
           k8sVersion: form.k8sVersion,
           k8sDistro: form.k8sDistro,
@@ -590,56 +636,56 @@ const submit = () => {
           k8sCni: form.k8sCni,
           nodeCount: form.nodeCount,
         });
-      } else if (props.deviceType === "MQ") {
+      } else if (currentType.value === "MQ") {
         Object.assign(payload, {
           mqType: form.mqType,
           mqVersion: form.mqVersion,
           brokerCount: form.brokerCount,
         });
-      } else if (props.deviceType === "LB") {
+      } else if (currentType.value === "LB") {
         Object.assign(payload, { lbType: form.lbType, lbVersion: form.lbVersion });
-      } else if (props.deviceType === "STORAGE") {
+      } else if (currentType.value === "STORAGE") {
         Object.assign(payload, {
           storageType: form.storageType,
           storageVendor: form.storageVendor,
         });
-      } else if (props.deviceType === "NETDEV") {
+      } else if (currentType.value === "NETDEV") {
         Object.assign(payload, {
           netDevType: form.netDevType,
           netDevVendor: form.netDevVendor,
           netDevModel: form.netDevModel,
         });
-      } else if (props.deviceType === "GPU") {
+      } else if (currentType.value === "GPU") {
         Object.assign(payload, {
           gpuVendor: form.gpuVendor,
           gpuModel: form.gpuModel,
           gpuCount: form.gpuCount,
         });
-      } else if (props.deviceType === "POWER") {
+      } else if (currentType.value === "POWER") {
         Object.assign(payload, {
           powerType: form.powerType,
           powerVendor: form.powerVendor,
           ratedPower: form.ratedPower,
         });
-      } else if (props.deviceType === "ESS") {
+      } else if (currentType.value === "ESS") {
         Object.assign(payload, {
           essType: form.essType,
           essVendor: form.essVendor,
           essCapacity: form.essCapacity,
         });
-      } else if (props.deviceType === "IOT") {
+      } else if (currentType.value === "IOT") {
         Object.assign(payload, {
           iotType: form.iotType,
           iotProtocol: form.iotProtocol,
           iotBand: form.iotBand,
         });
-      } else if (props.deviceType === "SBC") {
+      } else if (currentType.value === "SBC") {
         Object.assign(payload, {
           boardModel: form.boardModel,
           socModel: form.socModel,
           cpuArch: form.cpuArch,
         });
-      } else if (props.deviceType === "ANDROID") {
+      } else if (currentType.value === "ANDROID") {
         Object.assign(payload, {
           androidType: form.androidType,
           androidVersion: form.androidVersion,
