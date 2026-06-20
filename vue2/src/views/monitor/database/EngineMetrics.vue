@@ -22,7 +22,10 @@
         <section-card dense v-for="(g, gi) in groups" :key="'g' + gi" :title="g.title || '指标组'" icon="el-icon-s-data">
           <InfoTable :rows="groupRows(g)" :columns="2" />
         </section-card>
+      </card-grid>
 
+      <!-- Top SQL 指标内容较多：独占一行(上下结构) -->
+      <card-grid min="320px" gap="8px">
         <section-card dense scrollable class="fill" body-class="dense-table fill" title="Top SQL" icon="el-icon-s-marketing">
           <template #extra>共 {{ topSql.length }} 条</template>
           <el-table class="dense-table" height="100%" :data="topSql" size="small" stripe>

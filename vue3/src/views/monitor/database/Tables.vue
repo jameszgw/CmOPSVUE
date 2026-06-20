@@ -1,8 +1,10 @@
 <template>
   <div v-loading="loading" class="tab-pane">
-    <CardGrid min="240px" gap="8px" class="stat-grid">
+    <CardGrid min="200px" gap="8px" class="stat-grid">
+      <StatCard dense icon="Files" label="库数量" :value="d.databaseCount ?? '-'"
+        sub="业务数据库数" color="#e6a23c" />
       <StatCard dense icon="Grid" label="表数量" :value="d.tableCount ?? '-'"
-        sub="数据库表总数" color="#409eff" />
+        sub="所有库表总数" color="#409eff" />
       <StatCard dense icon="Tickets" label="总行数" :value="kfmt(d.totalRows)"
         sub="所有表行数合计" color="#67c23a" />
       <StatCard dense icon="Coin" label="总大小" :value="d.totalSize || '-'"
@@ -10,8 +12,8 @@
     </CardGrid>
 
     <CardGrid min="320px" gap="8px" class="body-grid">
-      <SectionCard dense title="Top 10 最大的表" icon="Sort" class="span-all fill" scrollable bodyClass="dense-table fill">
-        <el-table class="dense-table" height="100%" :data="d.topTables || []" size="small" stripe>
+      <SectionCard dense title="Top 10 最大的表" icon="Sort" class="span-all" scrollable bodyClass="dense-table">
+        <el-table class="dense-table" :max-height="300" :data="d.topTables || []" size="small" stripe>
         <el-table-column label="排名" width="80" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="rankType(row.rank)" effect="plain">{{ row.rank }}</el-tag>
@@ -37,8 +39,11 @@
         </el-table-column>
         </el-table>
       </SectionCard>
+    </CardGrid>
 
-      <SectionCard dense title="所有表详情" icon="List" class="span-all fill" scrollable bodyClass="fill">
+    <!-- 所有表详情数据较多：独占一行(上下结构)，占满剩余高度并内部滚动 -->
+    <CardGrid min="320px" gap="8px" class="body-grid fill">
+      <SectionCard dense title="所有表详情" icon="List" class="fill" scrollable bodyClass="fill">
         <template #extra>共 {{ (d.allTables || []).length }} 张表</template>
         <el-empty v-if="!(d.allTables || []).length" description="暂无数据" :image-size="60" />
         <div v-else class="table-grid">
@@ -141,14 +146,19 @@ onMounted(load);
 .stat-grid {
   flex-shrink: 0;
 }
+/* Top10 网格按内容高度；所有表详情网格占满剩余高度并内部滚动(上下结构) */
 .body-grid {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
   align-content: start;
+}
+.body-grid.fill {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 .span-all {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
+  width: 100%;
 }
 .schema-text {
   color: var(--cm-text-secondary);

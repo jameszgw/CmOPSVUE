@@ -29,8 +29,11 @@
       <SectionCard dense v-for="(g, gi) in d.groups || []" :key="gi" :title="g.title || '指标组'" icon="Tickets">
         <InfoTable :rows="groupRows(g)" :columns="2" />
       </SectionCard>
+    </CardGrid>
 
-      <SectionCard dense title="Top SQL" icon="List" class="span-all fill" scrollable bodyClass="dense-table fill">
+    <!-- Top SQL 指标内容较多：独占一行(上下结构)，整行占满 -->
+    <CardGrid min="320px" gap="8px" class="body-grid fill">
+      <SectionCard dense title="Top SQL" icon="List" class="fill" scrollable bodyClass="dense-table fill">
         <template #extra>共 {{ (d.topSql || []).length }} 条</template>
         <el-empty v-if="!(d.topSql || []).length" description="暂无数据" :image-size="60" />
         <el-table v-else class="dense-table" height="100%" :data="d.topSql || []" size="small" stripe>
@@ -122,14 +125,19 @@ onMounted(load);
   gap: 8px;
   overflow: hidden;
 }
+/* 上半部分(引擎指标+指标组)按内容高度；Top SQL 所在网格占满剩余高度并内部滚动 */
 .body-grid {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
   align-content: start;
+}
+.body-grid.fill {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 .span-all {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
+  width: 100%;
 }
 .engine-head {
   display: flex;
