@@ -36,7 +36,10 @@
             </el-table-column>
           </el-table>
         </section-card>
+      </card-grid>
 
+      <!-- 所有表详情数据较多：独占一行(上下结构) -->
+      <card-grid min="320px" gap="8px">
         <section-card dense scrollable class="fill" title="所有表详情" icon="el-icon-s-grid">
           <template #extra>共 {{ (d.allTables && d.allTables.length) || 0 }} 张表</template>
           <el-row :gutter="12">
