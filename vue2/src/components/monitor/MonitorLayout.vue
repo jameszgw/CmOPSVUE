@@ -79,6 +79,19 @@
               {{ autoRefresh ? "自动刷新中" : "已暂停" }}
             </el-button>
           </el-tooltip>
+          <el-select
+            v-model="refreshMs"
+            size="mini"
+            class="monitor-layout__interval"
+            @change="onRefreshMsChange"
+          >
+            <el-option
+              v-for="opt in REFRESH_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
           <el-button icon="el-icon-refresh-right" circle size="mini" @click="refreshNow" />
           <el-tag :type="currentDevice && currentDevice.connected ? 'success' : 'info'" size="small" effect="light">
             {{ currentDevice && currentDevice.connected ? "已连接" : "未连接" }}
@@ -180,6 +193,18 @@ import AddDeviceDialog from "./AddDeviceDialog.vue";
 // 默认采集端口（与 AddDeviceDialog 一致：SSH 22 / SNMP 161 / WinRM 5985）
 const COLLECT_DEFAULT_PORT = { SSH: 22, SNMP: 161, WINRM: 5985 };
 
+// 自动刷新间隔可选项（每设备可单独配置）
+const REFRESH_OPTIONS = [
+  { label: "3 秒", value: 3000 },
+  { label: "5 秒", value: 5000 },
+  { label: "10 秒", value: 10000 },
+  { label: "30 秒", value: 30000 },
+  { label: "60 秒", value: 60000 },
+];
+
+// 刷新间隔持久化键：按设备维度存储，回落全局默认
+const REFRESH_KEY_DEFAULT = "cmops:refreshMs:default";
+
 // 获取方式（采集方式）标签映射，用于头部展示设备配置的采集方式
 const COLLECT_VIA_LABEL = {
   NONE: "模拟数据",
@@ -202,11 +227,13 @@ export default {
   data() {
     return {
       COLLECT_VIA_LABEL,
+      REFRESH_OPTIONS,
       keyword: "",
       devices: [],
       currentDeviceId: "",
       activeKey: this.tabs[0] ? this.tabs[0].key : "",
       autoRefresh: true,
+      refreshMs: this.interval,
       refreshToken: 0,
       loadingDevices: false,
       addVisible: false,
@@ -271,11 +298,16 @@ export default {
     autoRefresh() {
       this.setupTimer();
     },
+    // 刷新间隔变化时重新计时
+    refreshMs() {
+      this.setupTimer();
+    },
     // 响应路由 query.deviceId 变化（同类型页面内切换）
     "$route.query.deviceId"(id) {
       if (id && this.devices.some((d) => d.id === id) && id !== this.currentDeviceId) {
         this.currentDeviceId = id;
         this.persistDevice(id);
+        this.refreshMs = this.readRefreshMs(id);
         this.refreshNow();
       }
     },
@@ -307,6 +339,35 @@ export default {
         /* ignore */
       }
     },
+    refreshKey(id) {
+      return `cmops:refreshMs:${id}`;
+    },
+    // 读取设备刷新间隔：按设备 > 全局默认 > interval prop
+    readRefreshMs(id) {
+      try {
+        const perDevice = id ? localStorage.getItem(this.refreshKey(id)) : null;
+        if (perDevice) return Number(perDevice);
+        const global = localStorage.getItem(REFRESH_KEY_DEFAULT);
+        if (global) return Number(global);
+      } catch (e) {
+        /* ignore */
+      }
+      return this.interval;
+    },
+    persistRefreshMs(id, ms) {
+      try {
+        if (id) {
+          localStorage.setItem(this.refreshKey(id), String(ms));
+        }
+        localStorage.setItem(REFRESH_KEY_DEFAULT, String(ms));
+      } catch (e) {
+        /* ignore */
+      }
+    },
+    // 修改刷新间隔：持久化到当前设备 + 全局默认，并重新计时（watch 接管）
+    onRefreshMsChange(ms) {
+      this.persistRefreshMs(this.currentDeviceId, ms);
+    },
     async loadDevices(preferId) {
       this.loadingDevices = true;
       try {
@@ -329,6 +390,8 @@ export default {
         }
         this.currentDeviceId = target;
         this.persistDevice(target);
+        // 载入该设备保存的刷新间隔
+        this.refreshMs = this.readRefreshMs(target);
       } finally {
         this.loadingDevices = false;
       }
@@ -338,6 +401,8 @@ export default {
     },
     onDeviceChange() {
       this.persistDevice(this.currentDeviceId);
+      // 切换设备时载入该设备的刷新间隔
+      this.refreshMs = this.readRefreshMs(this.currentDeviceId);
       this.refreshNow();
     },
     onDeviceAdded(device) {
@@ -436,7 +501,7 @@ export default {
     setupTimer() {
       this.clearTimer();
       if (this.autoRefresh) {
-        this.timer = setInterval(this.refreshNow, this.interval);
+        this.timer = setInterval(this.refreshNow, this.refreshMs);
       }
     },
     clearTimer() {
@@ -553,6 +618,10 @@ export default {
 
   &__device {
     width: 220px;
+  }
+
+  &__interval {
+    width: 96px;
   }
 
   &__device-sub {

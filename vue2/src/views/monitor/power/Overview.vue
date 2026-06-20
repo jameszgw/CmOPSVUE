@@ -129,7 +129,8 @@ export default {
     },
     async load() {
       if (!this.deviceId) return;
-      this.loading = true;
+      const hasData = this.d && (Array.isArray(this.d) ? this.d.length : Object.keys(this.d).length);
+      if (!hasData) this.loading = true;
       try {
         const res = await getPowerOverview(this.deviceId);
         this.d = res.content || {};

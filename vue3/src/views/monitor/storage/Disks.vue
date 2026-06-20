@@ -93,7 +93,8 @@ const smartType = (s) => {
 
 const load = async () => {
   if (!props.deviceId) return;
-  loading.value = true;
+  const hasData = data.value && (Array.isArray(data.value) ? data.value.length : Object.keys(data.value).length);
+  if (!hasData) loading.value = true;
   try {
     const res = await getStorageDisks(props.deviceId);
     data.value = res.content || {};
