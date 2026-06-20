@@ -58,7 +58,7 @@
         <el-row :gutter="8">
           <el-col v-for="(v, k) in d.times || {}" :key="k" :xs="12" :sm="8">
             <div class="grid-metric">
-              <div class="grid-metric__label">{{ k }}</div>
+              <div class="grid-metric__label">{{ cpuKeyLabel(k) }}<span class="grid-metric__en">{{ k }}</span></div>
               <div class="grid-metric__value">{{ fmt(v) }}</div>
             </div>
           </el-col>
@@ -68,7 +68,7 @@
         <el-row :gutter="8">
           <el-col v-for="(v, k) in d.stats || {}" :key="k" :xs="12" :sm="8">
             <div class="grid-metric">
-              <div class="grid-metric__label">{{ k }}</div>
+              <div class="grid-metric__label">{{ cpuKeyLabel(k) }}<span class="grid-metric__en">{{ k }}</span></div>
               <div class="grid-metric__value">{{ fmt(v) }}</div>
             </div>
           </el-col>
@@ -100,6 +100,27 @@ const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 const clamp = (v) => Math.max(0, Math.min(100, Number(v) || 0));
 const fmt = (v) =>
   typeof v === "number" && Math.abs(v) >= 1000 ? v.toLocaleString() : v;
+
+// CPU 时间统计 / 统计信息 指标键的中文名（原仅显示英文）
+const CPU_KEY_LABEL = {
+  // 时间统计（CPU 各状态累计时间）
+  user: "用户态",
+  nice: "低优先级用户态",
+  system: "内核态",
+  idle: "空闲",
+  iowait: "IO 等待",
+  irq: "硬中断",
+  softirq: "软中断",
+  steal: "被抢占",
+  guest: "客户机",
+  guestNice: "客户机(低优先级)",
+  // 统计信息
+  ctxSwitches: "上下文切换",
+  interrupts: "中断数",
+  softInterrupts: "软中断数",
+  syscalls: "系统调用",
+};
+const cpuKeyLabel = (k) => CPU_KEY_LABEL[k] || k;
 const coreColor = (v) => (v > 80 ? "#f56c6c" : v > 50 ? "#e6a23c" : "#409eff");
 
 // 真实采集来源（非模拟/无数据）则徽标用 success
@@ -168,6 +189,11 @@ onMounted(load);
     font-size: 12px;
     color: var(--cm-text-secondary);
     margin-bottom: 4px;
+  }
+  &__en {
+    margin-left: 4px;
+    font-size: 11px;
+    color: var(--cm-text-placeholder, #c0c4cc);
   }
   &__value {
     font-size: 15px;
