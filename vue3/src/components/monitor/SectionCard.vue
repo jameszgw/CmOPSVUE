@@ -104,6 +104,9 @@ defineProps({
     /* 内容区填满卡片剩余高度，便于内部表格/图表占满、必要时内部滚动 */
     flex: 1;
     min-height: 0;
+    /* 关键：当"占满一屏"把卡片压得比内容矮时(如小屏下 各核心使用率/CPU时间统计)，
+       内部滚动而非被卡片底边裁切遮挡数据 */
+    overflow: auto;
 
     &--scroll {
       overflow: auto;

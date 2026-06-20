@@ -100,6 +100,8 @@ export default {
     padding: @space-lg;
     flex: 1;
     min-height: 0;
+    /* 关键：当"占满一屏"把卡片压得比内容矮时，内部滚动而非被卡片底边裁切遮挡数据 */
+    overflow: auto;
 
     &--scroll {
       overflow: auto;
