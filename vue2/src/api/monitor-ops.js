@@ -258,6 +258,51 @@ export function getCveRegistry() {
   return request(`${BASE}/vuln/cve-registry`, { method: "GET" });
 }
 
+// ===== 10b) 安全漏洞-扩展（NVD CVE 库维护 / Trivy 镜像漏洞）=====
+/** NVD 在线同步（需平台出网） -> {productsSynced,cvesUpserted,mode} */
+export function nvdSync() {
+  return request(`${BASE}/vuln/nvd-sync`, { method: "POST" });
+}
+
+/** 导入 NVD 2.0 feed（离线/内网） -> {cvesUpserted,mode} */
+export function nvdImport(feed) {
+  return request(`${BASE}/vuln/nvd-import`, { method: "POST", data: { feed } });
+}
+
+/** 动态 CVE 库条数 -> {count} */
+export function getCveDbCount() {
+  return request(`${BASE}/vuln/cve-db-count`, { method: "GET" });
+}
+
+/** Trivy 是否可用 -> {available} */
+export function trivyAvailable() {
+  return request(`${BASE}/vuln/trivy/available`, { method: "GET" });
+}
+
+/** Trivy 扫描镜像 -> {ok,image,findings} 或 {ok:false,note} */
+export function trivyScan(image) {
+  return request(`${BASE}/vuln/trivy/scan`, {
+    method: "POST",
+    params: { image },
+  });
+}
+
+/** 导入 Trivy JSON 结果 -> {ok,findings,mode} 或 {ok:false,note} */
+export function trivyImport(jsonText, image) {
+  return request(`${BASE}/vuln/trivy/import`, {
+    method: "POST",
+    data: { json: jsonText, image },
+  });
+}
+
+/** Trivy 漏洞清单 -> [{image,severity,cve,title,detail,recommendation}] */
+export function getTrivyFindings(limit = 200) {
+  return request(`${BASE}/vuln/trivy/findings`, {
+    method: "GET",
+    params: { limit },
+  });
+}
+
 // ===== 8) 运维报告 =====
 /** 报告汇总 */
 export function getReportSummary(windowDays = 7) {
