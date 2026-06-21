@@ -141,6 +141,17 @@ export function getAuditList(limit = 100, operator, action) {
   });
 }
 
+// ===== 6b) 日志检索 =====
+/** 日志检索 */
+export function getLogSearch(params) {
+  return request(`${BASE}/log/search`, { method: "GET", params });
+}
+
+/** 日志统计 */
+export function getLogStats(windowMin = 60) {
+  return request(`${BASE}/log/stats`, { method: "GET", params: { windowMin } });
+}
+
 // ===== 7) 自愈 / 修复规则 =====
 /** 自愈规则列表 */
 export function getRemediationRules() {

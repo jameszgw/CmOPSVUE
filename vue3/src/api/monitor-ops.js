@@ -123,6 +123,15 @@ export const getAuditList = (limit = 100, operator, action) =>
     params: { limit, operator, action },
   });
 
+// ===== 6b) 日志检索 =====
+/** 日志检索 */
+export const getLogSearch = (params) =>
+  request(`${BASE}/log/search`, { method: "GET", params });
+
+/** 日志统计 */
+export const getLogStats = (windowMin = 60) =>
+  request(`${BASE}/log/stats`, { method: "GET", params: { windowMin } });
+
 // ===== 7) 自动修复 / 编排规则 =====
 /** 修复规则列表 */
 export const getRemediationRules = () =>
