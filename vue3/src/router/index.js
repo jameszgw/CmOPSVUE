@@ -39,6 +39,9 @@ const routes = [
       { path: "/devops/monitor/capacity", component: () => import("@/views/monitor/MonitorCapacity.vue") },
       { path: "/devops/monitor/dialtest", component: () => import("@/views/monitor/MonitorDialtest.vue") },
       { path: "/devops/monitor/audit", component: () => import("@/views/monitor/MonitorAudit.vue") },
+      { path: "/devops/monitor/remediation", component: () => import("@/views/monitor/MonitorRemediation.vue") },
+      { path: "/devops/monitor/oncall", component: () => import("@/views/monitor/MonitorOncall.vue") },
+      { path: "/devops/monitor/report", component: () => import("@/views/monitor/MonitorReport.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },
       { path: "/devops/ops/host-detail/:id", component: () => import("@/views/ops/HostDetail.vue") },
