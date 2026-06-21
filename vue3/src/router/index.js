@@ -35,6 +35,10 @@ const routes = [
       { path: "/devops/monitor/metric-dict", component: () => import("@/views/monitor/MetricDictionary.vue") },
       { path: "/devops/monitor/device-manage", component: () => import("@/views/monitor/DeviceManage.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
+      { path: "/devops/monitor/slo", component: () => import("@/views/monitor/MonitorSlo.vue") },
+      { path: "/devops/monitor/capacity", component: () => import("@/views/monitor/MonitorCapacity.vue") },
+      { path: "/devops/monitor/dialtest", component: () => import("@/views/monitor/MonitorDialtest.vue") },
+      { path: "/devops/monitor/audit", component: () => import("@/views/monitor/MonitorAudit.vue") },
       // ===== 运维监控 =====
       { path: "/devops/ops/host-list", component: () => import("@/views/ops/HostList.vue") },
       { path: "/devops/ops/host-detail/:id", component: () => import("@/views/ops/HostDetail.vue") },

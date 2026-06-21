@@ -47,7 +47,17 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="deviceName" label="设备" min-width="120" show-overflow-tooltip />
+            <el-table-column label="设备" min-width="150" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span>{{ row.deviceName }}</span>
+                <el-tag v-if="row.escalated" size="small" type="danger" effect="dark" class="badge">
+                  已升级
+                </el-tag>
+                <el-tag v-if="row.suppressed" size="small" type="info" effect="plain" class="badge">
+                  维护静默
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column prop="metricLabel" label="指标" min-width="110" show-overflow-tooltip />
             <el-table-column label="当前值" width="110">
               <template #default="{ row }">
@@ -59,10 +69,21 @@
                 {{ cmpSymbol(row.comparator) }} {{ fmtVal(row.threshold, row.unit) }}
               </template>
             </el-table-column>
-            <el-table-column prop="message" label="描述" min-width="180" show-overflow-tooltip />
+            <el-table-column label="来源" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" type="info" effect="plain">{{ row.source || "-" }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="message" label="描述" min-width="160" show-overflow-tooltip />
             <el-table-column prop="firstTime" label="首次" width="170" />
-            <el-table-column label="持续" width="100">
+            <el-table-column label="持续" width="90">
               <template #default="{ row }">{{ num(row.durationMin) }} 分钟</template>
+            </el-table-column>
+            <el-table-column label="操作" width="130" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="warning" size="small" @click="onAck(row)">确认</el-button>
+                <el-button link type="success" size="small" @click="onResolve(row)">恢复</el-button>
+              </template>
             </el-table-column>
             <template #empty>
               <el-empty description="暂无活跃告警" :image-size="60" />
@@ -266,6 +287,7 @@ import {
   deleteAlertRule,
   toggleAlertRule,
 } from "@/api/monitor-alert";
+import { ackAlertEvent, resolveAlertEvent } from "@/api/monitor-ops";
 
 const loading = ref(false);
 const activeTab = ref("overview");
@@ -277,6 +299,9 @@ const rules = ref([]);
 
 const filterLevel = ref("");
 const filterType = ref("");
+
+// 当前操作者（用于告警确认）
+const userEmail = "admin";
 
 // ----- 工具方法 -----
 const num = (v) => (v === undefined || v === null || v === "" ? "-" : v);
@@ -355,6 +380,27 @@ const onToggle = async (row, val) => {
   } catch (e) {
     row.enabled = !val; // 回滚
     ElMessage.error("操作失败");
+  }
+};
+
+// ----- 告警确认 / 恢复 -----
+const onAck = async (row) => {
+  try {
+    await ackAlertEvent(row.id, userEmail);
+    ElMessage.success("已确认");
+    await Promise.all([loadActive(), loadStats()]);
+  } catch (e) {
+    ElMessage.error("确认失败");
+  }
+};
+
+const onResolve = async (row) => {
+  try {
+    await resolveAlertEvent(row.id);
+    ElMessage.success("已恢复");
+    await Promise.all([loadActive(), loadStats(), loadHistory()]);
+  } catch (e) {
+    ElMessage.error("恢复失败");
   }
 };
 
@@ -521,6 +567,9 @@ onBeforeUnmount(() => {
 .val-strong {
   font-weight: 600;
   color: var(--cm-text-primary);
+}
+.badge {
+  margin-left: 6px;
 }
 .cond-warn {
   color: var(--cm-color-warning);
