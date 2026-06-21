@@ -51,6 +51,7 @@
             <el-option label="凭证" value="CREDENTIAL" />
             <el-option label="基线" value="BASELINE" />
             <el-option label="TLS" value="TLS" />
+            <el-option label="IMAGE / 镜像漏洞" value="IMAGE" />
           </el-select>
           <el-select v-model="filter.status" size="small" style="width: 110px">
             <el-option label="待处置" value="open" />
@@ -129,6 +130,90 @@
         </template>
       </el-table>
     </section-card>
+
+    <!-- CVE 库维护 (NVD) -->
+    <section-card dense class="ext-card" title="CVE 库维护 (NVD)" icon="el-icon-tickets">
+      <template #extra>
+        <span class="hint">在线同步需平台出网；离线/内网请用导入 feed</span>
+      </template>
+      <div class="ext-row">
+        <span class="ext-label">动态CVE库条数：</span>
+        <el-tag size="small" type="primary" effect="dark">{{ num(cveDbCount) }}</el-tag>
+        <el-button type="primary" size="small" :loading="nvdSyncing" @click="onNvdSync">
+          NVD 在线同步
+        </el-button>
+        <el-button size="small" @click="nvdDialog = true">导入 NVD feed</el-button>
+      </div>
+    </section-card>
+
+    <!-- 容器镜像漏洞 (Trivy) -->
+    <section-card
+      dense
+      scrollable
+      body-class="dense-table"
+      class="ext-card"
+      title="容器镜像漏洞 (Trivy)"
+      icon="el-icon-warning-outline"
+    >
+      <template #extra>
+        <el-tag v-if="trivyOk" size="small" type="success" effect="dark">可用</el-tag>
+        <el-tag v-else size="small" type="info" effect="plain">
+          未安装（宿主未装 trivy，可用 CI 离线导入）
+        </el-tag>
+      </template>
+      <div class="ext-row">
+        <el-input v-model="trivyImage" size="small" style="width: 220px"
+          placeholder="镜像引用，如 nginx:1.20" />
+        <el-button type="primary" size="small" :loading="trivyScanning" @click="onTrivyScan">
+          扫描镜像
+        </el-button>
+        <el-button size="small" @click="trivyDialog = true">导入 Trivy JSON</el-button>
+      </div>
+      <el-table class="dense-table" :data="trivyFindings" size="small" stripe>
+        <el-table-column prop="image" label="镜像" min-width="140" show-overflow-tooltip />
+        <el-table-column label="级别" width="90">
+          <template slot-scope="{ row }">
+            <el-tag size="small" :type="severityType(row.severity)" effect="dark">
+              {{ severityText(row.severity) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="cve" label="CVE" width="160" show-overflow-tooltip />
+        <el-table-column prop="title" label="漏洞" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="detail" label="详情" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="recommendation" label="建议" min-width="180" show-overflow-tooltip />
+        <template slot="empty">
+          <el-empty description="暂无镜像漏洞记录" :image-size="60" />
+        </template>
+      </el-table>
+    </section-card>
+
+    <!-- 导入 NVD feed 对话框 -->
+    <el-dialog :visible.sync="nvdDialog" title="导入 NVD feed" width="640px" append-to-body>
+      <p class="dialog-hint">离线/内网用，无需平台直连外网。粘贴 NVD 2.0 JSON。</p>
+      <el-input v-model="nvdFeed" type="textarea" :rows="12" resize="none"
+        placeholder="粘贴 NVD 2.0 JSON…" />
+      <template #footer>
+        <el-button size="small" @click="nvdDialog = false">取消</el-button>
+        <el-button type="primary" size="small" :loading="nvdImporting" @click="onNvdImport">
+          导入
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 导入 Trivy JSON 对话框 -->
+    <el-dialog :visible.sync="trivyDialog" title="导入 Trivy JSON" width="640px" append-to-body>
+      <el-input v-model="trivyImportImage" size="small" style="margin-bottom: 8px"
+        placeholder="镜像引用，如 nginx:1.20" />
+      <el-input v-model="trivyJson" type="textarea" :rows="12" resize="none"
+        placeholder="粘贴 trivy JSON…" />
+      <template #footer>
+        <el-button size="small" @click="trivyDialog = false">取消</el-button>
+        <el-button type="primary" size="small" :loading="trivyImporting" @click="onTrivyImport">
+          导入
+        </el-button>
+      </template>
+    </el-dialog>
   </screen-page>
 </template>
 
@@ -143,6 +228,13 @@ import {
   scanVuln,
   resolveVuln,
   getCveRegistry,
+  nvdSync,
+  nvdImport,
+  getCveDbCount,
+  trivyAvailable,
+  trivyScan,
+  trivyImport,
+  getTrivyFindings,
 } from "@/api/monitor-ops";
 
 const CATEGORIES = [
@@ -170,6 +262,21 @@ export default {
         category: "",
         status: "open",
       },
+      // 扩展：NVD CVE 库维护
+      cveDbCount: 0,
+      nvdSyncing: false,
+      nvdDialog: false,
+      nvdFeed: "",
+      nvdImporting: false,
+      // 扩展：Trivy 镜像漏洞
+      trivyOk: false,
+      trivyImage: "",
+      trivyScanning: false,
+      trivyFindings: [],
+      trivyDialog: false,
+      trivyImportImage: "",
+      trivyJson: "",
+      trivyImporting: false,
     };
   },
   computed: {
@@ -190,6 +297,9 @@ export default {
   },
   mounted() {
     this.load();
+    this.loadCveDbCount();
+    this.loadTrivyAvailable();
+    this.loadTrivyFindings();
   },
   methods: {
     num(v) {
@@ -276,6 +386,113 @@ export default {
         })
         .catch(() => {});
     },
+    // ===== 扩展：NVD CVE 库维护 =====
+    async loadCveDbCount() {
+      try {
+        const res = await getCveDbCount();
+        this.cveDbCount = (res.content && res.content.count) || 0;
+      } catch (e) {
+        // 静默
+      }
+    },
+    async onNvdSync() {
+      this.nvdSyncing = true;
+      try {
+        const res = await nvdSync();
+        const c = res.content || {};
+        this.$message.success(
+          `已同步 ${this.num(c.cvesUpserted)} 条 (${this.num(
+            c.productsSynced
+          )} 个产品)`
+        );
+        await this.loadCveDbCount();
+      } catch (e) {
+        this.$message.error("同步失败");
+      } finally {
+        this.nvdSyncing = false;
+      }
+    },
+    async onNvdImport() {
+      if (!this.nvdFeed.trim()) {
+        this.$message.warning("请粘贴 NVD 2.0 JSON");
+        return;
+      }
+      this.nvdImporting = true;
+      try {
+        const res = await nvdImport(this.nvdFeed);
+        const c = res.content || {};
+        this.$message.success(`已导入 ${this.num(c.cvesUpserted)} 条`);
+        this.nvdDialog = false;
+        this.nvdFeed = "";
+        await this.loadCveDbCount();
+      } catch (e) {
+        this.$message.error("导入失败");
+      } finally {
+        this.nvdImporting = false;
+      }
+    },
+    // ===== 扩展：Trivy 镜像漏洞 =====
+    async loadTrivyAvailable() {
+      try {
+        const res = await trivyAvailable();
+        this.trivyOk = !!(res.content && res.content.available);
+      } catch (e) {
+        this.trivyOk = false;
+      }
+    },
+    async loadTrivyFindings() {
+      try {
+        const res = await getTrivyFindings(200);
+        this.trivyFindings = res.content || [];
+      } catch (e) {
+        // 静默
+      }
+    },
+    async onTrivyScan() {
+      if (!this.trivyImage.trim()) {
+        this.$message.warning("请输入镜像引用");
+        return;
+      }
+      this.trivyScanning = true;
+      try {
+        const res = await trivyScan(this.trivyImage.trim());
+        const c = res.content || {};
+        if (c.ok) {
+          this.$message.success(`扫描完成：${this.num(c.findings)} 条漏洞`);
+        } else {
+          this.$message.info(c.note || "未执行扫描");
+        }
+        await this.loadTrivyFindings();
+      } catch (e) {
+        this.$message.error("扫描失败");
+      } finally {
+        this.trivyScanning = false;
+      }
+    },
+    async onTrivyImport() {
+      if (!this.trivyJson.trim()) {
+        this.$message.warning("请粘贴 trivy JSON");
+        return;
+      }
+      this.trivyImporting = true;
+      try {
+        const res = await trivyImport(this.trivyJson, this.trivyImportImage.trim());
+        const c = res.content || {};
+        if (c.ok === false) {
+          this.$message.info(c.note || "导入未生效");
+        } else {
+          this.$message.success(`已导入 ${this.num(c.findings)} 条`);
+        }
+        this.trivyDialog = false;
+        this.trivyJson = "";
+        this.trivyImportImage = "";
+        await this.loadTrivyFindings();
+      } catch (e) {
+        this.$message.error("导入失败");
+      } finally {
+        this.trivyImporting = false;
+      }
+    },
   },
 };
 </script>
@@ -317,5 +534,28 @@ export default {
 }
 .cve-card {
   flex-shrink: 0;
+}
+.ext-card {
+  flex-shrink: 0;
+}
+.ext-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: @space-sm;
+  margin-bottom: @space-xs;
+}
+.ext-label {
+  font-size: 12px;
+  color: var(--cm-text-secondary);
+}
+.hint {
+  font-size: 12px;
+  color: var(--cm-text-secondary);
+}
+.dialog-hint {
+  font-size: 12px;
+  color: var(--cm-text-secondary);
+  margin: 0 0 8px;
 }
 </style>
