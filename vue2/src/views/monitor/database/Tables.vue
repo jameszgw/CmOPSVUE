@@ -38,12 +38,52 @@
         </section-card>
       </card-grid>
 
+      <!-- 数据库列表(逐库)：独占一行，仅在后端返回 databases 时显示 -->
+      <card-grid v-if="(d.databases && d.databases.length) || 0" min="320px" gap="8px">
+        <section-card dense scrollable class="fill" body-class="dense-table" title="数据库列表" icon="el-icon-coin">
+          <template #extra>共 {{ (d.databases && d.databases.length) || 0 }} 个库</template>
+          <el-table class="dense-table" :max-height="300" :data="d.databases || []" size="small" stripe
+            highlight-current-row @row-click="onDatabaseRow">
+            <el-table-column prop="schema" label="数据库" min-width="160">
+              <template slot-scope="{ row }">
+                <span class="db-name">{{ row.schema == null ? '-' : row.schema }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="表数" width="120" align="right">
+              <template slot-scope="{ row }">{{ row.tableCount == null ? '-' : fmt(row.tableCount) }}</template>
+            </el-table-column>
+            <el-table-column label="行数" width="160" align="right">
+              <template slot-scope="{ row }">{{ row.rows == null ? '-' : fmt(row.rows) }}</template>
+            </el-table-column>
+            <el-table-column label="大小" width="160" align="right">
+              <template slot-scope="{ row }">
+                <span style="color: #e6a23c">{{ fmtBytes(row.sizeBytes) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100" align="center">
+              <template slot-scope="{ row }">
+                <el-button type="text" size="mini" @click.stop="selectSchema(row.schema)">查看表</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section-card>
+      </card-grid>
+
       <!-- 所有表详情数据较多：独占一行(上下结构) -->
       <card-grid min="320px" gap="8px">
         <section-card dense scrollable class="fill" title="所有表详情" icon="el-icon-s-grid">
-          <template #extra>共 {{ (d.allTables && d.allTables.length) || 0 }} 张表</template>
+          <template #extra>
+            <el-select v-if="schemaOptions.length" v-model="selectedSchema" size="mini" placeholder="全部"
+              class="schema-filter" clearable>
+              <el-option label="全部" value="" />
+              <el-option v-for="s in schemaOptions" :key="s" :label="s" :value="s" />
+            </el-select>
+            <span class="extra-count">
+              {{ selectedSchema ? (selectedSchema + '：' + filteredTables.length + ' 张表') : ('共 ' + filteredTables.length + ' 张表') }}
+            </span>
+          </template>
           <el-row :gutter="12">
-            <el-col v-for="(t, i) in d.allTables || []" :key="i" :xs="24" :sm="12" :lg="8" :xl="6">
+            <el-col v-for="(t, i) in filteredTables" :key="i" :xs="24" :sm="12" :lg="8" :xl="6">
               <div class="table-card">
                 <div class="table-card__head">
                   <el-tag size="mini" type="info" effect="plain">{{ t.schema }}</el-tag>
@@ -60,7 +100,7 @@
               </div>
             </el-col>
           </el-row>
-          <el-empty v-if="!(d.allTables && d.allTables.length)" description="暂无表数据" />
+          <el-empty v-if="!filteredTables.length" description="暂无表数据" />
         </section-card>
       </card-grid>
     </div>
@@ -83,7 +123,21 @@ export default {
     refreshToken: { type: Number, default: 0 },
   },
   data() {
-    return { loading: false, d: {} };
+    return { loading: false, d: {}, selectedSchema: "" };
+  },
+  computed: {
+    // 筛选下拉的可选 schema：优先取 databases，回退到 allTables 去重
+    schemaOptions() {
+      const src = (this.d.databases || []).map((x) => x && x.schema);
+      const fallback = (this.d.allTables || []).map((x) => x && x.schema);
+      const all = (src.length ? src : fallback).filter((s) => s !== undefined && s !== null && s !== "");
+      return Array.from(new Set(all));
+    },
+    // 按选中库过滤的表，空=全部
+    filteredTables() {
+      const all = this.d.allTables || [];
+      return this.selectedSchema ? all.filter((t) => t && t.schema === this.selectedSchema) : all;
+    },
   },
   watch: {
     deviceId() {
@@ -101,6 +155,26 @@ export default {
       if (v === undefined || v === null) return "-";
       return typeof v === "number" && Math.abs(v) >= 1000 ? v.toLocaleString() : v;
     },
+    fmtBytes(n) {
+      if (n === undefined || n === null || n === "") return "-";
+      const num = Number(n);
+      if (Number.isNaN(num)) return "-";
+      if (num < 1024) return num + " B";
+      const units = ["KB", "MB", "GB", "TB"];
+      let v = num / 1024;
+      let i = 0;
+      while (v >= 1024 && i < units.length - 1) {
+        v /= 1024;
+        i += 1;
+      }
+      return v.toFixed(2) + " " + units[i];
+    },
+    selectSchema(schema) {
+      this.selectedSchema = schema || "";
+    },
+    onDatabaseRow(row) {
+      if (row) this.selectSchema(row.schema);
+    },
     rankClass(rank) {
       const n = Number(rank);
       return n === 1 ? "rank-badge--gold" : n === 2 ? "rank-badge--silver" : n === 3 ? "rank-badge--bronze" : "";
@@ -112,6 +186,10 @@ export default {
       try {
         const res = await getDatabaseTables(this.deviceId);
         this.d = res.content || {};
+        // 切换设备后重置库筛选，避免旧选择导致空列表
+        if (this.selectedSchema && !this.schemaOptions.includes(this.selectedSchema)) {
+          this.selectedSchema = "";
+        }
       } finally {
         this.loading = false;
       }
@@ -161,6 +239,19 @@ export default {
     background: #fef0f0;
     color: #f56c6c;
   }
+}
+.db-name {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--cm-text-primary, @text-primary);
+}
+.schema-filter {
+  width: 160px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.extra-count {
+  vertical-align: middle;
 }
 .table-card {
   border: 1px solid var(--cm-border-light, @border-light);
