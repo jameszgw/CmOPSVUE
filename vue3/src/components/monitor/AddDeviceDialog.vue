@@ -6,6 +6,12 @@
     @open="onOpen"
     @closed="onClosed"
   >
+    <template #header>
+      <div class="add-dev-header">
+        <span class="el-dialog__title">{{ dialogTitle }}</span>
+        <el-button link type="primary" size="small" @click="matrixVisible = true">适配版本一览</el-button>
+      </div>
+    </template>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
         <el-input v-model="form.name" placeholder="请输入设备名称" />
@@ -272,6 +278,9 @@
 
       <!-- 采集配置（无探针 agentless 凭据） -->
       <el-divider content-position="left">采集配置</el-divider>
+      <el-form-item v-if="versionHint" label=" ">
+        <span class="version-hint">{{ versionHint }}</span>
+      </el-form-item>
       <el-form-item label="采集方式" prop="collectVia">
         <el-select v-model="form.collectVia" placeholder="请选择">
           <el-option label="模拟数据" value="NONE" />
@@ -339,6 +348,25 @@
       <el-button @click="visible = false">取消</el-button>
       <el-button type="primary" :loading="submitting" @click="submit">确定</el-button>
     </template>
+
+    <!-- 适配版本一览（全量矩阵） -->
+    <el-dialog v-model="matrixVisible" title="适配版本一览" width="820px" append-to-body>
+      <el-table :data="supportedList" size="small" stripe max-height="460">
+        <el-table-column prop="category" label="分类" width="110" />
+        <el-table-column prop="label" label="产品" min-width="130" />
+        <el-table-column prop="supported" label="支持范围" min-width="150" />
+        <el-table-column prop="recommended" label="推荐版本" width="120" />
+        <el-table-column prop="minVersion" label="最低版本" width="100" />
+        <el-table-column label="真实采集" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.realCollect ? 'success' : 'info'">
+              {{ row.realCollect ? "是" : "否" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="note" label="说明" min-width="200" show-overflow-tooltip />
+      </el-table>
+    </el-dialog>
   </el-dialog>
 </template>
 
@@ -346,6 +374,7 @@
 import { ref, reactive, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
+import { getSupportedVersions } from "@/api/monitor-meta";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -452,6 +481,40 @@ const formRef = ref();
 const submitting = ref(false);
 const options = ref({});
 
+// 适配版本矩阵：打开时拉取一次，按 product 建索引；矩阵一览弹窗
+const supportedList = ref([]);
+const supportedMap = ref({});
+const matrixVisible = ref(false);
+
+// 由当前设备类型（+ 相关子类型）解析出适配矩阵的产品 KEY
+const productKey = computed(() => {
+  const t = currentType.value;
+  if (t === "REDIS") return "REDIS";
+  if (t === "DATABASE") return String(form.dbType || "").toUpperCase();
+  if (t === "MQ") return String(form.mqType || "").toUpperCase();
+  if (t === "LB") return String(form.lbType || "").toUpperCase();
+  if (t === "K8S") return "K8S";
+  if (t === "NETDEV") return "SNMP";
+  if (t === "SERVER") {
+    return form.category === "VM" && String(form.vmType || "").toUpperCase().startsWith("VMWARE")
+      ? "VMWARE"
+      : "AGENT";
+  }
+  return "";
+});
+
+// 当前产品的适配信息（命中矩阵则有值）
+const productMeta = computed(() => supportedMap.value[productKey.value] || null);
+
+// 采集配置区的「适配版本」提示文案：无命中产品则为空（不渲染）
+const versionHint = computed(() => {
+  const m = productMeta.value;
+  if (!m) return "";
+  let s = `本平台适配版本：${m.supported || "-"}（推荐 ${m.recommended || "-"}）`;
+  if (m.realCollect === false) s += " · 暂未支持真实采集（将回落模拟数据）";
+  return s;
+});
+
 const form = reactive({
   name: "",
   ip: "",
@@ -539,6 +602,19 @@ const onOpen = async () => {
     try {
       const res = await getDeviceOptions();
       options.value = res.content || {};
+    } catch (e) {
+      /* 接口层已提示 */
+    }
+  }
+  if (!supportedList.value.length) {
+    try {
+      const res = await getSupportedVersions();
+      const list = res.content || [];
+      supportedList.value = list;
+      supportedMap.value = list.reduce((acc, it) => {
+        if (it && it.product) acc[it.product] = it;
+        return acc;
+      }, {});
     } catch (e) {
       /* 接口层已提示 */
     }
@@ -707,3 +783,17 @@ const submit = () => {
   });
 };
 </script>
+
+<style scoped>
+.add-dev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 24px;
+}
+.version-hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+}
+</style>

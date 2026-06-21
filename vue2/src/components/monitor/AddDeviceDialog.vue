@@ -1,11 +1,14 @@
 <template>
   <el-dialog
-    :title="dialogTitle"
     :visible.sync="visible"
     width="560px"
     @open="onOpen"
     @closed="onClosed"
   >
+    <div slot="title" class="add-dev-header">
+      <span class="el-dialog__title">{{ dialogTitle }}</span>
+      <el-button type="text" size="mini" @click="matrixVisible = true">适配版本一览</el-button>
+    </div>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
       <el-form-item label="设备名称" prop="name">
         <el-input v-model="form.name" placeholder="请输入设备名称" />
@@ -272,6 +275,9 @@
 
       <!-- 采集配置（无探针 agentless 凭据） -->
       <el-divider content-position="left">采集配置</el-divider>
+      <el-form-item v-if="versionHint" label=" ">
+        <span class="version-hint">{{ versionHint }}</span>
+      </el-form-item>
       <el-form-item label="采集方式" prop="collectVia">
         <el-select v-model="form.collectVia" placeholder="请选择">
           <el-option label="模拟数据" value="NONE" />
@@ -339,11 +345,31 @@
       <el-button @click="visible = false">取消</el-button>
       <el-button type="primary" :loading="submitting" @click="submit">确定</el-button>
     </div>
+
+    <!-- 适配版本一览（全量矩阵） -->
+    <el-dialog title="适配版本一览" :visible.sync="matrixVisible" width="820px" append-to-body>
+      <el-table :data="supportedList" size="mini" stripe max-height="460">
+        <el-table-column prop="category" label="分类" width="110" />
+        <el-table-column prop="label" label="产品" min-width="130" />
+        <el-table-column prop="supported" label="支持范围" min-width="150" />
+        <el-table-column prop="recommended" label="推荐版本" width="120" />
+        <el-table-column prop="minVersion" label="最低版本" width="100" />
+        <el-table-column label="真实采集" width="100" align="center">
+          <template slot-scope="{ row }">
+            <el-tag size="mini" :type="row.realCollect ? 'success' : 'info'">
+              {{ row.realCollect ? "是" : "否" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="note" label="说明" min-width="200" show-overflow-tooltip />
+      </el-table>
+    </el-dialog>
   </el-dialog>
 </template>
 
 <script>
 import { addDevice, updateDevice, getDeviceOptions } from "@/api/monitor-device";
+import { getSupportedVersions } from "@/api/monitor-meta";
 
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
@@ -431,6 +457,10 @@ export default {
       options: {},
       isEdit: false,
       editId: null,
+      // 适配版本矩阵：打开时拉取一次，按 product 建索引；矩阵一览弹窗
+      supportedList: [],
+      supportedMap: {},
+      matrixVisible: false,
       // 当前设备类型：新增取自 props.deviceType；编辑取自 editDevice.type，且允许在编辑时修改
       currentType: this.deviceType,
       TYPE_LABEL,
@@ -515,6 +545,35 @@ export default {
     vmTypeOptions() {
       return (this.options.vmTypes || []).filter((v) => v !== "NONE");
     },
+    // 由当前设备类型（+ 相关子类型）解析出适配矩阵的产品 KEY
+    productKey() {
+      const t = this.currentType;
+      const f = this.form;
+      if (t === "REDIS") return "REDIS";
+      if (t === "DATABASE") return String(f.dbType || "").toUpperCase();
+      if (t === "MQ") return String(f.mqType || "").toUpperCase();
+      if (t === "LB") return String(f.lbType || "").toUpperCase();
+      if (t === "K8S") return "K8S";
+      if (t === "NETDEV") return "SNMP";
+      if (t === "SERVER") {
+        return f.category === "VM" && String(f.vmType || "").toUpperCase().startsWith("VMWARE")
+          ? "VMWARE"
+          : "AGENT";
+      }
+      return "";
+    },
+    // 当前产品的适配信息（命中矩阵则有值）
+    productMeta() {
+      return this.supportedMap[this.productKey] || null;
+    },
+    // 采集配置区的「适配版本」提示文案：无命中产品则为空（不渲染）
+    versionHint() {
+      const m = this.productMeta;
+      if (!m) return "";
+      let s = `本平台适配版本：${m.supported || "-"}（推荐 ${m.recommended || "-"}）`;
+      if (m.realCollect === false) s += " · 暂未支持真实采集（将回落模拟数据）";
+      return s;
+    },
   },
   watch: {
     deviceType() {
@@ -588,6 +647,19 @@ export default {
         try {
           const res = await getDeviceOptions();
           this.options = res.content || {};
+        } catch (e) {
+          /* 接口层已提示 */
+        }
+      }
+      if (!this.supportedList.length) {
+        try {
+          const res = await getSupportedVersions();
+          const list = res.content || [];
+          this.supportedList = list;
+          this.supportedMap = list.reduce((acc, it) => {
+            if (it && it.product) acc[it.product] = it;
+            return acc;
+          }, {});
         } catch (e) {
           /* 接口层已提示 */
         }
@@ -726,3 +798,17 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.add-dev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 24px;
+}
+.version-hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+}
+</style>
