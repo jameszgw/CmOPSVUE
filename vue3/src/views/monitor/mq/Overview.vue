@@ -14,6 +14,11 @@
     <CardGrid min="320px" gap="8px" class="body-grid">
       <SectionCard dense title="基础信息" icon="InfoFilled">
         <template #extra>
+          <el-tooltip v-if="versionStatus" :content="versionTooltip" placement="top">
+            <el-tag size="small" :type="versionTagType" style="margin-right: 6px">
+              适配: {{ versionStatus.status }}
+            </el-tag>
+          </el-tooltip>
           <el-tag size="small" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
             {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
           </el-tag>
@@ -63,6 +68,7 @@ import SectionCard from "@/components/monitor/SectionCard.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import CardGrid from "@/components/monitor/CardGrid.vue";
 import { getMqOverview } from "@/api/monitor-mq";
+import { getVersionStatus } from "@/api/monitor-meta";
 
 const props = defineProps({
   deviceId: { type: String, default: "" },
@@ -73,6 +79,33 @@ const props = defineProps({
 const loading = ref(false);
 const data = ref({});
 const d = computed(() => data.value || {});
+
+// 适配版本状态
+const versionStatus = ref(null);
+const versionTagType = computed(() => {
+  const s = versionStatus.value?.status;
+  if (s === "适配") return "success";
+  if (s === "可能适配") return "warning";
+  return "info";
+});
+const versionTooltip = computed(() => {
+  const v = versionStatus.value;
+  return v ? `支持范围：${v.supported || "-"}（推荐 ${v.recommended || "-"}）` : "";
+});
+const loadVersionStatus = async () => {
+  const version = d.value.version;
+  const product = String(d.value.mqType || props.device?.mqType || "").toUpperCase();
+  if (!version || !product) {
+    versionStatus.value = null;
+    return;
+  }
+  try {
+    const res = await getVersionStatus(product, version);
+    versionStatus.value = res.content || null;
+  } catch (e) {
+    versionStatus.value = null;
+  }
+};
 
 const num = (v) => (v === undefined || v === null ? "-" : Number(v).toFixed(1));
 const num0 = (v) => (v === undefined || v === null ? "-" : Number(v).toLocaleString());
@@ -119,6 +152,7 @@ const load = async () => {
   try {
     const res = await getMqOverview(props.deviceId);
     data.value = res.content || {};
+    loadVersionStatus();
   } finally {
     loading.value = false;
   }

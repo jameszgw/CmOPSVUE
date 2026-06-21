@@ -18,6 +18,11 @@
     <card-grid class="fill" min="300px" gap="8px">
       <SectionCard dense scrollable title="基础信息" icon="el-icon-info">
         <template #extra>
+          <el-tooltip v-if="versionStatus" :content="versionTooltip" placement="top">
+            <el-tag size="mini" :type="versionTagType" style="margin-right: 6px">
+              适配: {{ versionStatus.status }}
+            </el-tag>
+          </el-tooltip>
           <el-tag size="mini" :type="['agent','ssh','snmp','winrm','redis'].includes(d.source) ? 'success' : 'info'" style="margin-right: 6px">
             {{ {agent:"真实采集·Agent",ssh:"真实采集·SSH",snmp:"真实采集·SNMP",winrm:"真实采集·WinRM",redis:"真实采集·Redis"}[d.source] || "模拟数据" }}
           </el-tag>
@@ -50,6 +55,7 @@ import SectionCard from "@/components/monitor/SectionCard.vue";
 import CardGrid from "@/components/monitor/CardGrid.vue";
 import InfoTable from "@/components/monitor/InfoTable.vue";
 import { getLbOverview } from "@/api/monitor-lb";
+import { getVersionStatus } from "@/api/monitor-meta";
 
 export default {
   name: "LbOverview",
@@ -60,9 +66,19 @@ export default {
     refreshToken: { type: Number, default: 0 },
   },
   data() {
-    return { loading: false, d: {} };
+    return { loading: false, d: {}, versionStatus: null };
   },
   computed: {
+    versionTagType() {
+      const s = this.versionStatus && this.versionStatus.status;
+      if (s === "适配") return "success";
+      if (s === "可能适配") return "warning";
+      return "info";
+    },
+    versionTooltip() {
+      const v = this.versionStatus;
+      return v ? `支持范围：${v.supported || "-"}（推荐 ${v.recommended || "-"}）` : "";
+    },
     healthPercent() {
       const h = Number(this.d.upstreamHealthy) || 0;
       const t = Number(this.d.upstreamTotal) || 0;
@@ -147,8 +163,23 @@ export default {
       try {
         const res = await getLbOverview(this.deviceId);
         this.d = res.content || {};
+        this.loadVersionStatus();
       } finally {
         this.loading = false;
+      }
+    },
+    async loadVersionStatus() {
+      const version = this.d.version;
+      const product = String(this.d.lbType || (this.device && this.device.lbType) || "").toUpperCase();
+      if (!version || !product) {
+        this.versionStatus = null;
+        return;
+      }
+      try {
+        const res = await getVersionStatus(product, version);
+        this.versionStatus = res.content || null;
+      } catch (e) {
+        this.versionStatus = null;
       }
     },
   },
