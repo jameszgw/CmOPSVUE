@@ -229,6 +229,35 @@ export function toggleOncallRoster(id, enabled) {
   });
 }
 
+// ===== 10) 安全漏洞 =====
+/** 漏洞统计 */
+export function getVulnStats() {
+  return request(`${BASE}/vuln/stats`, { method: "GET" });
+}
+
+/** 漏洞清单 */
+export function getVulnFindings(params) {
+  return request(`${BASE}/vuln/findings`, { method: "GET", params });
+}
+
+/** 立即扫描 */
+export function scanVuln() {
+  return request(`${BASE}/vuln/scan`, { method: "POST" });
+}
+
+/** 标记处置漏洞 */
+export function resolveVuln(id) {
+  return request(`${BASE}/vuln/finding/resolve`, {
+    method: "POST",
+    params: { id },
+  });
+}
+
+/** CVE 登记表 */
+export function getCveRegistry() {
+  return request(`${BASE}/vuln/cve-registry`, { method: "GET" });
+}
+
 // ===== 8) 运维报告 =====
 /** 报告汇总 */
 export function getReportSummary(windowDays = 7) {

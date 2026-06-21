@@ -188,6 +188,27 @@ export const toggleOncallRoster = (id, enabled) =>
     params: { id, enabled },
   });
 
+// ===== 10) 安全漏洞 =====
+/** 漏洞统计 */
+export const getVulnStats = () =>
+  request(`${BASE}/vuln/stats`, { method: "GET" });
+
+/** 漏洞清单 */
+export const getVulnFindings = (params) =>
+  request(`${BASE}/vuln/findings`, { method: "GET", params });
+
+/** 立即扫描 */
+export const scanVuln = () =>
+  request(`${BASE}/vuln/scan`, { method: "POST" });
+
+/** 标记处置漏洞 */
+export const resolveVuln = (id) =>
+  request(`${BASE}/vuln/finding/resolve`, { method: "POST", params: { id } });
+
+/** CVE 登记表 */
+export const getCveRegistry = () =>
+  request(`${BASE}/vuln/cve-registry`, { method: "GET" });
+
 // ===== 8) 运维报告 =====
 /** 报告汇总 */
 export const getReportSummary = (windowDays = 7) =>
