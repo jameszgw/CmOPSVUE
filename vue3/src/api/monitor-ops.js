@@ -122,3 +122,68 @@ export const getAuditList = (limit = 100, operator, action) =>
     method: "GET",
     params: { limit, operator, action },
   });
+
+// ===== 7) 自动修复 / 编排规则 =====
+/** 修复规则列表 */
+export const getRemediationRules = () =>
+  request(`${BASE}/remediation/rules`, { method: "GET" });
+
+/** 新增修复规则 */
+export const addRemediationRule = (data) =>
+  request(`${BASE}/remediation/rule/add`, { method: "POST", data });
+
+/** 更新修复规则 */
+export const updateRemediationRule = (data) =>
+  request(`${BASE}/remediation/rule/update`, { method: "POST", data });
+
+/** 删除修复规则 */
+export const deleteRemediationRule = (id) =>
+  request(`${BASE}/remediation/rule/delete`, { method: "POST", params: { id } });
+
+/** 启用 / 停用修复规则 */
+export const toggleRemediationRule = (id, enabled) =>
+  request(`${BASE}/remediation/rule/toggle`, {
+    method: "POST",
+    params: { id, enabled },
+  });
+
+/** 修复执行历史 */
+export const getRemediationHistory = (limit = 50) =>
+  request(`${BASE}/remediation/history`, { method: "GET", params: { limit } });
+
+// ===== 9) 值班排班 =====
+/** 值班排班列表 */
+export const getOncallRosters = () =>
+  request(`${BASE}/oncall/rosters`, { method: "GET" });
+
+/** 当前值班 */
+export const getOncallCurrent = () =>
+  request(`${BASE}/oncall/current`, { method: "GET" });
+
+/** 新增值班排班 */
+export const addOncallRoster = (data) =>
+  request(`${BASE}/oncall/roster/add`, { method: "POST", data });
+
+/** 更新值班排班 */
+export const updateOncallRoster = (data) =>
+  request(`${BASE}/oncall/roster/update`, { method: "POST", data });
+
+/** 删除值班排班 */
+export const deleteOncallRoster = (id) =>
+  request(`${BASE}/oncall/roster/delete`, { method: "POST", params: { id } });
+
+/** 启用 / 停用值班排班 */
+export const toggleOncallRoster = (id, enabled) =>
+  request(`${BASE}/oncall/roster/toggle`, {
+    method: "POST",
+    params: { id, enabled },
+  });
+
+// ===== 8) 运维报告 =====
+/** 报告汇总 */
+export const getReportSummary = (windowDays = 7) =>
+  request(`${BASE}/report/summary`, { method: "GET", params: { windowDays } });
+
+/** 报告导出下载 URL（用于 window.open，format: md | csv） */
+export const getReportExportUrl = (format = "md", windowDays = 7) =>
+  `${BASE}/report/export?format=${format}&windowDays=${windowDays}`;

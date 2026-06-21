@@ -36,6 +36,13 @@ const routes = [
       { path: "/devops/monitor/aiops", component: () => import("@/views/monitor/MonitorAiops.vue") },
       { path: "/devops/monitor/resilience", component: () => import("@/views/monitor/MonitorResilience.vue") },
       { path: "/devops/monitor/alert", component: () => import("@/views/monitor/AlertCenter.vue") },
+      { path: "/devops/monitor/slo", component: () => import("@/views/monitor/MonitorSlo.vue") },
+      { path: "/devops/monitor/capacity", component: () => import("@/views/monitor/MonitorCapacity.vue") },
+      { path: "/devops/monitor/dialtest", component: () => import("@/views/monitor/MonitorDialtest.vue") },
+      { path: "/devops/monitor/audit", component: () => import("@/views/monitor/MonitorAudit.vue") },
+      { path: "/devops/monitor/remediation", component: () => import("@/views/monitor/MonitorRemediation.vue") },
+      { path: "/devops/monitor/oncall", component: () => import("@/views/monitor/MonitorOncall.vue") },
+      { path: "/devops/monitor/report", component: () => import("@/views/monitor/MonitorReport.vue") },
       { path: "/devops/monitor/metric-dict", component: () => import("@/views/monitor/MetricDictionary.vue") },
       { path: "/devops/monitor/device-manage", component: () => import("@/views/monitor/DeviceManage.vue") },
       // ===== 运维监控 =====
