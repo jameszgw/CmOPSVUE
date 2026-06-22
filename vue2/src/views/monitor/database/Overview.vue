@@ -92,7 +92,7 @@ export default {
     },
     basicRows() {
       const b = this.d.basic || {};
-      return [
+      const rows = [
         { label: "数据库类型", value: b.dbType, color: "#67c23a" },
         { label: "主机地址", value: b.host },
         { label: "数据库名", value: b.dbName },
@@ -101,6 +101,37 @@ export default {
         { label: "时区", value: b.timezone },
         { label: "字符集", value: b.charset },
       ];
+      return rows.concat(this.clusterRows);
+    },
+    // 部署模式（集群模式）/集群角色·状态：连接真实集群时后端在概览顶层返回，缺省字段不展示以避免“-”杂讯
+    clusterRows() {
+      const o = this.d || {};
+      const b = this.d.basic || {};
+      const pick = (k) => (o[k] != null ? o[k] : b[k]);
+      const rows = [];
+      const dev = this.device || {};
+      const clusterMode = pick("clusterMode") != null ? pick("clusterMode") : dev.dbMode;
+      if (clusterMode != null && clusterMode !== "") {
+        rows.push({ label: "部署模式", value: clusterMode, color: "#409eff" });
+      }
+      const clusterRole = pick("clusterRole");
+      if (clusterRole != null && clusterRole !== "") {
+        rows.push({ label: "集群角色", value: clusterRole });
+      }
+      const clusterStatus = pick("clusterStatus");
+      if (clusterStatus != null && clusterStatus !== "") {
+        rows.push({ label: "集群状态", value: clusterStatus });
+      }
+      const delay = pick("replicationDelaySec");
+      if (delay != null) {
+        rows.push({ label: "复制延迟", value: `${delay} 秒` });
+      }
+      const members = pick("clusterMembers");
+      if (members != null) {
+        const online = pick("onlineMembers") != null ? pick("onlineMembers") : members;
+        rows.push({ label: "集群节点", value: `${online}/${members} 在线` });
+      }
+      return rows;
     },
     connectionRows() {
       const c = this.d.connection || {};

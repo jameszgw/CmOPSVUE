@@ -97,6 +97,11 @@
         <el-form-item label="版本" prop="dbVersion">
           <el-input v-model="form.dbVersion" placeholder="如 PostgreSQL 16.2" />
         </el-form-item>
+        <el-form-item label="部署模式" prop="dbMode">
+          <el-select v-model="form.dbMode" placeholder="请选择">
+            <el-option v-for="t in dbModeOptions" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
       </template>
 
       <!-- K8s 集群专有 -->
@@ -431,6 +436,13 @@ const typeLabel = computed(() => TYPE_LABEL[currentType.value] || "");
 // 当前设备类型的「直连采集」凭据档案（无则为空对象，采集方式回落 Agent/SSH/SNMP/WinRM）
 const directProfile = computed(() => DIRECT_PROFILE[currentType.value] || {});
 
+// 数据库部署模式（集群模式）下拉项：取自设备选项 dbModes，缺失时回落静态全集
+const DB_MODE_FALLBACK = ["单机", "主备热备", "主备冷备", "读写分离", "多活集群", "共享存储集群"];
+const dbModeOptions = computed(() => {
+  const list = options.value.dbModes;
+  return Array.isArray(list) && list.length ? list : DB_MODE_FALLBACK;
+});
+
 // 编辑状态：打开时根据 editDevice 是否存在确定
 const isEdit = ref(false);
 const editId = ref(null);
@@ -534,6 +546,7 @@ const form = reactive({
   dbType: "MYSQL",
   dbName: "",
   dbVersion: "",
+  dbMode: "单机",
   k8sVersion: "v1.29.0",
   k8sDistro: "VANILLA",
   k8sRuntime: "CONTAINERD",
@@ -703,6 +716,7 @@ const submit = () => {
           dbType: form.dbType,
           dbName: form.dbName,
           dbVersion: form.dbVersion,
+          dbMode: form.dbMode,
         });
       } else if (currentType.value === "K8S") {
         Object.assign(payload, {
