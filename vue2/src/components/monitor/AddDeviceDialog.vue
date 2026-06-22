@@ -320,7 +320,8 @@
           <el-input v-model="form.collectUser" placeholder="如 root / ops" />
         </el-form-item>
         <el-form-item label="密码" prop="collectSecret">
-          <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
+          <el-input v-model="form.collectSecret" type="password" show-password
+            :placeholder="isEdit ? 'SSH 登录密码（留空表示不修改）' : 'SSH 登录密码'" />
         </el-form-item>
         <el-form-item label=" ">
           <span v-if="form.collectVia === 'WINRM'" style="color: #909399; font-size: 12px; line-height: 1.5">
@@ -347,7 +348,8 @@
           <el-input v-model="form.collectUser" :placeholder="directProfile.userPh" />
         </el-form-item>
         <el-form-item v-if="directProfile.showPass" label="密码" prop="collectSecret">
-          <el-input v-model="form.collectSecret" type="password" show-password :placeholder="directProfile.passPh" />
+          <el-input v-model="form.collectSecret" type="password" show-password
+            :placeholder="isEdit ? directProfile.passPh + '（留空表示不修改）' : directProfile.passPh" />
         </el-form-item>
         <el-form-item v-if="directProfile.showToken" label="Token" prop="collectSecret">
           <el-input v-model="form.collectSecret" type="textarea" :rows="2" :placeholder="directProfile.passPh" />
@@ -488,6 +490,8 @@ export default {
       options: {},
       isEdit: false,
       editId: null,
+      // 回填表单时抑制 collectVia 监听，避免误重置采集端口（见 onOpen / "form.collectVia" watch）
+      suppressViaWatch: false,
       // 适配版本矩阵：打开时拉取一次，按 product 建索引；矩阵一览弹窗
       supportedList: [],
       supportedMap: {},
@@ -618,13 +622,16 @@ export default {
   },
   watch: {
     deviceType() {
-      // 新增模式下外部类型变化时同步当前类型与默认端口（编辑模式由 onOpen 接管）
+      // 新增模式下外部类型变化时同步当前类型与默认端口（编辑模式由 onOpen 接管，
+      // 不可重置 form.port，否则会把设备已保存的端口覆盖为默认值而丢失）
       if (!this.isEdit) {
         this.currentType = this.deviceType;
+        this.form.port = DEFAULT_PORT[this.deviceType] || 22;
       }
-      this.form.port = DEFAULT_PORT[this.deviceType] || 22;
     },
     "form.collectVia"(via) {
+      // 回填期间不重置采集端口，避免覆盖设备已保存的自定义端口
+      if (this.suppressViaWatch) return;
       if (via === "SSH") {
         this.form.collectPort = 22;
       } else if (via === "WINRM") {
@@ -672,11 +679,16 @@ export default {
         this.editId = this.editDevice.id;
         // 编辑模式：类型取自设备本身，允许后续修改纠正
         this.currentType = this.editDevice.type || this.deviceType;
+        // 回填期间抑制 collectVia 监听，避免其把已保存的采集端口重置为默认值（丢失自定义端口）
+        this.suppressViaWatch = true;
         // 用已有设备数据回填表单（含采集配置字段）
         Object.keys(this.form).forEach((k) => {
           if (this.editDevice[k] !== undefined && this.editDevice[k] !== null) {
             this.$set(this.form, k, this.editDevice[k]);
           }
+        });
+        this.$nextTick(() => {
+          this.suppressViaWatch = false;
         });
       } else {
         this.isEdit = false;
@@ -725,18 +737,19 @@ export default {
             payload.id = this.editId;
           }
           // 采集配置（无探针 agentless 凭据）
+          // 注意：collectSecret 为 WRITE_ONLY 不回显，编辑时留空表示「不修改」——为空则不下发，避免覆盖丢失
           payload.collectVia = f.collectVia;
           if (f.collectVia === "SSH" || f.collectVia === "WINRM") {
             payload.collectPort = f.collectPort;
             payload.collectUser = f.collectUser;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           } else if (f.collectVia === "SNMP") {
             payload.collectPort = f.collectPort;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           } else if (f.collectVia === "DIRECT") {
             payload.collectPort = f.collectPort;
             payload.collectUser = f.collectUser;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           }
           if (this.currentType === "SERVER") {
             Object.assign(payload, {
