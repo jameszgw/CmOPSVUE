@@ -94,6 +94,11 @@
         <el-form-item label="版本" prop="dbVersion">
           <el-input v-model="form.dbVersion" placeholder="如 PostgreSQL 16.2" />
         </el-form-item>
+        <el-form-item label="部署模式" prop="dbMode">
+          <el-select v-model="form.dbMode" placeholder="请选择">
+            <el-option v-for="t in dbModeOptions" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
       </template>
 
       <!-- K8s 集群专有 -->
@@ -410,6 +415,9 @@ const DEFAULT_PORT = {
   POWER: 502, ESS: 502, IOT: 1883, SBC: 22, ANDROID: 5555,
 };
 
+// 数据库部署模式（集群模式）下拉项缺失时回落的静态全集
+const DB_MODE_FALLBACK = ["单机", "主备热备", "主备冷备", "读写分离", "多活集群", "共享存储集群"];
+
 // 「直连采集」凭据档案：按设备类型驱动采集方式标签、默认端口与所需凭据字段
 // （统一复用 collectUser/collectSecret/collectPort，后端门控为 collectVia 非 NONE/AGENT）。
 const DIRECT_PROFILE = {
@@ -483,6 +491,7 @@ export default {
         dbType: "MYSQL",
         dbName: "",
         dbVersion: "",
+        dbMode: "单机",
         k8sVersion: "v1.29.0",
         k8sDistro: "VANILLA",
         k8sRuntime: "CONTAINERD",
@@ -538,6 +547,11 @@ export default {
     // 当前设备类型的「直连采集」凭据档案（无则为空对象，采集方式回落 Agent/SSH/SNMP/WinRM）
     directProfile() {
       return DIRECT_PROFILE[this.currentType] || {};
+    },
+    // 数据库部署模式（集群模式）下拉项：取自设备选项 dbModes，缺失时回落静态全集
+    dbModeOptions() {
+      const list = this.options.dbModes;
+      return Array.isArray(list) && list.length ? list : DB_MODE_FALLBACK;
     },
     dialogTitle() {
       return this.isEdit ? "编辑设备" : `新增${this.typeLabel}设备`;
@@ -716,6 +730,7 @@ export default {
               dbType: f.dbType,
               dbName: f.dbName,
               dbVersion: f.dbVersion,
+              dbMode: f.dbMode,
             });
           } else if (this.currentType === "K8S") {
             Object.assign(payload, {
