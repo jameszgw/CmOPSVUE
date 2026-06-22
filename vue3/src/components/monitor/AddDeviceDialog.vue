@@ -168,6 +168,21 @@
         </el-form-item>
       </template>
 
+      <!-- 虚拟化专有 (KVM / VMware / Docker) -->
+      <template v-if="currentType === 'VIRT'">
+        <el-form-item label="平台" prop="virtType">
+          <el-select v-model="form.virtType">
+            <el-option v-for="t in options.virtTypes" :key="t" :label="optLabel(t)" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="版本" prop="virtVersion">
+          <el-input v-model="form.virtVersion" placeholder="如 vCenter 8.0 / libvirt 8.0 / Docker 25.0" />
+        </el-form-item>
+        <el-form-item label="宿主/节点数" prop="hostCount">
+          <el-input-number v-model="form.hostCount" :min="1" :max="1024" controls-position="right" />
+        </el-form-item>
+      </template>
+
       <!-- 网络设备专有 -->
       <template v-if="currentType === 'NETDEV'">
         <el-form-item label="类型" prop="netDevType">
@@ -396,7 +411,7 @@ const visible = computed({
 
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
-  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", VIRT: "虚拟化", NETDEV: "网络设备", GPU: "GPU",
   POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开",
 };
 
@@ -421,6 +436,8 @@ const OPT_LABEL = {
   // K8s 发行版/运行时/CNI
   VANILLA: "原生 Kubernetes", OPENSHIFT: "OpenShift", RANCHER: "Rancher", EKS: "AWS EKS", AKS: "Azure AKS", GKE: "Google GKE", K3S: "K3s",
   CONTAINERD: "containerd", DOCKER: "Docker", CRIO: "CRI-O",
+  // 虚拟化平台
+  KVM: "KVM / libvirt", VMWARE: "VMware vSphere",
   CALICO: "Calico", FLANNEL: "Flannel", CILIUM: "Cilium", WEAVE: "Weave",
   // 数据库
   MYSQL: "MySQL", MARIADB: "MariaDB", POSTGRESQL: "PostgreSQL", ORACLE: "Oracle", SQLSERVER: "SQL Server", DM: "达梦 DM", KINGBASE: "人大金仓 KingbaseES", GAUSSDB: "华为 GaussDB", OPENGAUSS: "openGauss", TIDB: "TiDB", MONGODB: "MongoDB", CLICKHOUSE: "ClickHouse",
@@ -452,7 +469,7 @@ const dialogTitle = computed(() =>
 
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
-  MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
+  MQ: 9092, LB: 80, STORAGE: 6789, VIRT: 443, NETDEV: 161, GPU: 8080,
   POWER: 502, ESS: 502, IOT: 1883, SBC: 22, ANDROID: 5555,
 };
 
@@ -487,6 +504,12 @@ const DIRECT_PROFILE = {
     userPh: "状态页路径(选填，如 /nginx_status)",
     hint: "抓取 Nginx stub_status / HAProxy CSV 状态页(默认80)；Nginx 可用「状态页路径」覆盖默认探测路径",
   },
+  VIRT: {
+    label: "直连采集(vCenter)", port: 443, showUser: true, showPass: true,
+    userPh: "vCenter 账号(如 administrator@vsphere.local)",
+    passPh: "vCenter 密码",
+    hint: "VMware 经 vCenter REST 直连采集主机/虚机(默认443)；KVM/Docker 经宿主 Agent 采集，无需在此填凭据",
+  },
 };
 
 const formRef = ref();
@@ -505,6 +528,7 @@ const productKey = computed(() => {
   if (t === "DATABASE") return String(form.dbType || "").toUpperCase();
   if (t === "MQ") return String(form.mqType || "").toUpperCase();
   if (t === "LB") return String(form.lbType || "").toUpperCase();
+  if (t === "VIRT") return String(form.virtType || "").toUpperCase();
   if (t === "K8S") return "K8S";
   if (t === "NETDEV") return "SNMP";
   if (t === "SERVER") {
@@ -559,6 +583,9 @@ const form = reactive({
   lbVersion: "1.25.0",
   storageType: "CEPH",
   storageVendor: "",
+  virtType: "KVM",
+  virtVersion: "",
+  hostCount: 3,
   netDevType: "SWITCH",
   netDevVendor: "",
   netDevModel: "",
@@ -738,6 +765,12 @@ const submit = () => {
         Object.assign(payload, {
           storageType: form.storageType,
           storageVendor: form.storageVendor,
+        });
+      } else if (currentType.value === "VIRT") {
+        Object.assign(payload, {
+          virtType: form.virtType,
+          virtVersion: form.virtVersion,
+          hostCount: form.hostCount,
         });
       } else if (currentType.value === "NETDEV") {
         Object.assign(payload, {

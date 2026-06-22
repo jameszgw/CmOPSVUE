@@ -21,6 +21,7 @@ const routes = [
       { path: "/devops/monitor/mq", component: () => import("@/views/monitor/MonitorMq.vue") },
       { path: "/devops/monitor/lb", component: () => import("@/views/monitor/MonitorLb.vue") },
       { path: "/devops/monitor/storage", component: () => import("@/views/monitor/MonitorStorage.vue") },
+      { path: "/devops/monitor/virtualization", component: () => import("@/views/monitor/MonitorVirt.vue") },
       { path: "/devops/monitor/netdev", component: () => import("@/views/monitor/MonitorNetDev.vue") },
       { path: "/devops/monitor/gpu", component: () => import("@/views/monitor/MonitorGpu.vue") },
       { path: "/devops/monitor/ai", component: () => import("@/views/monitor/MonitorAi.vue") },
