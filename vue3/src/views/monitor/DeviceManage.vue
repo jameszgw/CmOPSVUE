@@ -79,6 +79,14 @@
           >
             检测重复主机
           </el-button>
+          <el-button
+            size="small"
+            :icon="Download"
+            :loading="importLoading"
+            @click="importHosts"
+          >
+            从主机列表导入
+          </el-button>
           <el-button size="small" :icon="RefreshRight" @click="load">刷新</el-button>
         </div>
       </template>
@@ -256,12 +264,12 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { Search, Plus, Setting, RefreshRight, ArrowDown, CopyDocument } from "@element-plus/icons-vue";
+import { Search, Plus, Setting, RefreshRight, ArrowDown, CopyDocument, Download } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import AddDeviceDialog from "@/components/monitor/AddDeviceDialog.vue";
-import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts } from "@/api/monitor-device";
+import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts, importFromHosts } from "@/api/monitor-device";
 
 // 设备类型代码顺序（与监控侧栏/新增弹窗口径一致）
 const DEVICE_TYPES = [
@@ -458,6 +466,27 @@ const openDuplicate = async () => {
     dupVisible.value = true;
   } finally {
     dupLoading.value = false;
+  }
+};
+
+const importLoading = ref(false);
+const importHosts = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "将「主机列表」中的运维主机导入为 SERVER 监控设备（按 IP 去重，已存在则跳过）。是否继续？",
+      "从主机列表导入",
+      { confirmButtonText: "导入", cancelButtonText: "取消", type: "info" }
+    );
+  } catch (e) {
+    return;
+  }
+  importLoading.value = true;
+  try {
+    const res = await importFromHosts();
+    ElMessage.success((res.content && res.content.message) || "导入完成");
+    await load();
+  } finally {
+    importLoading.value = false;
   }
 };
 

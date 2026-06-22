@@ -77,6 +77,14 @@
           >
             检测重复主机
           </el-button>
+          <el-button
+            size="small"
+            icon="el-icon-download"
+            :loading="importLoading"
+            @click="importHosts"
+          >
+            从主机列表导入
+          </el-button>
           <el-button size="small" icon="el-icon-refresh-right" @click="load">刷新</el-button>
         </div>
       </template>
@@ -251,7 +259,7 @@
 import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import AddDeviceDialog from "@/components/monitor/AddDeviceDialog.vue";
-import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts } from "@/api/monitor-device";
+import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts, importFromHosts } from "@/api/monitor-device";
 
 // 设备类型代码顺序（与监控侧栏/新增弹窗口径一致）
 const DEVICE_TYPES = [
@@ -318,6 +326,7 @@ export default {
       // 重复主机检测
       dupVisible: false,
       dupLoading: false,
+      importLoading: false,
       dupDeleting: -1,
       dupGroups: [],
       // 批量设置采集
@@ -456,6 +465,25 @@ export default {
         this.dupVisible = true;
       } finally {
         this.dupLoading = false;
+      }
+    },
+    async importHosts() {
+      try {
+        await this.$confirm(
+          "将「主机列表」中的运维主机导入为 SERVER 监控设备（按 IP 去重，已存在则跳过）。是否继续？",
+          "从主机列表导入",
+          { confirmButtonText: "导入", cancelButtonText: "取消", type: "info" }
+        );
+      } catch (e) {
+        return;
+      }
+      this.importLoading = true;
+      try {
+        const res = await importFromHosts();
+        this.$message.success((res.content && res.content.message) || "导入完成");
+        await this.load();
+      } finally {
+        this.importLoading = false;
       }
     },
     async removeGroupDuplicates(group, index) {
