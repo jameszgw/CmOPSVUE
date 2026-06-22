@@ -207,3 +207,10 @@ export async function queryLog(data) {
 export async function getScreenPath(data) {
   return request("/api/devops/host/terminal/log/screen?id=" + data.id);
 }
+
+/** 从「设备维护」导入到「主机列表」（SERVER 监控设备 → 运维主机，按 IP 去重） */
+export async function importFromDevices() {
+  return request("/api/devops/host/import-from-devices", {
+    method: "POST",
+  });
+}

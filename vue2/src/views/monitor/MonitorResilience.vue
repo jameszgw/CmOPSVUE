@@ -97,6 +97,11 @@
 
           <section-card dense scrollable body-class="dense-table fill" class="fill"
             title="安全基线漂移" icon="el-icon-lock">
+            <template slot="extra">
+              <el-tag size="small" effect="plain" :type="drift.source === 'real' ? 'success' : 'info'">
+                {{ drift.source === 'real' ? '真实信号' : '模拟数据' }}
+              </el-tag>
+            </template>
             <el-table class="dense-table" height="100%" :data="drifts" size="small" stripe>
               <el-table-column prop="deviceName" label="设备" min-width="150" />
               <el-table-column label="类型" width="110">
@@ -120,6 +125,13 @@
                 </template>
               </el-table-column>
               <el-table-column prop="detectedTime" label="时间" width="180" />
+              <el-table-column label="来源" width="80">
+                <template slot-scope="{ row }">
+                  <el-tag size="small" effect="plain" :type="row.source === 'real' ? 'success' : 'info'">
+                    {{ row.source === 'real' ? '真实' : '模拟' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column prop="recommendation" label="建议" min-width="220" show-overflow-tooltip />
               <template slot="empty">
                 <el-empty description="暂无基线漂移" :image-size="60" />

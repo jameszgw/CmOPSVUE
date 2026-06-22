@@ -67,3 +67,10 @@ export function getDuplicateHosts() {
     method: "GET",
   });
 }
+
+/** 从「主机列表」导入到「设备维护」（运维主机 → SERVER 监控设备，按 IP 去重） */
+export function importFromHosts() {
+  return request("/api/devops/monitor/device/import-from-hosts", {
+    method: "POST",
+  });
+}

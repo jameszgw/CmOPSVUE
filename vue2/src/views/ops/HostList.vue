@@ -12,6 +12,7 @@
           <el-button type="primary" @click="onSearch">查询</el-button>
           <el-button @click="onReset">重置</el-button>
           <el-button type="primary" icon="el-icon-plus" @click="handleCreateHostDrawer">新增主机</el-button>
+          <el-button icon="el-icon-download" :loading="importLoading" @click="importDevices">从设备维护导入</el-button>
         </el-form-item>
       </el-form>
     </template>
@@ -112,6 +113,7 @@ import {
   copyHost,
   fetchHostGroups,
   queryServerKeys,
+  importFromDevices,
 } from "@/api/host";
 import { fetchProxies } from "@/api/proxy";
 
@@ -140,6 +142,7 @@ export default {
       editingHost: null,
       isModalOpen: false,
       modalHost: null,
+      importLoading: false,
     };
   },
   created() {
@@ -149,6 +152,25 @@ export default {
     this.fetchServerKeys();
   },
   methods: {
+    async importDevices() {
+      try {
+        await this.$confirm(
+          "将「设备维护」中的 SERVER 服务器导入为运维主机（按 IP 去重，已存在则跳过）。是否继续？",
+          "从设备维护导入",
+          { confirmButtonText: "导入", cancelButtonText: "取消", type: "info" }
+        );
+      } catch (e) {
+        return;
+      }
+      this.importLoading = true;
+      try {
+        const res = await importFromDevices();
+        this.$message.success((res.content && res.content.message) || "导入完成");
+        await this.getHosts();
+      } finally {
+        this.importLoading = false;
+      }
+    },
     async getHosts() {
       let allGroupIds = [];
       if (this.selectedGroup) {

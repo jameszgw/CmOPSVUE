@@ -79,6 +79,14 @@
           >
             检测重复主机
           </el-button>
+          <el-button
+            size="small"
+            :icon="Download"
+            :loading="importLoading"
+            @click="importHosts"
+          >
+            从主机列表导入
+          </el-button>
           <el-button size="small" :icon="RefreshRight" @click="load">刷新</el-button>
         </div>
       </template>
@@ -256,23 +264,23 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { Search, Plus, Setting, RefreshRight, ArrowDown, CopyDocument } from "@element-plus/icons-vue";
+import { Search, Plus, Setting, RefreshRight, ArrowDown, CopyDocument, Download } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import ScreenPage from "@/components/monitor/ScreenPage.vue";
 import SectionCard from "@/components/monitor/SectionCard.vue";
 import AddDeviceDialog from "@/components/monitor/AddDeviceDialog.vue";
-import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts } from "@/api/monitor-device";
+import { listDevices, deleteDevice, batchCollect, testCollect, getDuplicateHosts, importFromHosts } from "@/api/monitor-device";
 
 // 设备类型代码顺序（与监控侧栏/新增弹窗口径一致）
 const DEVICE_TYPES = [
-  "SERVER", "REDIS", "DATABASE", "K8S", "MQ", "LB", "STORAGE",
+  "SERVER", "REDIS", "DATABASE", "K8S", "MQ", "LB", "STORAGE", "VIRT",
   "NETDEV", "GPU", "POWER", "ESS", "IOT", "SBC", "ANDROID",
 ];
 
 // 设备类型 → 中文名（copy from AddDeviceDialog.vue）
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
-  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", VIRT: "虚拟化", NETDEV: "网络设备", GPU: "GPU",
   POWER: "电能", ESS: "储能", IOT: "物联", SBC: "单板机", ANDROID: "安卓多开", AI: "AI",
 };
 
@@ -280,7 +288,7 @@ const TYPE_LABEL = {
 // 缺省回退到 Monitor。
 const TYPE_ICON = {
   SERVER: "Monitor", REDIS: "Coin", DATABASE: "Files", K8S: "Cloudy",
-  MQ: "Connection", LB: "Share", STORAGE: "Box", NETDEV: "Connection", GPU: "Cpu",
+  MQ: "Connection", LB: "Share", STORAGE: "Box", VIRT: "Grid", NETDEV: "Connection", GPU: "Cpu",
   AI: "MagicStick", POWER: "Lightning", ESS: "Coin", IOT: "Connection",
   SBC: "Cpu", ANDROID: "Cellphone",
 };
@@ -288,7 +296,7 @@ const TYPE_ICON = {
 // 设备类型 → 图标颜色，便于区分
 const TYPE_COLOR = {
   SERVER: "#409eff", REDIS: "#e6493b", DATABASE: "#67c23a", K8S: "#326ce5",
-  MQ: "#e6a23c", LB: "#9254de", STORAGE: "#13c2c2", NETDEV: "#2f9e7d", GPU: "#f56c6c",
+  MQ: "#e6a23c", LB: "#9254de", STORAGE: "#13c2c2", VIRT: "#7265e6", NETDEV: "#2f9e7d", GPU: "#f56c6c",
   AI: "#722ed1", POWER: "#fa8c16", ESS: "#52c41a", IOT: "#1890ff",
   SBC: "#8c8c8c", ANDROID: "#3ddc84",
 };
@@ -379,6 +387,9 @@ const summary = (row) => {
     case "LB":
       v = row.lbType;
       break;
+    case "VIRT":
+      v = row.virtType;
+      break;
     default:
       v = typeLabel(row.type);
   }
@@ -455,6 +466,27 @@ const openDuplicate = async () => {
     dupVisible.value = true;
   } finally {
     dupLoading.value = false;
+  }
+};
+
+const importLoading = ref(false);
+const importHosts = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "将「主机列表」中的运维主机导入为 SERVER 监控设备（按 IP 去重，已存在则跳过）。是否继续？",
+      "从主机列表导入",
+      { confirmButtonText: "导入", cancelButtonText: "取消", type: "info" }
+    );
+  } catch (e) {
+    return;
+  }
+  importLoading.value = true;
+  try {
+    const res = await importFromHosts();
+    ElMessage.success((res.content && res.content.message) || "导入完成");
+    await load();
+  } finally {
+    importLoading.value = false;
   }
 };
 

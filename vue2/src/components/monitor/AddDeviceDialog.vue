@@ -165,6 +165,21 @@
         </el-form-item>
       </template>
 
+      <!-- 虚拟化专有 (KVM / VMware / Docker) -->
+      <template v-if="currentType === 'VIRT'">
+        <el-form-item label="平台" prop="virtType">
+          <el-select v-model="form.virtType">
+            <el-option v-for="t in (options.virtTypes || [])" :key="t" :label="optLabel(t)" :value="t" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="版本" prop="virtVersion">
+          <el-input v-model="form.virtVersion" placeholder="如 vCenter 8.0 / libvirt 8.0 / Docker 25.0" />
+        </el-form-item>
+        <el-form-item label="宿主/节点数" prop="hostCount">
+          <el-input-number v-model="form.hostCount" :min="1" :max="1024" controls-position="right" />
+        </el-form-item>
+      </template>
+
       <!-- 网络设备专有 -->
       <template v-if="currentType === 'NETDEV'">
         <el-form-item label="类型" prop="netDevType">
@@ -305,7 +320,8 @@
           <el-input v-model="form.collectUser" placeholder="如 root / ops" />
         </el-form-item>
         <el-form-item label="密码" prop="collectSecret">
-          <el-input v-model="form.collectSecret" type="password" show-password placeholder="SSH 登录密码" />
+          <el-input v-model="form.collectSecret" type="password" show-password
+            :placeholder="isEdit ? 'SSH 登录密码（留空表示不修改）' : 'SSH 登录密码'" />
         </el-form-item>
         <el-form-item label=" ">
           <span v-if="form.collectVia === 'WINRM'" style="color: #909399; font-size: 12px; line-height: 1.5">
@@ -332,7 +348,8 @@
           <el-input v-model="form.collectUser" :placeholder="directProfile.userPh" />
         </el-form-item>
         <el-form-item v-if="directProfile.showPass" label="密码" prop="collectSecret">
-          <el-input v-model="form.collectSecret" type="password" show-password :placeholder="directProfile.passPh" />
+          <el-input v-model="form.collectSecret" type="password" show-password
+            :placeholder="isEdit ? directProfile.passPh + '（留空表示不修改）' : directProfile.passPh" />
         </el-form-item>
         <el-form-item v-if="directProfile.showToken" label="Token" prop="collectSecret">
           <el-input v-model="form.collectSecret" type="textarea" :rows="2" :placeholder="directProfile.passPh" />
@@ -378,7 +395,7 @@ import { getSupportedVersions } from "@/api/monitor-meta";
 
 const TYPE_LABEL = {
   SERVER: "服务器", REDIS: "Redis", DATABASE: "数据库", K8S: "K8s集群",
-  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", NETDEV: "网络设备", GPU: "GPU",
+  MQ: "消息中间件", LB: "负载均衡", STORAGE: "存储", VIRT: "虚拟化", NETDEV: "网络设备", GPU: "GPU",
   POWER: "电能", ESS: "储能", IOT: "物联感知", SBC: "单板机", ANDROID: "安卓多开",
 };
 
@@ -404,6 +421,8 @@ const OPT_LABEL = {
   VANILLA: "原生 Kubernetes", OPENSHIFT: "OpenShift", RANCHER: "Rancher", EKS: "AWS EKS", AKS: "Azure AKS", GKE: "Google GKE", K3S: "K3s",
   CONTAINERD: "containerd", DOCKER: "Docker", CRIO: "CRI-O",
   CALICO: "Calico", FLANNEL: "Flannel", CILIUM: "Cilium", WEAVE: "Weave",
+  // 虚拟化平台
+  KVM: "KVM / libvirt", VMWARE: "VMware vSphere",
   // 数据库
   MYSQL: "MySQL", MARIADB: "MariaDB", POSTGRESQL: "PostgreSQL", ORACLE: "Oracle", SQLSERVER: "SQL Server", DM: "达梦 DM", KINGBASE: "人大金仓 KingbaseES", GAUSSDB: "华为 GaussDB", OPENGAUSS: "openGauss", TIDB: "TiDB", MONGODB: "MongoDB", CLICKHOUSE: "ClickHouse",
   // 安卓多开
@@ -411,7 +430,7 @@ const OPT_LABEL = {
 };
 const DEFAULT_PORT = {
   SERVER: 22, REDIS: 6379, DATABASE: 3306, K8S: 6443,
-  MQ: 9092, LB: 80, STORAGE: 6789, NETDEV: 161, GPU: 8080,
+  MQ: 9092, LB: 80, STORAGE: 6789, VIRT: 443, NETDEV: 161, GPU: 8080,
   POWER: 502, ESS: 502, IOT: 1883, SBC: 22, ANDROID: 5555,
 };
 
@@ -449,6 +468,12 @@ const DIRECT_PROFILE = {
     userPh: "状态页路径(选填，如 /nginx_status)",
     hint: "抓取 Nginx stub_status / HAProxy CSV 状态页(默认80)；Nginx 可用「状态页路径」覆盖默认探测路径",
   },
+  VIRT: {
+    label: "直连采集(vCenter)", port: 443, showUser: true, showPass: true,
+    userPh: "vCenter 账号(如 administrator@vsphere.local)",
+    passPh: "vCenter 密码",
+    hint: "VMware 经 vCenter REST 直连采集主机/虚机(默认443)；KVM/Docker 经宿主 Agent 采集，无需在此填凭据",
+  },
 };
 
 export default {
@@ -465,6 +490,8 @@ export default {
       options: {},
       isEdit: false,
       editId: null,
+      // 回填表单时抑制 collectVia 监听，避免误重置采集端口（见 onOpen / "form.collectVia" watch）
+      suppressViaWatch: false,
       // 适配版本矩阵：打开时拉取一次，按 product 建索引；矩阵一览弹窗
       supportedList: [],
       supportedMap: {},
@@ -504,6 +531,9 @@ export default {
         lbVersion: "1.25.0",
         storageType: "CEPH",
         storageVendor: "",
+        virtType: "KVM",
+        virtVersion: "",
+        hostCount: 3,
         netDevType: "SWITCH",
         netDevVendor: "",
         netDevModel: "",
@@ -567,6 +597,7 @@ export default {
       if (t === "DATABASE") return String(f.dbType || "").toUpperCase();
       if (t === "MQ") return String(f.mqType || "").toUpperCase();
       if (t === "LB") return String(f.lbType || "").toUpperCase();
+      if (t === "VIRT") return String(f.virtType || "").toUpperCase();
       if (t === "K8S") return "K8S";
       if (t === "NETDEV") return "SNMP";
       if (t === "SERVER") {
@@ -591,13 +622,16 @@ export default {
   },
   watch: {
     deviceType() {
-      // 新增模式下外部类型变化时同步当前类型与默认端口（编辑模式由 onOpen 接管）
+      // 新增模式下外部类型变化时同步当前类型与默认端口（编辑模式由 onOpen 接管，
+      // 不可重置 form.port，否则会把设备已保存的端口覆盖为默认值而丢失）
       if (!this.isEdit) {
         this.currentType = this.deviceType;
+        this.form.port = DEFAULT_PORT[this.deviceType] || 22;
       }
-      this.form.port = DEFAULT_PORT[this.deviceType] || 22;
     },
     "form.collectVia"(via) {
+      // 回填期间不重置采集端口，避免覆盖设备已保存的自定义端口
+      if (this.suppressViaWatch) return;
       if (via === "SSH") {
         this.form.collectPort = 22;
       } else if (via === "WINRM") {
@@ -645,11 +679,16 @@ export default {
         this.editId = this.editDevice.id;
         // 编辑模式：类型取自设备本身，允许后续修改纠正
         this.currentType = this.editDevice.type || this.deviceType;
+        // 回填期间抑制 collectVia 监听，避免其把已保存的采集端口重置为默认值（丢失自定义端口）
+        this.suppressViaWatch = true;
         // 用已有设备数据回填表单（含采集配置字段）
         Object.keys(this.form).forEach((k) => {
           if (this.editDevice[k] !== undefined && this.editDevice[k] !== null) {
             this.$set(this.form, k, this.editDevice[k]);
           }
+        });
+        this.$nextTick(() => {
+          this.suppressViaWatch = false;
         });
       } else {
         this.isEdit = false;
@@ -698,18 +737,19 @@ export default {
             payload.id = this.editId;
           }
           // 采集配置（无探针 agentless 凭据）
+          // 注意：collectSecret 为 WRITE_ONLY 不回显，编辑时留空表示「不修改」——为空则不下发，避免覆盖丢失
           payload.collectVia = f.collectVia;
           if (f.collectVia === "SSH" || f.collectVia === "WINRM") {
             payload.collectPort = f.collectPort;
             payload.collectUser = f.collectUser;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           } else if (f.collectVia === "SNMP") {
             payload.collectPort = f.collectPort;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           } else if (f.collectVia === "DIRECT") {
             payload.collectPort = f.collectPort;
             payload.collectUser = f.collectUser;
-            payload.collectSecret = f.collectSecret;
+            if (f.collectSecret) payload.collectSecret = f.collectSecret;
           }
           if (this.currentType === "SERVER") {
             Object.assign(payload, {
@@ -752,6 +792,12 @@ export default {
             Object.assign(payload, {
               storageType: f.storageType,
               storageVendor: f.storageVendor,
+            });
+          } else if (this.currentType === "VIRT") {
+            Object.assign(payload, {
+              virtType: f.virtType,
+              virtVersion: f.virtVersion,
+              hostCount: f.hostCount,
             });
           } else if (this.currentType === "NETDEV") {
             Object.assign(payload, {

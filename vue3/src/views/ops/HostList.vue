@@ -12,6 +12,7 @@
           <el-button type="primary" size="small" @click="onSearch">查询</el-button>
           <el-button size="small" @click="onReset">重置</el-button>
           <el-button type="primary" size="small" @click="handleCreateHostDrawer">新增主机</el-button>
+          <el-button size="small" :loading="importLoading" @click="importDevices">从设备维护导入</el-button>
         </el-form-item>
       </el-form>
     </template>
@@ -117,6 +118,7 @@ import {
   copyHost,
   fetchHostGroups,
   queryServerKeys,
+  importFromDevices,
 } from "@/api/host";
 import { fetchProxies } from "@/api/proxy";
 
@@ -191,6 +193,27 @@ const getMachineProxies = async () => {
 const getServerKeys = async () => {
   const res = await queryServerKeys({});
   serverKeys.items = res.content?.items || [];
+};
+
+const importLoading = ref(false);
+const importDevices = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "将「设备维护」中的 SERVER 服务器导入为运维主机（按 IP 去重，已存在则跳过）。是否继续？",
+      "从设备维护导入",
+      { confirmButtonText: "导入", cancelButtonText: "取消", type: "info" }
+    );
+  } catch (e) {
+    return;
+  }
+  importLoading.value = true;
+  try {
+    const res = await importFromDevices();
+    ElMessage.success(res.content?.message || "导入完成");
+    await getHosts();
+  } finally {
+    importLoading.value = false;
+  }
 };
 
 const handleGroupSelect = (groupId) => {
